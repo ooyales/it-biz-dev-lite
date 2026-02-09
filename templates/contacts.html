@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Management - Federal Contracting</title>
+    <link href="{{ url_for('static', filename='css/dark-theme.css') }}" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Archivo:wght@300;500;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #0A2540;
+            --secondary: #1E4D7B;
+            --accent: #00D4FF;
+            --success: #00C896;
+            --warning: #FFB020;
+            --danger: #FF4757;
+            --bg: #0D1117;
+            --surface: #161B22;
+            --surface-light: #1F2937;
+            --text: #E6EDF3;
+            --text-muted: #8B949E;
+            --border: #30363D;
+        }
+        
+        body {
+            font-family: 'Archivo', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            padding: 1.5rem 2rem;
+            border-bottom: 2px solid var(--accent);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        h1 {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--accent);
+            text-transform: uppercase;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .nav-link {
+            padding: 0.6rem 1.2rem;
+            background: transparent;
+            border: 1px solid var(--accent);
+            border-radius: 6px;
+            color: var(--accent);
+            text-decoration: none;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            background: rgba(0, 212, 255, 0.1);
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn-primary {
+            background: var(--accent);
+            color: var(--primary);
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .filters {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .filter-group label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        
+        select, input[type="text"] {
+            padding: 0.5rem;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+        
+        .contacts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .contact-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .contact-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 212, 255, 0.2);
+        }
+        
+        .contact-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+        
+        .contact-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        
+        .contact-role {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-top: 0.5rem;
+        }
+        
+        .role-decision-maker {
+            background: rgba(255, 107, 107, 0.2);
+            color: #FF6B6B;
+        }
+        
+        .role-technical-lead {
+            background: rgba(78, 205, 196, 0.2);
+            color: #4ECDC4;
+        }
+        
+        .role-executive {
+            background: rgba(255, 230, 109, 0.2);
+            color: #FFD93D;
+        }
+        
+        .role-influencer {
+            background: rgba(149, 225, 211, 0.2);
+            color: #95E1D3;
+        }
+        
+        .contact-info {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.8;
+        }
+        
+        .contact-info p {
+            margin-bottom: 0.5rem;
+        }
+        
+        .contact-tags {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+        
+        .tag {
+            padding: 0.25rem 0.75rem;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        .influence-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        
+        .influence-very-high {
+            background: rgba(255, 71, 87, 0.2);
+            color: var(--danger);
+        }
+        
+        .influence-high {
+            background: rgba(255, 176, 32, 0.2);
+            color: var(--warning);
+        }
+        
+        .influence-medium {
+            background: rgba(0, 212, 255, 0.2);
+            color: var(--accent);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+        }
+        
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>👥 Contact Management</h1>
+            <div class="nav-links">
+                <a href="/" class="nav-link">← Dashboard</a>
+                <a href="/network" class="nav-link">Network View</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h2 class="page-title">Agency Contacts</h2>
+            <button class="btn btn-primary" onclick="addContact()">+ Add Contact</button>
+        </div>
+
+        <!-- Statistics -->
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-label">Total Contacts</div>
+                <div class="stat-value" id="totalContacts">-</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Decision Makers</div>
+                <div class="stat-value" id="decisionMakers">-</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Agencies</div>
+                <div class="stat-value" id="totalAgencies">-</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Recent Interactions</div>
+                <div class="stat-value" id="recentInteractions">-</div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters">
+            <div class="filter-group">
+                <label>Agency</label>
+                <select id="agencyFilter" onchange="filterContacts()">
+                    <option value="all">All Agencies</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Role Type</label>
+                <select id="roleFilter" onchange="filterContacts()">
+                    <option value="all">All Roles</option>
+                    <option value="Decision Maker">Decision Makers</option>
+                    <option value="Technical Lead">Technical Leads</option>
+                    <option value="Executive">Executives</option>
+                    <option value="Influencer">Influencers</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Influence Level</label>
+                <select id="influenceFilter" onchange="filterContacts()">
+                    <option value="all">All Levels</option>
+                    <option value="Very High">Very High</option>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Search</label>
+                <input type="text" id="searchBox" placeholder="Name, organization..." oninput="filterContacts()">
+            </div>
+            <div class="filter-group">
+                <label>&nbsp;</label>
+                <button class="btn btn-primary" onclick="resetFilters()">Reset</button>
+            </div>
+        </div>
+
+        <!-- Contacts Grid -->
+        <div id="contactsGrid" class="contacts-grid">
+            <div class="empty-state">
+                <h3>Loading contacts...</h3>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        let allContacts = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStats();
+            loadContacts();
+        });
+
+        // Load statistics
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE}/network/stats`);
+                const stats = await response.json();
+                
+                document.getElementById('totalContacts').textContent = stats.total_contacts || 0;
+                document.getElementById('decisionMakers').textContent = stats.decision_makers || 0;
+                document.getElementById('totalAgencies').textContent = stats.total_agencies || 0;
+                document.getElementById('recentInteractions').textContent = stats.recent_interactions || 0;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Load contacts
+        async function loadContacts() {
+            try {
+                const response = await fetch(`${API_BASE}/contacts/list`);
+                allContacts = await response.json();
+                
+                populateFilters();
+                renderContacts(allContacts);
+            } catch (error) {
+                console.error('Error loading contacts:', error);
+                document.getElementById('contactsGrid').innerHTML = `
+                    <div class="empty-state">
+                        <h3>No contacts yet</h3>
+                        <p>Click "Add Contact" to get started, or run the setup script to add sample data.</p>
+                        <p style="margin-top: 1rem; font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem; color: var(--accent);">
+                            python setup_contact_network.py
+                        </p>
+                    </div>
+                `;
+            }
+        }
+
+        // Populate filter dropdowns
+        function populateFilters() {
+            const agencies = [...new Set(allContacts.map(c => c.agency))];
+            const agencyFilter = document.getElementById('agencyFilter');
+            
+            agencies.forEach(agency => {
+                const option = document.createElement('option');
+                option.value = agency;
+                option.textContent = agency;
+                agencyFilter.appendChild(option);
+            });
+        }
+
+        // Render contacts
+        function renderContacts(contacts) {
+            const grid = document.getElementById('contactsGrid');
+            
+            if (contacts.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <h3>No contacts found</h3>
+                        <p>Try adjusting your filters or add a new contact.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            grid.innerHTML = contacts.map(contact => {
+                const roleClass = contact.role_type ? contact.role_type.toLowerCase().replace(/\s+/g, '-') : 'default';
+                const influenceClass = contact.influence_level ? contact.influence_level.toLowerCase().replace(/\s+/g, '-') : 'medium';
+                
+                return `
+                    <div class="contact-card" onclick="viewContact(${contact.id})">
+                        <div class="contact-header">
+                            <div>
+                                <div class="contact-name">${contact.first_name} ${contact.last_name}</div>
+                                <div class="contact-role role-${roleClass}">${contact.role_type || 'Contact'}</div>
+                            </div>
+                            <span class="influence-badge influence-${influenceClass}">${contact.influence_level || 'N/A'}</span>
+                        </div>
+                        
+                        <div class="contact-info">
+                            <p><strong>${contact.title || 'N/A'}</strong></p>
+                            <p>${contact.organization}</p>
+                            <p style="color: var(--text-muted); font-size: 0.85rem;">${contact.agency}</p>
+                            ${contact.email ? `<p>📧 ${contact.email}</p>` : ''}
+                            ${contact.phone ? `<p>📞 ${contact.phone}</p>` : ''}
+                        </div>
+                        
+                        ${contact.tags && contact.tags.length > 0 ? `
+                            <div class="contact-tags">
+                                ${contact.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Filter contacts
+        function filterContacts() {
+            const agencyFilter = document.getElementById('agencyFilter').value;
+            const roleFilter = document.getElementById('roleFilter').value;
+            const influenceFilter = document.getElementById('influenceFilter').value;
+            const searchTerm = document.getElementById('searchBox').value.toLowerCase();
+            
+            const filtered = allContacts.filter(contact => {
+                const agencyMatch = agencyFilter === 'all' || contact.agency === agencyFilter;
+                const roleMatch = roleFilter === 'all' || contact.role_type === roleFilter;
+                const influenceMatch = influenceFilter === 'all' || contact.influence_level === influenceFilter;
+                
+                const searchMatch = !searchTerm || 
+                    contact.first_name.toLowerCase().includes(searchTerm) ||
+                    contact.last_name.toLowerCase().includes(searchTerm) ||
+                    contact.organization.toLowerCase().includes(searchTerm) ||
+                    (contact.title && contact.title.toLowerCase().includes(searchTerm));
+                
+                return agencyMatch && roleMatch && influenceMatch && searchMatch;
+            });
+            
+            renderContacts(filtered);
+        }
+
+        // Reset filters
+        function resetFilters() {
+            document.getElementById('agencyFilter').value = 'all';
+            document.getElementById('roleFilter').value = 'all';
+            document.getElementById('influenceFilter').value = 'all';
+            document.getElementById('searchBox').value = '';
+            renderContacts(allContacts);
+        }
+
+        // View contact details
+        function viewContact(contactId) {
+            alert(`Contact detail page coming soon!\n\nContact ID: ${contactId}\n\nWill show:\n- Full contact info\n- Interaction history\n- Relationships\n- Associated opportunities`);
+            // Future: window.location.href = `/contacts/${contactId}`;
+        }
+
+        // Add new contact
+        function addContact() {
+            alert('Add contact form coming soon!\n\nFor now, use:\npython setup_contact_network.py\n\nOr add contacts directly to the database.');
+            // Future: Show modal with contact form
+        }
+    </script>
+</body>
+</html>

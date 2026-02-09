@@ -1,0 +1,465 @@
+{% extends "base-ultimate.html" %}
+
+{% block title %}Dashboard - BD Intelligence{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Your complete BD intelligence at a glance{% endblock %}
+
+{% block stats_bar %}
+<div class="stats-bar">
+    <div class="stat-item">
+        <div class="stat-icon purple">
+            <i class="fas fa-bullseye"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="total-opportunities">0</h4>
+            <p>Total Opportunities</p>
+        </div>
+    </div>
+    
+    <div class="stat-item">
+        <div class="stat-icon green">
+            <i class="fas fa-star"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="high-priority">0</h4>
+            <p>High Priority</p>
+        </div>
+    </div>
+    
+    <div class="stat-item">
+        <div class="stat-icon blue">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="total-contacts">0</h4>
+            <p>Total Contacts</p>
+        </div>
+    </div>
+    
+    <div class="stat-item">
+        <div class="stat-icon orange">
+            <i class="fas fa-calendar-check"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="due-this-week">0</h4>
+            <p>Due This Week</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block top_actions %}
+<button class="btn btn-success" onclick="refreshData()">
+    <i class="fas fa-sync me-2"></i>Refresh Data
+</button>
+
+<a href="/bd-intelligence" class="btn btn-primary">
+    <i class="fas fa-table me-2"></i>Full Table View
+</a>
+
+<div class="btn-group">
+    <button class="btn btn-outline-primary" onclick="window.location.href='/opportunities/timeline'">
+        <i class="fas fa-chart-line me-1"></i>Timeline
+    </button>
+    <button class="btn btn-outline-primary" onclick="window.location.href='/opportunities/network'">
+        <i class="fas fa-project-diagram me-1"></i>Network
+    </button>
+    <button class="btn btn-outline-primary" onclick="window.location.href='/opportunities/kanban'">
+        <i class="fas fa-columns me-1"></i>Kanban
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card quick-action-card" onclick="window.location.href='/opportunities/timeline'">
+            <div class="card-body text-center">
+                <i class="fas fa-chart-line fa-3x mb-3" style="color: #667eea;"></i>
+                <h5>Timeline View</h5>
+                <p class="small text-muted">Visualize opportunities by deadline</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card quick-action-card" onclick="window.location.href='/contacts'">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-3x mb-3" style="color: #48bb78;"></i>
+                <h5>Contacts</h5>
+                <p class="small text-muted" id="contacts-summary">124 contacts at 43 agencies</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card quick-action-card" onclick="window.location.href='/staff'">
+            <div class="card-body text-center">
+                <i class="fas fa-user-tie fa-3x mb-3" style="color: #4299e1;"></i>
+                <h5>Team & Staff</h5>
+                <p class="small text-muted">Manage capabilities</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-3">
+        <div class="card quick-action-card" onclick="window.location.href='/agents/dashboard'">
+            <div class="card-body text-center">
+                <i class="fas fa-robot fa-3x mb-3" style="color: #ed8936;"></i>
+                <h5>AI Agents</h5>
+                <p class="small text-muted">6 agents active</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- High Priority Opportunities -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-fire me-2" style="color: #f56565;"></i>High Priority Opportunities
+                </h5>
+                <a href="/bd-intelligence" class="btn btn-sm btn-outline-primary">
+                    View All <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+            <div class="card-body" id="high-priority-list">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary"></div>
+                    <p class="text-muted mt-2">Loading opportunities...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity & Quick Insights -->
+<div class="row mb-4">
+    <div class="col-md-6 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-clock me-2"></i>Recent Activity
+                </h5>
+            </div>
+            <div class="card-body" id="recent-activity">
+                <div class="activity-item">
+                    <i class="fas fa-search text-primary"></i>
+                    <div>
+                        <strong>Opportunity Scout</strong> found 5 new opportunities
+                        <div class="small text-muted">2 hours ago</div>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <i class="fas fa-user-plus text-success"></i>
+                    <div>
+                        <strong>Contact synced</strong> from Neo4j
+                        <div class="small text-muted">5 hours ago</div>
+                    </div>
+                </div>
+                <div class="activity-item">
+                    <i class="fas fa-file-alt text-info"></i>
+                    <div>
+                        <strong>RFI generated</strong> for DOD opportunity
+                        <div class="small text-muted">Yesterday</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-3">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>Quick Insights
+                </h5>
+            </div>
+            <div class="card-body" id="quick-insights">
+                <div class="alert alert-info mb-2">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong id="insight-opps-count">15</strong> opportunities match your capabilities
+                </div>
+                <div class="alert alert-warning mb-2">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong id="insight-due-soon">3</strong> opportunities due within 7 days
+                </div>
+                <div class="alert alert-success mb-0">
+                    <i class="fas fa-handshake me-2"></i>
+                    You have contacts at <strong id="insight-coverage">43</strong> agencies
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- All Opportunities Table (Compact) -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>All Opportunities
+                </h5>
+                <div>
+                    <select class="form-select form-select-sm d-inline-block" style="width: 150px;" id="priority-filter" onchange="filterOpportunities()">
+                        <option value="all">All Priorities</option>
+                        <option value="HIGH">High Only</option>
+                        <option value="MEDIUM">Medium Only</option>
+                    </select>
+                    <button class="btn btn-sm btn-success ms-2" onclick="exportToExcel()">
+                        <i class="fas fa-file-excel me-1"></i>Export
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Agency</th>
+                                <th>Deadline</th>
+                                <th>Score</th>
+                                <th>Priority</th>
+                                <th>Contacts</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="opportunities-table">
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <div class="spinner-border text-primary"></div>
+                                    <p class="text-muted mt-2">Loading opportunities...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.quick-action-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: linear-gradient(135deg, #1a2147 0%, #151b3d 100%);
+    border: 1px solid #2d3748;
+}
+
+.quick-action-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+    border-color: #667eea;
+}
+
+.activity-item {
+    display: flex;
+    align-items: start;
+    gap: 1rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #2d3748;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-item i {
+    font-size: 1.2rem;
+    margin-top: 0.2rem;
+}
+
+.opp-card-mini {
+    background: linear-gradient(135deg, #1a2147 0%, #151b3d 100%);
+    border-left: 4px solid;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.opp-card-mini:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.opp-card-mini.priority-HIGH {
+    border-left-color: #48bb78;
+}
+
+.opp-card-mini.priority-MEDIUM {
+    border-left-color: #4299e1;
+}
+
+.opp-card-mini.priority-LOW {
+    border-left-color: #718096;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let allOpportunities = [];
+
+// Load dashboard data
+async function loadDashboard() {
+    try {
+        // Load opportunities
+        const oppRes = await fetch('/api/scout/opportunities');
+        const oppData = await oppRes.json();
+        allOpportunities = oppData.opportunities || [];
+        
+        // Load contacts
+        const contactRes = await fetch('/api/contacts');
+        const contactData = await contactRes.json();
+        const contacts = contactData.contacts || [];
+        
+        // Update stats
+        updateStats(allOpportunities, contacts);
+        
+        // Render high priority opportunities
+        renderHighPriority(allOpportunities);
+        
+        // Render opportunities table
+        renderOpportunitiesTable(allOpportunities);
+        
+    } catch (error) {
+        console.error('Error loading dashboard:', error);
+        document.getElementById('high-priority-list').innerHTML = 
+            '<div class="alert alert-danger">Error loading data</div>';
+    }
+}
+
+function updateStats(opportunities, contacts) {
+    const highPriority = opportunities.filter(o => o.priority === 'HIGH').length;
+    const dueThisWeek = opportunities.filter(o => {
+        if (!o.deadline) return false;
+        const deadline = new Date(o.deadline);
+        const today = new Date();
+        const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+        return deadline >= today && deadline <= weekFromNow;
+    }).length;
+    
+    document.getElementById('total-opportunities').textContent = opportunities.length;
+    document.getElementById('high-priority').textContent = highPriority;
+    document.getElementById('total-contacts').textContent = contacts.length;
+    document.getElementById('due-this-week').textContent = dueThisWeek;
+    
+    // Update insights
+    document.getElementById('insight-opps-count').textContent = opportunities.length;
+    document.getElementById('insight-due-soon').textContent = dueThisWeek;
+    
+    // Count unique agencies in contacts
+    const agencies = new Set(contacts.map(c => c.organization).filter(Boolean));
+    document.getElementById('insight-coverage').textContent = agencies.size;
+    document.getElementById('contacts-summary').textContent = 
+        `${contacts.length} contacts at ${agencies.size} agencies`;
+}
+
+function renderHighPriority(opportunities) {
+    const highPriority = opportunities
+        .filter(o => o.priority === 'HIGH')
+        .slice(0, 5);
+    
+    const container = document.getElementById('high-priority-list');
+    
+    if (highPriority.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center py-3">No high priority opportunities yet</p>';
+        return;
+    }
+    
+    container.innerHTML = highPriority.map(opp => `
+        <div class="opp-card-mini priority-${opp.priority}" onclick="viewOpportunity('${opp.notice_id}')">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                    <h6 class="mb-1">${opp.title}</h6>
+                    <div class="small text-muted">
+                        <i class="fas fa-building me-1"></i>${opp.agency}
+                        <i class="fas fa-calendar ms-3 me-1"></i>${opp.deadline ? new Date(opp.deadline).toLocaleDateString() : 'No deadline'}
+                        ${(opp.contacts && opp.contacts.total > 0) ? 
+                            `<i class="fas fa-user-friends ms-3 me-1"></i>${opp.contacts.total} contacts` : ''}
+                    </div>
+                </div>
+                <div class="text-end">
+                    <div class="text-success fw-bold">${opp.score}/100</div>
+                    <span class="badge bg-success">HIGH</span>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderOpportunitiesTable(opportunities) {
+    const tbody = document.getElementById('opportunities-table');
+    
+    if (opportunities.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4">No opportunities found</td></tr>';
+        return;
+    }
+    
+    // Show first 20
+    const displayOpps = opportunities.slice(0, 20);
+    
+    tbody.innerHTML = displayOpps.map(opp => `
+        <tr onclick="viewOpportunity('${opp.notice_id}')" style="cursor: pointer;">
+            <td><strong>${opp.title}</strong></td>
+            <td>${opp.agency}</td>
+            <td>${opp.deadline ? new Date(opp.deadline).toLocaleDateString() : '-'}</td>
+            <td><span class="badge bg-${opp.score >= 70 ? 'success' : opp.score >= 50 ? 'info' : 'secondary'}">${opp.score}</span></td>
+            <td><span class="badge bg-${opp.priority === 'HIGH' ? 'success' : opp.priority === 'MEDIUM' ? 'info' : 'secondary'}">${opp.priority}</span></td>
+            <td>${(opp.contacts && opp.contacts.total) ? opp.contacts.total : 0}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); viewOpportunity('${opp.notice_id}')">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+    
+    if (opportunities.length > 20) {
+        tbody.innerHTML += `
+            <tr>
+                <td colspan="7" class="text-center py-3">
+                    <a href="/bd-intelligence" class="btn btn-sm btn-primary">
+                        View All ${opportunities.length} Opportunities <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </td>
+            </tr>
+        `;
+    }
+}
+
+function filterOpportunities() {
+    const filter = document.getElementById('priority-filter').value;
+    
+    let filtered = allOpportunities;
+    if (filter !== 'all') {
+        filtered = allOpportunities.filter(o => o.priority === filter);
+    }
+    
+    renderOpportunitiesTable(filtered);
+}
+
+function viewOpportunity(noticeId) {
+    window.location.href = `/bd-intelligence#${noticeId}`;
+}
+
+function refreshData() {
+    location.reload();
+}
+
+function exportToExcel() {
+    window.location.href = '/api/export-excel';
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', loadDashboard);
+</script>
+{% endblock %}

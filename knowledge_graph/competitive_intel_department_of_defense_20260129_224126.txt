@@ -1,0 +1,130 @@
+======================================================================
+COMPETITIVE INTELLIGENCE REPORT
+Generated: 2026-01-29 22:41
+======================================================================
+
+TARGET AGENCY: Department of Defense
+----------------------------------------------------------------------
+
+SPENDING ANALYSIS
+  Total Contracts: 300
+  Total Value: $1,508,910,865
+  Average Contract: $5,029,703
+
+  Top NAICS Codes by Spending:
+    None: $1,508,910,865
+
+INCUMBENT CONTRACTORS
+----------------------------------------------------------------------
+1. GENERAL DYNAMICS INFORMATION TECHNOLOGY, INC.
+   Contracts: 5
+   Total Value: $315,601,565
+   Latest Award: 2024-11-05
+
+2. PERATON INC.
+   Contracts: 12
+   Total Value: $166,917,799
+   Latest Award: 2025-10-01
+
+3. SCIENCE APPLICATIONS INTERNATIONAL CORPORATION
+   Contracts: 2
+   Total Value: $121,456,959
+   Latest Award: 2025-08-01
+
+4. EMPOWER AI, INC.
+   Contracts: 8
+   Total Value: $86,826,974
+   Latest Award: 2025-09-19
+
+5. MICROSOFT CORPORATION
+   Contracts: 1
+   Total Value: $80,515,592
+   Latest Award: 2019-06-28
+
+6. CACI, INC. - FEDERAL
+   Contracts: 1
+   Total Value: $63,066,191
+   Latest Award: 2024-12-20
+
+7. TECHNICAL AND PROJECT ENGINEERING, LLC
+   Contracts: 2
+   Total Value: $53,776,331
+   Latest Award: 2025-03-07
+
+8. TEKSYNAP CORPORATION
+   Contracts: 13
+   Total Value: $47,397,088
+   Latest Award: 2025-07-07
+
+9. NAKUPUNA CONSULTING LLC
+   Contracts: 1
+   Total Value: $35,620,264
+   Latest Award: 2024-07-15
+
+10. AUGUSTINE CONSULTING INC
+   Contracts: 1
+   Total Value: $28,060,813
+   Latest Award: 2024-03-01
+
+POTENTIAL TEAMING PARTNERS
+----------------------------------------------------------------------
+1. YOUONE ENGINEERING CO.,LTD
+   Contracts at Agency: 16
+   Total Value: $3,048,160
+
+2. RESOURCE MANAGEMENT ASSOCIATES, INC.
+   Contracts at Agency: 15
+   Total Value: $6,550,319
+
+3. TEKSYNAP CORPORATION
+   Contracts at Agency: 13
+   Total Value: $47,397,088
+
+4. PERATON INC.
+   Contracts at Agency: 12
+   Total Value: $166,917,799
+
+5. EMPOWER AI, INC.
+   Contracts at Agency: 8
+   Total Value: $86,826,974
+
+6. M. C. DEAN, INC.
+   Contracts at Agency: 6
+   Total Value: $19,342,466
+
+7. SPIDER STRATEGIES, INC.
+   Contracts at Agency: 6
+   Total Value: $8,285,585
+
+8. GENERAL DYNAMICS INFORMATION TECHNOLOGY, INC.
+   Contracts at Agency: 5
+   Total Value: $315,601,565
+
+9. ASK SAGE, INC.
+   Contracts at Agency: 5
+   Total Value: $530,290
+
+10. ABBOTT RAPID DIAGNOSTICS INFORMATICS, INC
+   Contracts at Agency: 4
+   Total Value: $538,092
+
+======================================================================
+RECOMMENDATIONS
+======================================================================
+
+1. INCUMBENT STRATEGY:
+   • Research top 3 incumbents: GENERAL DYNAMICS INFORMATION TECHNOLOGY, INC., PERATON INC., SCIENCE APPLICATIONS INTERNATIONAL CORPORATION
+   • Identify their strengths and weaknesses
+   • Consider subcontracting or teaming
+
+2. TEAMING STRATEGY:
+   • Reach out to potential partners
+   • Look for complementary capabilities
+   • Propose joint pursuit on upcoming opportunities
+
+3. RELATIONSHIP BUILDING:
+   • Network with incumbent employees
+   • Attend agency industry days
+   • Build contacts at the agency
+
+======================================================================

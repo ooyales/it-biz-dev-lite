@@ -1,0 +1,419 @@
+{
+  "collection_date": "2026-02-06T07:34:38.386656",
+  "competitive_intelligence": {
+    "incumbents": {
+      "LEIDOS, INC.": {
+        "contract_count": 34,
+        "total_value": 7194184.8,
+        "agencies": [
+          "DEPT OF DEFENSE"
+        ]
+      },
+      "HPI FEDERAL LLC": {
+        "contract_count": 13,
+        "total_value": 1912706.7600000002,
+        "agencies": [
+          "DEPT OF DEFENSE"
+        ]
+      },
+      "NEW TECH SOLUTIONS, INC.": {
+        "contract_count": 7,
+        "total_value": 1128980.32,
+        "agencies": [
+          "NATIONAL AERONAUTICS AND SPACE ADMINISTRATION",
+          "JUSTICE, DEPARTMENT OF",
+          "DEPT OF DEFENSE"
+        ]
+      },
+      "ACCENTURE FEDERAL SERVICES LLC": {
+        "contract_count": 4,
+        "total_value": 12386115.290000001,
+        "agencies": [
+          "STATE, DEPARTMENT OF",
+          "ENERGY, DEPARTMENT OF",
+          "DEPT OF DEFENSE"
+        ]
+      },
+      "SCIENCE APPLICATIONS INTERNATIONAL CORPORATION": {
+        "contract_count": 4,
+        "total_value": 36978864.0,
+        "agencies": [
+          "TREASURY, DEPARTMENT OF THE",
+          "DEPT OF DEFENSE",
+          "GENERAL SERVICES ADMINISTRATION"
+        ]
+      },
+      "BOOZ ALLEN HAMILTON INC.": {
+        "contract_count": 4,
+        "total_value": 5968252.899999999,
+        "agencies": [
+          "HEALTH AND HUMAN SERVICES, DEPARTMENT OF",
+          "ENERGY, DEPARTMENT OF",
+          "DEPT OF DEFENSE",
+          "GENERAL SERVICES ADMINISTRATION"
+        ]
+      },
+      "CACI, INC. - FEDERAL": {
+        "contract_count": 3,
+        "total_value": 13838843.41,
+        "agencies": [
+          "DEPT OF DEFENSE"
+        ]
+      },
+      "BCT PARTNERS LLC": {
+        "contract_count": 3,
+        "total_value": 7256.52,
+        "agencies": [
+          "JUSTICE, DEPARTMENT OF"
+        ]
+      },
+      "CGI FEDERAL INC.": {
+        "contract_count": 3,
+        "total_value": 22944677.64,
+        "agencies": [
+          "STATE, DEPARTMENT OF",
+          "DEPT OF DEFENSE",
+          "HEALTH AND HUMAN SERVICES, DEPARTMENT OF"
+        ]
+      },
+      "PERATON ENTERPRISE SOLUTIONS LLC": {
+        "contract_count": 3,
+        "total_value": 14391237.280000001,
+        "agencies": [
+          "LABOR, DEPARTMENT OF",
+          "DEPT OF DEFENSE"
+        ]
+      },
+      "SPATIAL FRONT INCORPORATED": {
+        "contract_count": 3,
+        "total_value": 2706999.6,
+        "agencies": [
+          "TRANSPORTATION, DEPARTMENT OF",
+          "NATIONAL SCIENCE FOUNDATION",
+          "HEALTH AND HUMAN SERVICES, DEPARTMENT OF"
+        ]
+      },
+      "GENERAL DYNAMICS INFORMATION TECHNOLOGY, INC.": {
+        "contract_count": 3,
+        "total_value": 2470435.36,
+        "agencies": [
+          "COMMERCE, DEPARTMENT OF",
+          "ENERGY, DEPARTMENT OF"
+        ]
+      },
+      "DLT SOLUTIONS, LLC": {
+        "contract_count": 3,
+        "total_value": 167227.22,
+        "agencies": [
+          "STATE, DEPARTMENT OF",
+          "DEPT OF DEFENSE"
+        ]
+      },
+      "CONCEPT SOLUTIONS, L.L.C.": {
+        "contract_count": 3,
+        "total_value": 4800549.41,
+        "agencies": [
+          "TRANSPORTATION, DEPARTMENT OF"
+        ]
+      },
+      "ADVANCED COMPUTER CONCEPTS, INC.": {
+        "contract_count": 3,
+        "total_value": 164835.62,
+        "agencies": [
+          "NATIONAL AERONAUTICS AND SPACE ADMINISTRATION",
+          "DEPT OF DEFENSE"
+        ]
+      },
+      "INMARSAT GOVERNMENT, INC.": {
+        "contract_count": 3,
+        "total_value": 5984.15,
+        "agencies": [
+          "STATE, DEPARTMENT OF",
+          "HOMELAND SECURITY, DEPARTMENT OF"
+        ]
+      },
+      "DELOITTE CONSULTING LLP": {
+        "contract_count": 2,
+        "total_value": 33506540.24,
+        "agencies": [
+          "DEPT OF DEFENSE",
+          "HEALTH AND HUMAN SERVICES, DEPARTMENT OF"
+        ]
+      },
+      "CDW GOVERNMENT LLC": {
+        "contract_count": 2,
+        "total_value": 138215.03999999998,
+        "agencies": [
+          "TRANSPORTATION, DEPARTMENT OF",
+          "ENERGY, DEPARTMENT OF"
+        ]
+      },
+      "TERRESTRIS, LLC": {
+        "contract_count": 2,
+        "total_value": 2069268.1600000001,
+        "agencies": [
+          "VETERANS AFFAIRS, DEPARTMENT OF",
+          "AGRICULTURE, DEPARTMENT OF"
+        ]
+      },
+      "INTERNATIONAL BUSINESS MACHINES CORPORATION": {
+        "contract_count": 2,
+        "total_value": 3328787.34,
+        "agencies": [
+          "HOMELAND SECURITY, DEPARTMENT OF",
+          "GENERAL SERVICES ADMINISTRATION"
+        ]
+      }
+    },
+    "agency_patterns": {
+      "DEPT OF DEFENSE": {
+        "total_spend": 148390046.26999995,
+        "contract_count": 127,
+        "top_vendors": [
+          "LEIDOS, INC.",
+          "HPI FEDERAL LLC",
+          "NEW TECH SOLUTIONS, INC.",
+          "BOOZ ALLEN HAMILTON INC.",
+          "ACCENTURE FEDERAL SERVICES LLC"
+        ]
+      },
+      "ENVIRONMENTAL PROTECTION AGENCY": {
+        "total_spend": 1514100.63,
+        "contract_count": 3,
+        "top_vendors": [
+          "LINTECH GLOBAL, INC.",
+          "CHEROKEE NATION SYSTEM SOLUTIONS, LLC",
+          "COMPTECH COMPUTER TECHNOLOGIES, INC."
+        ]
+      },
+      "STATE, DEPARTMENT OF": {
+        "total_spend": 18169543.59,
+        "contract_count": 12,
+        "top_vendors": [
+          "ACCENTURE FEDERAL SERVICES LLC",
+          "INMARSAT GOVERNMENT, INC.",
+          "DLT SOLUTIONS, LLC",
+          "CGI FEDERAL INC.",
+          "THE MIL CORPORATION"
+        ]
+      },
+      "JUSTICE, DEPARTMENT OF": {
+        "total_spend": 3586156.26,
+        "contract_count": 13,
+        "top_vendors": [
+          "NEW TECH SOLUTIONS, INC.",
+          "BCT PARTNERS LLC",
+          "DIGITAL FOUNDATION COMPUTER CONSULTING SERVICES CORP., INC.",
+          "COLOSSAL CONTRACTING, LLC",
+          "PAGE VAULT INC."
+        ]
+      },
+      "TREASURY, DEPARTMENT OF THE": {
+        "total_spend": 8243589.18,
+        "contract_count": 14,
+        "top_vendors": [
+          "SCIENCE APPLICATIONS INTERNATIONAL CORPORATION",
+          "FOUR POINTS TECHNOLOGY, L.L.C.",
+          "FCN, INC.",
+          "PERATON TECHNOLOGY SERVICES INC.",
+          "LRP PUBLICATIONS, INC."
+        ]
+      },
+      "HOMELAND SECURITY, DEPARTMENT OF": {
+        "total_spend": 21131628.550000004,
+        "contract_count": 17,
+        "top_vendors": [
+          "INMARSAT GOVERNMENT, INC.",
+          "BAHFED CORP",
+          "GOVPLACE, LLC",
+          "INTERNATIONAL BUSINESS MACHINES CORPORATION",
+          "ISHPI INFORMATION TECHNOLOGIES, INC."
+        ]
+      },
+      "HEALTH AND HUMAN SERVICES, DEPARTMENT OF": {
+        "total_spend": 58328044.88999999,
+        "contract_count": 15,
+        "top_vendors": [
+          "BOOZ ALLEN HAMILTON INC.",
+          "CGI FEDERAL INC.",
+          "SPATIAL FRONT INCORPORATED",
+          "DELOITTE CONSULTING LLP",
+          "EDUCE GROUP, INC., THE"
+        ]
+      },
+      "GENERAL SERVICES ADMINISTRATION": {
+        "total_spend": 93574385.92,
+        "contract_count": 12,
+        "top_vendors": [
+          "SCIENCE APPLICATIONS INTERNATIONAL CORPORATION",
+          "BOOZ ALLEN HAMILTON INC.",
+          "PERATON TECHNOLOGY SERVICES INC.",
+          "INTERNATIONAL BUSINESS MACHINES CORPORATION",
+          "SYMPLICITY CORPORATION"
+        ]
+      },
+      "LABOR, DEPARTMENT OF": {
+        "total_spend": 10809380.59,
+        "contract_count": 2,
+        "top_vendors": [
+          "PERATON ENTERPRISE SOLUTIONS LLC",
+          "MICRO SYSTEMS CONSULTANTS, INC."
+        ]
+      },
+      "VETERANS AFFAIRS, DEPARTMENT OF": {
+        "total_spend": 136045718.62999997,
+        "contract_count": 15,
+        "top_vendors": [
+          "MINBURN TECHNOLOGY GROUP, LLC",
+          "FOUR POINTS TECHNOLOGY, L.L.C.",
+          "TERRESTRIS, LLC",
+          "PAR EXCELLENCE SYSTEMS, INC",
+          "CONSENSUS MEDICAL SYSTEMS LLC"
+        ]
+      },
+      "COMMERCE, DEPARTMENT OF": {
+        "total_spend": 6041449.09,
+        "contract_count": 10,
+        "top_vendors": [
+          "GENERAL DYNAMICS INFORMATION TECHNOLOGY, INC.",
+          "COLOSSAL CONTRACTING, LLC",
+          "EMERGENT, LLC",
+          "DISYS SOLUTIONS, INC.",
+          "BLUE GLACIER MANAGEMENT GROUP INC."
+        ]
+      },
+      "NATIONAL AERONAUTICS AND SPACE ADMINISTRATION": {
+        "total_spend": 502203.44999999995,
+        "contract_count": 14,
+        "top_vendors": [
+          "NEW TECH SOLUTIONS, INC.",
+          "ADVANCED COMPUTER CONCEPTS, INC.",
+          "BAHFED CORP",
+          "AUGUST SCHELL ENTERPRISES, INC.",
+          "LRP PUBLICATIONS, INC."
+        ]
+      },
+      "EDUCATION, DEPARTMENT OF": {
+        "total_spend": 6546345.25,
+        "contract_count": 4,
+        "top_vendors": [
+          "PPS INFOTECH LLC",
+          "ZEN STRATEGICS LLC",
+          "METAPHASE CONSULTING LLC",
+          "SANAMETRIX, INC."
+        ]
+      },
+      "PENSION BENEFIT GUARANTY CORPORATION": {
+        "total_spend": 1171088.33,
+        "contract_count": 2,
+        "top_vendors": [
+          "LYNCHVAL SYSTEMS WORLDWIDE INC",
+          "ICF INCORPORATED, L.L.C."
+        ]
+      },
+      "ENERGY, DEPARTMENT OF": {
+        "total_spend": 8993841.540000001,
+        "contract_count": 8,
+        "top_vendors": [
+          "ACCENTURE FEDERAL SERVICES LLC",
+          "BOOZ ALLEN HAMILTON INC.",
+          "GENERAL DYNAMICS INFORMATION TECHNOLOGY, INC.",
+          "CDW GOVERNMENT LLC",
+          "DIGITAL STRATEGY LLC"
+        ]
+      },
+      "CONSUMER FINANCIAL PROTECTION BUREAU": {
+        "total_spend": 168000.0,
+        "contract_count": 1,
+        "top_vendors": [
+          "GOLDEN IT LLC"
+        ]
+      },
+      "TRANSPORTATION, DEPARTMENT OF": {
+        "total_spend": 10013231.9,
+        "contract_count": 12,
+        "top_vendors": [
+          "CONCEPT SOLUTIONS, L.L.C.",
+          "SPATIAL FRONT INCORPORATED",
+          "CDW GOVERNMENT LLC",
+          "RIGIL CORPORATION",
+          "DSOFT TECHNOLOGY COMPANY"
+        ]
+      },
+      "AGRICULTURE, DEPARTMENT OF": {
+        "total_spend": 7256064.34,
+        "contract_count": 5,
+        "top_vendors": [
+          "TERRESTRIS, LLC",
+          "ACCESSAGILITY LLC",
+          "NUVITEK LLC",
+          "VCH PARTNERS LLC",
+          "DYNAMO TECHNOLOGIES LLC"
+        ]
+      },
+      "NATIONAL SCIENCE FOUNDATION": {
+        "total_spend": 277102.8,
+        "contract_count": 1,
+        "top_vendors": [
+          "SPATIAL FRONT INCORPORATED"
+        ]
+      },
+      "INTERIOR, DEPARTMENT OF THE": {
+        "total_spend": 2021497.47,
+        "contract_count": 5,
+        "top_vendors": [
+          "EMERGENT, LLC",
+          "R & K SOLUTIONS, INC.",
+          "GLOBAL SOLUTIONS GROUP, INC.",
+          "J. J. KELLER & ASSOCIATES, INC.",
+          "APEX RESOURCE MANAGEMENT SOLUTIONS LTD"
+        ]
+      },
+      "NUCLEAR REGULATORY COMMISSION": {
+        "total_spend": 1040000.0,
+        "contract_count": 3,
+        "top_vendors": [
+          "PROJECT PERFORMANCE COMPANY LLC",
+          "UNION5 LLC",
+          "INFINETIX INC"
+        ]
+      },
+      "UNITED STATES INTERNATIONAL DEVELOPMENT FINANCE CORPORATION": {
+        "total_spend": 34200.0,
+        "contract_count": 1,
+        "top_vendors": [
+          "FISCALNOTE, INC"
+        ]
+      },
+      "CORPORATION FOR NATIONAL AND COMMUNITY SERVICE": {
+        "total_spend": 1656414.21,
+        "contract_count": 1,
+        "top_vendors": [
+          "APPLIED ENTERPRISE MANAGEMENT CORPORATION"
+        ]
+      },
+      "EQUAL EMPLOYMENT OPPORTUNITY COMMISSION": {
+        "total_spend": 64927.22,
+        "contract_count": 1,
+        "top_vendors": [
+          "TYLER FEDERAL, LLC"
+        ]
+      },
+      "AGENCY FOR INTERNATIONAL DEVELOPMENT": {
+        "total_spend": 114090.89,
+        "contract_count": 1,
+        "top_vendors": [
+          "MERLIN INTERNATIONAL, INC."
+        ]
+      },
+      "HOUSING AND URBAN DEVELOPMENT, DEPARTMENT OF": {
+        "total_spend": 16648257.13,
+        "contract_count": 1,
+        "top_vendors": [
+          "MINBURN TECHNOLOGY GROUP, LLC"
+        ]
+      }
+    },
+    "detected_incumbents_in_opportunities": {}
+  }
+}

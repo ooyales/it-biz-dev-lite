@@ -1,0 +1,733 @@
+{% extends "base-ultimate.html" %}
+
+{% block title %}Staff Management - BD Intelligence{% endblock %}
+{% block page_title %}Staff & Capabilities{% endblock %}
+{% block page_subtitle %}Manage your team members, skills, and capacity{% endblock %}
+
+{% block stats_bar %}
+<div class="stats-bar">
+    <div class="stat-item">
+        <div class="stat-icon purple">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="total-staff">0</h4>
+            <p>Team Members</p>
+        </div>
+    </div>
+    
+    <div class="stat-item">
+        <div class="stat-icon green">
+            <i class="fas fa-user-check"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="available-staff">0</h4>
+            <p>Available</p>
+        </div>
+    </div>
+    
+    <div class="stat-item">
+        <div class="stat-icon blue">
+            <i class="fas fa-certificate"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="clearances">0</h4>
+            <p>With Clearances</p>
+        </div>
+    </div>
+    
+    <div class="stat-item">
+        <div class="stat-icon orange">
+            <i class="fas fa-award"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="certifications">0</h4>
+            <p>Certifications</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block top_actions %}
+<button class="btn btn-primary" onclick="showAddStaffModal()">
+    <i class="fas fa-user-plus me-2"></i>Add Team Member
+</button>
+
+<div class="btn-group">
+    <button class="btn btn-outline-primary" id="view-list" onclick="setView('list')">
+        <i class="fas fa-list me-1"></i>List
+    </button>
+    <button class="btn btn-outline-primary active" id="view-matrix" onclick="setView('matrix')">
+        <i class="fas fa-th me-1"></i>Capability Matrix
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- List View -->
+<div id="staff-list-view" style="display: none;">
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Title</th>
+                            <th>Clearance</th>
+                            <th>Skills</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="staff-table-body">
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">
+                                <div class="py-4">
+                                    <i class="fas fa-users fa-3x mb-3"></i>
+                                    <p>No team members added yet</p>
+                                    <button class="btn btn-primary btn-sm" onclick="showAddStaffModal()">
+                                        <i class="fas fa-user-plus me-2"></i>Add Your First Team Member
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Capability Matrix View -->
+<div id="staff-matrix-view">
+    <div class="row">
+        <div class="col-12 mb-3">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-search me-2"></i>Filter Capabilities</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <select class="form-select form-select-sm" id="filter-clearance" onchange="filterMatrix()">
+                                <option value="">All Clearances</option>
+                                <option value="Top Secret">Top Secret</option>
+                                <option value="Secret">Secret</option>
+                                <option value="Public Trust">Public Trust</option>
+                                <option value="None">None</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select form-select-sm" id="filter-skill" onchange="filterMatrix()">
+                                <option value="">All Skills</option>
+                                <optgroup label="IT Technical">
+                                    <option value="Software Development">Software Development</option>
+                                    <option value="Cybersecurity">Cybersecurity</option>
+                                    <option value="DevOps">DevOps / CI/CD</option>
+                                    <option value="Network Engineering">Network Engineering</option>
+                                    <option value="Systems Integration">Systems Integration</option>
+                                </optgroup>
+                                <optgroup label="Cloud & Infrastructure">
+                                    <option value="Cloud Computing">Cloud Computing</option>
+                                    <option value="Cloud Migration">Cloud Migration</option>
+                                    <option value="Zero Trust">Zero Trust</option>
+                                </optgroup>
+                                <optgroup label="Management">
+                                    <option value="Project Management">Project Management</option>
+                                    <option value="Program Management">Program Management</option>
+                                    <option value="Agile/Scrum">Agile / Scrum</option>
+                                    <option value="Contract Management">Contract Management</option>
+                                </optgroup>
+                                <optgroup label="Financial & Compliance">
+                                    <option value="FinOps">FinOps</option>
+                                    <option value="TBM">TBM</option>
+                                    <option value="IT Budget & Planning">IT Budget & Planning</option>
+                                    <option value="FedRAMP">FedRAMP</option>
+                                    <option value="CMMC">CMMC</option>
+                                    <option value="Risk Management">Risk Management</option>
+                                </optgroup>
+                                <optgroup label="Data & Analytics">
+                                    <option value="Data Science">Data Science</option>
+                                    <option value="Business Intelligence">Business Intelligence</option>
+                                    <option value="AI/ML">AI / ML</option>
+                                </optgroup>
+                                <optgroup label="Consulting">
+                                    <option value="IT Strategy">IT Strategy</option>
+                                    <option value="Digital Transformation">Digital Transformation</option>
+                                    <option value="Enterprise Architecture">Enterprise Architecture</option>
+                                    <option value="Business Analysis">Business Analysis</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select form-select-sm" id="filter-status" onchange="filterMatrix()">
+                                <option value="">All Status</option>
+                                <option value="Available">Available</option>
+                                <option value="Partially Available">Partially Available</option>
+                                <option value="Busy">Busy</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="text" class="form-control form-control-sm" id="filter-search" 
+                                   placeholder="Search name..." onkeyup="filterMatrix()">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div id="capability-matrix">
+                        <div class="text-center text-muted py-5">
+                            <i class="fas fa-table fa-3x mb-3"></i>
+                            <p>Add team members to see capability matrix</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Staff Modal -->
+<div class="modal fade" id="staffModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h5 class="modal-title text-white" id="staffModalTitle">
+                    <i class="fas fa-user-plus me-2"></i>Add Team Member
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="staffForm">
+                    <input type="hidden" id="staff-id">
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Full Name *</label>
+                            <input type="text" class="form-control" id="staff-name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Title/Role *</label>
+                            <input type="text" class="form-control" id="staff-title" 
+                                   placeholder="e.g., Senior Software Engineer" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="staff-email">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Phone</label>
+                            <input type="tel" class="form-control" id="staff-phone">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Clearance Level</label>
+                            <select class="form-select" id="staff-clearance">
+                                <option value="">None</option>
+                                <option value="Public Trust">Public Trust</option>
+                                <option value="Secret">Secret</option>
+                                <option value="Top Secret">Top Secret</option>
+                                <option value="Top Secret/SCI">Top Secret/SCI</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Years of Experience</label>
+                            <input type="number" class="form-control" id="staff-experience" min="0" value="0">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Skills (select multiple)</label>
+                        <select class="form-select" id="staff-skills" multiple size="10">
+                            <!-- IT Technical -->
+                            <optgroup label="── IT Technical ──">
+                                <option value="Software Development">Software Development</option>
+                                <option value="Cybersecurity">Cybersecurity</option>
+                                <option value="DevOps">DevOps / CI/CD</option>
+                                <option value="Network Engineering">Network Engineering</option>
+                                <option value="Database">Database Administration</option>
+                                <option value="IT Support">IT Support / Help Desk</option>
+                                <option value="Systems Integration">Systems Integration</option>
+                                <option value="Quality Assurance">Quality Assurance / Testing</option>
+                            </optgroup>
+                            <!-- Cloud & Infrastructure -->
+                            <optgroup label="── Cloud & Infrastructure ──">
+                                <option value="Cloud Computing">Cloud Computing (AWS/Azure/GCP)</option>
+                                <option value="Infrastructure as Code">Infrastructure as Code / Terraform</option>
+                                <option value="Cloud Migration">Cloud Migration</option>
+                                <option value="Zero Trust">Zero Trust Architecture</option>
+                            </optgroup>
+                            <!-- Management & Leadership -->
+                            <optgroup label="── Management & Leadership ──">
+                                <option value="Project Management">Project Management</option>
+                                <option value="Agile/Scrum">Agile / Scrum</option>
+                                <option value="Program Management">Program Management</option>
+                                <option value="Contract Management">Contract Management</option>
+                                <option value="Change Management">Change Management</option>
+                                <option value="Stakeholder Management">Stakeholder Management</option>
+                            </optgroup>
+                            <!-- Financial & Compliance -->
+                            <optgroup label="── Financial & Compliance ──">
+                                <option value="FinOps">FinOps (Cloud Financial Optimization)</option>
+                                <option value="TBM">Technology Business Management (TBM)</option>
+                                <option value="IT Budget & Planning">IT Budget & Planning</option>
+                                <option value="Cost Benefit Analysis">Cost-Benefit Analysis</option>
+                                <option value="ROI Modeling">ROI Modeling</option>
+                                <option value="FISMA Compliance">FISMA Compliance</option>
+                                <option value="FedRAMP">FedRAMP Authorization</option>
+                                <option value="CMMC">CMMC Compliance</option>
+                                <option value="Risk Management">Risk Management (RMF/NIST)</option>
+                            </optgroup>
+                            <!-- Data & Analytics -->
+                            <optgroup label="── Data & Analytics ──">
+                                <option value="Data Science">Data Science / ML</option>
+                                <option value="Business Intelligence">Business Intelligence / BI</option>
+                                <option value="Data Architecture">Data Architecture</option>
+                                <option value="AI/ML">AI / Machine Learning</option>
+                                <option value="ETL / Data Pipelines">ETL / Data Pipelines</option>
+                            </optgroup>
+                            <!-- Consulting & Advisory -->
+                            <optgroup label="── Consulting & Advisory ──">
+                                <option value="IT Strategy">IT Strategy & Roadmapping</option>
+                                <option value="Digital Transformation">Digital Transformation</option>
+                                <option value="Enterprise Architecture">Enterprise Architecture</option>
+                                <option value="Vendor Management">Vendor Management</option>
+                                <option value="Business Analysis">Business Analysis</option>
+                                <option value="RFI/Proposal Writing">RFI / Proposal Writing</option>
+                            </optgroup>
+                        </select>
+                        <small class="text-muted">Hold Ctrl/Cmd to select multiple</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Certifications (comma-separated)</label>
+                        <input type="text" class="form-control" id="staff-certifications" 
+                               placeholder="e.g., AWS Solutions Architect, PMP, CISSP">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Availability Status</label>
+                        <select class="form-select" id="staff-status">
+                            <option value="Available">Available</option>
+                            <option value="Partially Available">Partially Available</option>
+                            <option value="Busy">Busy</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" id="staff-notes" rows="3" 
+                                  placeholder="Additional notes, specialties, languages, etc."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveStaff()">
+                    <i class="fas fa-save me-2"></i>Save Team Member
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let staff = [];
+let filteredStaff = [];
+let filterActive = false;
+let currentView = 'matrix';
+
+// Sample data for demonstration
+function initializeSampleStaff() {
+    const saved = localStorage.getItem('bd-staff');
+    if (saved) {
+        staff = JSON.parse(saved);
+    } else {
+        // Add sample staff
+        staff = [
+            {
+                id: 1,
+                name: 'John Smith',
+                title: 'Program Manager',
+                email: 'jsmith@company.com',
+                phone: '555-0101',
+                clearance: 'Secret',
+                experience: 10,
+                skills: ['Project Management', 'Agile/Scrum', 'Cloud Computing'],
+                certifications: ['PMP', 'CSM'],
+                status: 'Available',
+                notes: 'Lead on multiple DOD projects'
+            },
+            {
+                id: 2,
+                name: 'Sarah Johnson',
+                title: 'Senior Software Engineer',
+                email: 'sjohnson@company.com',
+                clearance: 'Top Secret',
+                experience: 8,
+                skills: ['Software Development', 'DevOps', 'Cloud Computing'],
+                certifications: ['AWS Solutions Architect', 'Kubernetes'],
+                status: 'Available',
+                notes: 'Full-stack developer with security clearance'
+            },
+            {
+                id: 3,
+                name: 'Michael Chen',
+                title: 'Cybersecurity Analyst',
+                email: 'mchen@company.com',
+                clearance: 'Secret',
+                experience: 6,
+                skills: ['Cybersecurity', 'Network', 'Cloud Computing'],
+                certifications: ['CISSP', 'CEH'],
+                status: 'Partially Available',
+                notes: 'Penetration testing and security assessments'
+            }
+        ];
+        saveToStorage();
+    }
+    
+    renderStaff();
+    updateStats();
+}
+
+function renderStaff() {
+    if (currentView === 'list') {
+        renderListView();
+    } else {
+        renderMatrixView();
+    }
+}
+
+function renderListView() {
+    const tbody = document.getElementById('staff-table-body');
+    
+    if (staff.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center text-muted">
+                    <div class="py-4">
+                        <i class="fas fa-users fa-3x mb-3"></i>
+                        <p>No team members added yet</p>
+                        <button class="btn btn-primary btn-sm" onclick="showAddStaffModal()">
+                            <i class="fas fa-user-plus me-2"></i>Add Your First Team Member
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = staff.map(member => `
+        <tr>
+            <td>
+                <strong>${member.name}</strong><br>
+                <small class="text-muted">${member.email || ''}</small>
+            </td>
+            <td>${member.title}</td>
+            <td>
+                ${member.clearance ? `<span class="badge bg-info">${member.clearance}</span>` : 
+                  '<span class="text-muted">None</span>'}
+            </td>
+            <td>
+                ${(member.skills || []).slice(0, 3).map(skill => 
+                    `<span class="badge bg-secondary me-1">${skill}</span>`
+                ).join('')}
+                ${(member.skills || []).length > 3 ? 
+                    `<span class="badge bg-light text-dark">+${(member.skills || []).length - 3}</span>` : ''}
+            </td>
+            <td>
+                <span class="badge bg-${member.status === 'Available' ? 'success' : 
+                    member.status === 'Partially Available' ? 'warning' : 'danger'}">
+                    ${member.status}
+                </span>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="editStaff(${member.id})">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteStaff(${member.id})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function renderMatrixView() {
+    const container = document.getElementById('capability-matrix');
+    
+    // Use filteredStaff when a filter is active, otherwise show everyone
+    const displayStaff = filterActive ? filteredStaff : staff;
+
+    if (staff.length === 0) {
+        container.innerHTML = `
+            <div class="text-center text-muted py-5">
+                <i class="fas fa-table fa-3x mb-3"></i>
+                <p>Add team members to see capability matrix</p>
+                <button class="btn btn-primary" onclick="showAddStaffModal()">
+                    <i class="fas fa-user-plus me-2"></i>Add Team Member
+                </button>
+            </div>
+        `;
+        return;
+    }
+
+    if (displayStaff.length === 0) {
+        container.innerHTML = `<div class="text-center text-muted py-4">No team members match the current filters.</div>`;
+        return;
+    }
+
+    // Skill → category mapping for column color-coding
+    const skillCategories = {
+        'Software Development': 'it', 'Cybersecurity': 'it', 'DevOps': 'it',
+        'Network Engineering': 'it', 'Database': 'it', 'IT Support': 'it',
+        'Systems Integration': 'it', 'Quality Assurance': 'it',
+        'Cloud Computing': 'cloud', 'Infrastructure as Code': 'cloud',
+        'Cloud Migration': 'cloud', 'Zero Trust': 'cloud',
+        'Project Management': 'mgmt', 'Agile/Scrum': 'mgmt',
+        'Program Management': 'mgmt', 'Contract Management': 'mgmt',
+        'Change Management': 'mgmt', 'Stakeholder Management': 'mgmt',
+        'FinOps': 'finance', 'TBM': 'finance', 'IT Budget & Planning': 'finance',
+        'Cost Benefit Analysis': 'finance', 'ROI Modeling': 'finance',
+        'FISMA Compliance': 'finance', 'FedRAMP': 'finance', 'CMMC': 'finance',
+        'Risk Management': 'finance',
+        'Data Science': 'data', 'Business Intelligence': 'data',
+        'Data Architecture': 'data', 'AI/ML': 'data', 'ETL / Data Pipelines': 'data',
+        'IT Strategy': 'consult', 'Digital Transformation': 'consult',
+        'Enterprise Architecture': 'consult', 'Vendor Management': 'consult',
+        'Business Analysis': 'consult', 'RFI/Proposal Writing': 'consult',
+    };
+
+    const categoryColors = {
+        'it':       { header: '#3a86ff', cell: 'rgba(58,134,255,0.15)' },
+        'cloud':    { header: '#8338ec', cell: 'rgba(131,56,236,0.15)' },
+        'mgmt':     { header: '#06d6a0', cell: 'rgba(6,214,160,0.15)' },
+        'finance':  { header: '#ff6b6b', cell: 'rgba(255,107,107,0.15)' },
+        'data':     { header: '#ffd166', cell: 'rgba(255,209,102,0.15)' },
+        'consult':  { header: '#ef476f', cell: 'rgba(239,71,111,0.15)' },
+    };
+
+    // Get all unique skills across full staff (stable columns)
+    const allSkills = [...new Set(staff.flatMap(m => m.skills || []))];
+
+    // Legend
+    let legend = '<div style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:12px;">';
+    const legendLabels = { it: 'IT Technical', cloud: 'Cloud & Infra', mgmt: 'Management', finance: 'Financial & Compliance', data: 'Data & Analytics', consult: 'Consulting' };
+    Object.entries(legendLabels).forEach(([cat, label]) => {
+        legend += `<div style="display:flex; align-items:center; gap:6px;">
+            <div style="width:14px; height:14px; border-radius:3px; background:${categoryColors[cat].header};"></div>
+            <span style="font-size:0.78rem; color:#aaa;">${label}</span>
+        </div>`;
+    });
+    legend += '</div>';
+
+    let html = legend;
+    html += '<div class="table-responsive"><table class="table table-sm table-hover" style="font-size:0.82rem;">';
+    html += '<thead><tr><th style="position:sticky;left:0;background:#1e2530;z-index:2;">Team Member</th>';
+    allSkills.forEach(skill => {
+        const cat = skillCategories[skill] || 'it';
+        html += `<th class="text-center" style="min-width:90px; background:${categoryColors[cat].header}; color:#fff; border-radius:4px 4px 0 0; font-weight:600;">${skill}</th>`;
+    });
+    html += '<th class="text-center">Clearance</th><th class="text-center">Status</th><th>Actions</th></tr></thead>';
+
+    html += '<tbody>';
+    displayStaff.forEach(member => {
+        html += `<tr>`;
+        html += `<td style="position:sticky;left:0;background:#1e2530;"><strong>${member.name}</strong><br><small class="text-muted">${member.title}</small></td>`;
+
+        allSkills.forEach(skill => {
+            const has = (member.skills || []).includes(skill);
+            const cat = skillCategories[skill] || 'it';
+            const bg = has ? categoryColors[cat].cell : 'transparent';
+            html += `<td class="text-center" style="background:${bg};">
+                ${has ? `<i class="fas fa-check-circle" style="color:${categoryColors[cat].header};"></i>` : ''}
+            </td>`;
+        });
+
+        html += `<td class="text-center">${member.clearance ?
+            `<span class="badge bg-info">${member.clearance}</span>` :
+            '<span class="text-muted">None</span>'}</td>`;
+
+        html += `<td class="text-center">
+            <span class="badge bg-${member.status === 'Available' ? 'success' :
+                member.status === 'Partially Available' ? 'warning' : 'danger'}">
+                ${member.status}
+            </span>
+        </td>`;
+
+        html += `<td>
+            <button class="btn btn-sm btn-outline-primary me-1" onclick="editStaff(${member.id})">
+                <i class="fas fa-edit"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteStaff(${member.id})">
+                <i class="fas fa-trash"></i>
+            </button>
+        </td>`;
+
+        html += `</tr>`;
+    });
+    html += '</tbody></table></div>';
+
+    container.innerHTML = html;
+}
+
+function updateStats() {
+    document.getElementById('total-staff').textContent = staff.length;
+    document.getElementById('available-staff').textContent = 
+        staff.filter(m => m.status === 'Available').length;
+    document.getElementById('clearances').textContent = 
+        staff.filter(m => m.clearance).length;
+    document.getElementById('certifications').textContent = 
+        staff.reduce((sum, m) => sum + (m.certifications || []).length, 0);
+}
+
+function setView(view) {
+    currentView = view;
+    
+    document.getElementById('staff-list-view').style.display = view === 'list' ? 'block' : 'none';
+    document.getElementById('staff-matrix-view').style.display = view === 'matrix' ? 'block' : 'none';
+    
+    document.getElementById('view-list').classList.toggle('active', view === 'list');
+    document.getElementById('view-matrix').classList.toggle('active', view === 'matrix');
+    
+    renderStaff();
+}
+
+function showAddStaffModal() {
+    document.getElementById('staffModalTitle').innerHTML = 
+        '<i class="fas fa-user-plus me-2"></i>Add Team Member';
+    document.getElementById('staffForm').reset();
+    document.getElementById('staff-id').value = '';
+    
+    const modal = new bootstrap.Modal(document.getElementById('staffModal'));
+    modal.show();
+}
+
+function editStaff(id) {
+    const member = staff.find(m => m.id === id);
+    if (!member) return;
+    
+    document.getElementById('staffModalTitle').innerHTML = 
+        '<i class="fas fa-user-edit me-2"></i>Edit Team Member';
+    
+    document.getElementById('staff-id').value = member.id;
+    document.getElementById('staff-name').value = member.name;
+    document.getElementById('staff-title').value = member.title;
+    document.getElementById('staff-email').value = member.email || '';
+    document.getElementById('staff-phone').value = member.phone || '';
+    document.getElementById('staff-clearance').value = member.clearance || '';
+    document.getElementById('staff-experience').value = member.experience || 0;
+    document.getElementById('staff-status').value = member.status || 'Available';
+    document.getElementById('staff-notes').value = member.notes || '';
+    document.getElementById('staff-certifications').value = (member.certifications || []).join(', ');
+    
+    // Set selected skills
+    const skillsSelect = document.getElementById('staff-skills');
+    Array.from(skillsSelect.options).forEach(option => {
+        option.selected = (member.skills || []).includes(option.value);
+    });
+    
+    const modal = new bootstrap.Modal(document.getElementById('staffModal'));
+    modal.show();
+}
+
+function saveStaff() {
+    const id = document.getElementById('staff-id').value;
+    const name = document.getElementById('staff-name').value;
+    const title = document.getElementById('staff-title').value;
+    
+    if (!name || !title) {
+        alert('Please fill in required fields');
+        return;
+    }
+    
+    const skillsSelect = document.getElementById('staff-skills');
+    const skills = Array.from(skillsSelect.selectedOptions).map(opt => opt.value);
+    
+    const certifications = document.getElementById('staff-certifications').value
+        .split(',')
+        .map(c => c.trim())
+        .filter(c => c);
+    
+    const member = {
+        id: id ? parseInt(id) : Date.now(),
+        name,
+        title,
+        email: document.getElementById('staff-email').value,
+        phone: document.getElementById('staff-phone').value,
+        clearance: document.getElementById('staff-clearance').value,
+        experience: parseInt(document.getElementById('staff-experience').value) || 0,
+        skills,
+        certifications,
+        status: document.getElementById('staff-status').value,
+        notes: document.getElementById('staff-notes').value
+    };
+    
+    if (id) {
+        // Update existing
+        const index = staff.findIndex(m => m.id === parseInt(id));
+        staff[index] = member;
+    } else {
+        // Add new
+        staff.push(member);
+    }
+    
+    saveToStorage();
+    renderStaff();
+    updateStats();
+    
+    bootstrap.Modal.getInstance(document.getElementById('staffModal')).hide();
+}
+
+function deleteStaff(id) {
+    if (!confirm('Are you sure you want to remove this team member?')) return;
+    
+    staff = staff.filter(m => m.id !== id);
+    saveToStorage();
+    renderStaff();
+    updateStats();
+}
+
+function filterMatrix() {
+    const clearanceFilter = document.getElementById('filter-clearance').value;
+    const skillFilter = document.getElementById('filter-skill').value;
+    const statusFilter = document.getElementById('filter-status').value;
+    const searchFilter = document.getElementById('filter-search').value.toLowerCase();
+
+    filterActive = !!(clearanceFilter || skillFilter || statusFilter || searchFilter);
+
+    filteredStaff = staff.filter(member => {
+        if (clearanceFilter && member.clearance !== clearanceFilter) return false;
+        if (skillFilter && !(member.skills || []).includes(skillFilter)) return false;
+        if (statusFilter && member.status !== statusFilter) return false;
+        if (searchFilter && !member.name.toLowerCase().includes(searchFilter)
+            && !member.title.toLowerCase().includes(searchFilter)) return false;
+        return true;
+    });
+
+    renderMatrixView();
+}
+
+function saveToStorage() {
+    localStorage.setItem('bd-staff', JSON.stringify(staff));
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    initializeSampleStaff();
+});
+</script>
+{% endblock %}

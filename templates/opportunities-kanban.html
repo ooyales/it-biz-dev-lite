@@ -1,0 +1,445 @@
+{% extends "base-ultimate.html" %}
+
+{% block title %}Kanban Board - BD Intelligence{% endblock %}
+{% block page_title %}Workflow Kanban Board{% endblock %}
+{% block page_subtitle %}Drag opportunities through your BD workflow{% endblock %}
+
+{% block stats_bar %}
+<div class="stats-bar">
+    <div class="stat-item">
+        <div class="stat-icon purple">
+            <i class="fas fa-inbox"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="new-count">0</h4>
+            <p>New</p>
+        </div>
+    </div>
+    
+    <div class="stat-item">
+        <div class="stat-icon blue">
+            <i class="fas fa-search"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="analyzing-count">0</h4>
+            <p>Analyzing</p>
+        </div>
+    </div>
+    
+    <div class="stat-item">
+        <div class="stat-icon green">
+            <i class="fas fa-file-alt"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="rfi-count">0</h4>
+            <p>RFI Sent</p>
+        </div>
+    </div>
+    
+    <div class="stat-item">
+        <div class="stat-icon orange">
+            <i class="fas fa-file-word"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="proposal-count">0</h4>
+            <p>Proposal Draft</p>
+        </div>
+    </div>
+    
+    <div class="stat-item">
+        <div class="stat-icon" style="background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);">
+            <i class="fas fa-dollar-sign"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="pricing-count">0</h4>
+            <p>Pricing</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block top_actions %}
+<div class="view-switcher">
+    <button class="btn" onclick="window.location.href='/opportunities/timeline'">
+        <i class="fas fa-chart-line me-1"></i>Timeline
+    </button>
+    <button class="btn" onclick="window.location.href='/opportunities/network'">
+        <i class="fas fa-project-diagram me-1"></i>Network
+    </button>
+    <button class="btn" onclick="window.location.href='/bd-intelligence'">
+        <i class="fas fa-table me-1"></i>Table
+    </button>
+    <button class="btn active" onclick="window.location.href='/opportunities/kanban'">
+        <i class="fas fa-columns me-1"></i>Kanban
+    </button>
+</div>
+
+<select class="form-select form-select-sm" style="width: 150px;" id="priority-filter" onchange="filterKanban()">
+    <option value="all">All Priorities</option>
+    <option value="HIGH">High Only</option>
+    <option value="MEDIUM">Medium Only</option>
+</select>
+
+<button class="btn btn-success btn-sm" onclick="saveKanbanState()">
+    <i class="fas fa-save me-2"></i>Save Layout
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="kanban-board">
+    <div class="kanban-column" data-status="new">
+        <div class="kanban-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <h6><i class="fas fa-inbox me-2"></i>New</h6>
+            <span class="badge bg-white text-dark" id="count-new">0</span>
+        </div>
+        <div class="kanban-cards" id="column-new">
+            <!-- Cards will be added here -->
+        </div>
+    </div>
+    
+    <div class="kanban-column" data-status="analyzing">
+        <div class="kanban-header" style="background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);">
+            <h6><i class="fas fa-search me-2"></i>Analyzing</h6>
+            <span class="badge bg-white text-dark" id="count-analyzing">0</span>
+        </div>
+        <div class="kanban-cards" id="column-analyzing">
+            <!-- Cards will be added here -->
+        </div>
+    </div>
+    
+    <div class="kanban-column" data-status="rfi">
+        <div class="kanban-header" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);">
+            <h6><i class="fas fa-file-alt me-2"></i>RFI Sent</h6>
+            <span class="badge bg-white text-dark" id="count-rfi">0</span>
+        </div>
+        <div class="kanban-cards" id="column-rfi">
+            <!-- Cards will be added here -->
+        </div>
+    </div>
+    
+    <div class="kanban-column" data-status="proposal">
+        <div class="kanban-header" style="background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);">
+            <h6><i class="fas fa-file-word me-2"></i>Proposal</h6>
+            <span class="badge bg-white text-dark" id="count-proposal">0</span>
+        </div>
+        <div class="kanban-cards" id="column-proposal">
+            <!-- Cards will be added here -->
+        </div>
+    </div>
+    
+    <div class="kanban-column" data-status="pricing">
+        <div class="kanban-header" style="background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);">
+            <h6><i class="fas fa-dollar-sign me-2"></i>Pricing</h6>
+            <span class="badge bg-white text-dark" id="count-pricing">0</span>
+        </div>
+        <div class="kanban-cards" id="column-pricing">
+            <!-- Cards will be added here -->
+        </div>
+    </div>
+</div>
+
+<style>
+.kanban-board {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem 0;
+    overflow-x: auto;
+    min-height: 600px;
+}
+
+.kanban-column {
+    flex: 1;
+    min-width: 300px;
+    background: #151b3d;
+    border-radius: 12px;
+    border: 1px solid #2d3748;
+}
+
+.kanban-header {
+    padding: 1rem;
+    border-radius: 12px 12px 0 0;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.kanban-header h6 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.kanban-cards {
+    padding: 1rem;
+    min-height: 500px;
+}
+
+.kanban-card {
+    background: linear-gradient(135deg, #1a2147 0%, #151b3d 100%);
+    border: 1px solid #2d3748;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    cursor: move;
+    transition: all 0.3s ease;
+}
+
+.kanban-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(102, 126, 234, 0.2);
+    border-color: #667eea;
+}
+
+.kanban-card.dragging {
+    opacity: 0.5;
+}
+
+.kanban-card h6 {
+    color: #fff;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+}
+
+.kanban-card .small {
+    color: #a0aec0;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.kanban-card .badges {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.drop-zone {
+    border: 2px dashed #667eea;
+    background: rgba(102, 126, 234, 0.1);
+}
+</style>
+
+<!-- Opportunity Detail Modal -->
+<div class="modal fade" id="opportunityModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h5 class="modal-title text-white" id="modalTitle">Opportunity Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Content loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<script>
+let opportunities = [];
+let kanbanState = {};
+
+// Load opportunities and render kanban
+async function loadKanban() {
+    try {
+        const res = await fetch('/api/scout/opportunities');
+        const data = await res.json();
+        opportunities = data.opportunities || [];
+        
+        // Load saved kanban state from localStorage
+        const saved = localStorage.getItem('kanban-state');
+        if (saved) {
+            kanbanState = JSON.parse(saved);
+        } else {
+            // Initialize all as "new"
+            opportunities.forEach(opp => {
+                const id = opp.noticeId || opp.notice_id;
+                kanbanState[id] = 'new';
+            });
+        }
+        
+        renderKanban();
+        updateCounts();
+        
+    } catch (error) {
+        console.error('Error loading kanban:', error);
+    }
+}
+
+function renderKanban() {
+    // Clear all columns
+    ['new', 'analyzing', 'rfi', 'proposal', 'pricing'].forEach(status => {
+        document.getElementById(`column-${status}`).innerHTML = '';
+    });
+    
+    // Filter opportunities
+    const priority = document.getElementById('priority-filter')?.value || 'all';
+    let filtered = opportunities;
+    
+    if (priority !== 'all') {
+        filtered = opportunities.filter(opp => {
+            const score = opp.scout_score || opp.score || {};
+            return score.priority === priority;
+        });
+    }
+    
+    // Add cards to columns
+    filtered.forEach(opp => {
+        const id = opp.noticeId || opp.notice_id;
+        const status = kanbanState[id] || 'new';
+        const card = createCard(opp);
+        
+        document.getElementById(`column-${status}`).appendChild(card);
+    });
+    
+    // Initialize Sortable on each column
+    ['new', 'analyzing', 'rfi', 'proposal', 'pricing'].forEach(status => {
+        const column = document.getElementById(`column-${status}`);
+        new Sortable(column, {
+            group: 'kanban',
+            animation: 150,
+            ghostClass: 'dragging',
+            onEnd: function(evt) {
+                // Update state
+                const oppId = evt.item.dataset.oppId;
+                const newStatus = evt.to.id.replace('column-', '');
+                kanbanState[oppId] = newStatus;
+                
+                // Auto-save
+                saveKanbanState();
+                updateCounts();
+            }
+        });
+    });
+    
+    updateCounts();
+}
+
+function createCard(opp) {
+    const id = opp.noticeId || opp.notice_id;
+    const score = opp.scout_score || opp.score || {};
+    const priority = score.priority || 'MEDIUM';
+    const winProb = score.win_probability || 50;
+    const contacts = (score.contacts || {}).total_contacts || 0;
+    const agency = opp.agency || opp.organizationName || 'Unknown';
+    const deadline = opp.responseDeadLine || opp.deadline;
+    
+    const card = document.createElement('div');
+    card.className = 'kanban-card';
+    card.dataset.oppId = id;
+    card.draggable = true;
+    
+    card.innerHTML = `
+        <h6>${opp.title}</h6>
+        <span class="small"><i class="fas fa-building me-1"></i>${agency}</span>
+        <span class="small"><i class="fas fa-calendar me-1"></i>${deadline ? new Date(deadline).toLocaleDateString() : 'No deadline'}</span>
+        <div class="badges">
+            <span class="badge" style="background: ${priority === 'HIGH' ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'linear-gradient(135deg, #4299e1 0%, #3182ce 100%)'}">${priority}</span>
+            <span class="badge bg-success">${winProb}% Win</span>
+            ${contacts > 0 ? `<span class="badge bg-info">${contacts} contacts</span>` : ''}
+        </div>
+    `;
+    
+    card.onclick = () => openOpportunityModal(opp);
+    
+    return card;
+}
+
+function updateCounts() {
+    ['new', 'analyzing', 'rfi', 'proposal', 'pricing'].forEach(status => {
+        const count = document.getElementById(`column-${status}`).children.length;
+        document.getElementById(`count-${status}`).textContent = count;
+        
+        // Update stats bar
+        const statId = status === 'new' ? 'new-count' :
+                      status === 'analyzing' ? 'analyzing-count' :
+                      status === 'rfi' ? 'rfi-count' :
+                      status === 'proposal' ? 'proposal-count' :
+                      'pricing-count';
+        document.getElementById(statId).textContent = count;
+    });
+}
+
+function filterKanban() {
+    renderKanban();
+}
+
+function saveKanbanState() {
+    localStorage.setItem('kanban-state', JSON.stringify(kanbanState));
+    
+    // Show toast
+    const toast = document.createElement('div');
+    toast.className = 'position-fixed bottom-0 end-0 p-3';
+    toast.style.zIndex = '11';
+    toast.innerHTML = `
+        <div class="alert alert-success mb-0">
+            <i class="fas fa-check-circle me-2"></i>Kanban layout saved!
+        </div>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2000);
+}
+
+async function openOpportunityModal(opp) {
+    const modal = new bootstrap.Modal(document.getElementById('opportunityModal'));
+    modal.show();
+    
+    document.getElementById('modalTitle').textContent = opp.title;
+    document.getElementById('modalBody').innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border"></div>
+            <p class="text-muted mt-2">Loading opportunity details...</p>
+        </div>
+    `;
+    
+    // TODO: Load full details with agent actions
+    setTimeout(() => {
+        const score = opp.scout_score || opp.score || {};
+        document.getElementById('modalBody').innerHTML = `
+            <div class="row">
+                <div class="col-md-8">
+                    <h6>Agency:</h6>
+                    <p>${opp.agency || opp.organizationName || 'Unknown'}</p>
+                    
+                    <h6>Score:</h6>
+                    <p>${score.total_score || 50}/100 - ${score.priority || 'MEDIUM'} Priority</p>
+                    
+                    <h6>Deadline:</h6>
+                    <p>${opp.responseDeadLine ? new Date(opp.responseDeadLine).toLocaleDateString() : 'Not specified'}</p>
+                </div>
+                <div class="col-md-4">
+                    <h6>Quick Actions:</h6>
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary btn-sm" onclick="moveToColumn('${opp.noticeId || opp.notice_id}', 'analyzing')">
+                            Move to Analyzing
+                        </button>
+                        <button class="btn btn-success btn-sm" onclick="moveToColumn('${opp.noticeId || opp.notice_id}', 'rfi')">
+                            Move to RFI
+                        </button>
+                        <button class="btn btn-info btn-sm" onclick="moveToColumn('${opp.noticeId || opp.notice_id}', 'proposal')">
+                            Move to Proposal
+                        </button>
+                        <button class="btn btn-warning btn-sm" onclick="moveToColumn('${opp.noticeId || opp.notice_id}', 'pricing')">
+                            Move to Pricing
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }, 500);
+}
+
+function moveToColumn(oppId, newStatus) {
+    kanbanState[oppId] = newStatus;
+    saveKanbanState();
+    renderKanban();
+    bootstrap.Modal.getInstance(document.getElementById('opportunityModal')).hide();
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', loadKanban);
+</script>
+{% endblock %}

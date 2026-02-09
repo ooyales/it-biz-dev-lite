@@ -1,0 +1,2891 @@
+{
+  "collection_date": "2026-02-06T07:34:38.386656",
+  "contacts": [
+    {
+      "name": "ENGENIUS CONSULTING GROUP INC.",
+      "organization": "ENGENIUS CONSULTING GROUP INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 0.0,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "FUSE INTEGRATION, INC.",
+      "organization": "FUSE INTEGRATION, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 1129754.0,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "LINTECH GLOBAL, INC.",
+      "organization": "LINTECH GLOBAL, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 666554.0,
+      "agencies": [
+        "ENVIRONMENTAL PROTECTION AGENCY"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "ACCENTURE FEDERAL SERVICES LLC",
+      "organization": "ACCENTURE FEDERAL SERVICES LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 4,
+      "total_value": 12386115.290000001,
+      "agencies": [
+        "STATE, DEPARTMENT OF",
+        "ENERGY, DEPARTMENT OF",
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "Medium"
+    },
+    {
+      "name": "DELTA POINT LLC",
+      "organization": "DELTA POINT LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 999999.98,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "HPI FEDERAL LLC",
+      "organization": "HPI FEDERAL LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 13,
+      "total_value": 1912706.7600000002,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "Strong"
+    },
+    {
+      "name": "CACI, INC. - FEDERAL",
+      "organization": "CACI, INC. - FEDERAL",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 3,
+      "total_value": 13838843.41,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "Medium"
+    },
+    {
+      "name": "BCT PARTNERS LLC",
+      "organization": "BCT PARTNERS LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 3,
+      "total_value": 7256.52,
+      "agencies": [
+        "JUSTICE, DEPARTMENT OF"
+      ],
+      "relationship_strength": "Medium"
+    },
+    {
+      "name": "MICROSOFT CORPORATION SITZ IN REDMOND CORPORATION",
+      "organization": "MICROSOFT CORPORATION SITZ IN REDMOND CORPORATION",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 6554738.25,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "AVFEDERAL TECH SOLUTIONS, LLC",
+      "organization": "AVFEDERAL TECH SOLUTIONS, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 1973876.8,
+      "agencies": [
+        "TREASURY, DEPARTMENT OF THE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "LEIDOS, INC.",
+      "organization": "LEIDOS, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 34,
+      "total_value": 7194184.8,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "Strong"
+    },
+    {
+      "name": "ISHPI INFORMATION TECHNOLOGIES, INC.",
+      "organization": "ISHPI INFORMATION TECHNOLOGIES, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 3954471.3,
+      "agencies": [
+        "HOMELAND SECURITY, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "CGI FEDERAL INC.",
+      "organization": "CGI FEDERAL INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 3,
+      "total_value": 22944677.64,
+      "agencies": [
+        "STATE, DEPARTMENT OF",
+        "DEPT OF DEFENSE",
+        "HEALTH AND HUMAN SERVICES, DEPARTMENT OF"
+      ],
+      "relationship_strength": "Medium"
+    },
+    {
+      "name": "KEY STRATEGIC ALLIANCE, LLC",
+      "organization": "KEY STRATEGIC ALLIANCE, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 1063110.8,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "SCIENCE APPLICATIONS INTERNATIONAL CORPORATION",
+      "organization": "SCIENCE APPLICATIONS INTERNATIONAL CORPORATION",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 4,
+      "total_value": 36978864.0,
+      "agencies": [
+        "TREASURY, DEPARTMENT OF THE",
+        "DEPT OF DEFENSE",
+        "GENERAL SERVICES ADMINISTRATION"
+      ],
+      "relationship_strength": "Medium"
+    },
+    {
+      "name": "MICRO SYSTEMS CONSULTANTS, INC.",
+      "organization": "MICRO SYSTEMS CONSULTANTS, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 618066.59,
+      "agencies": [
+        "LABOR, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "IT CONCEPTS, INC.",
+      "organization": "IT CONCEPTS, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 98653330.15,
+      "agencies": [
+        "VETERANS AFFAIRS, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "A3L FEDERAL WORKS, LLC",
+      "organization": "A3L FEDERAL WORKS, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 597458.4,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "CHEROKEE NATION TECHNOLOGIES, L.L.C.",
+      "organization": "CHEROKEE NATION TECHNOLOGIES, L.L.C.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 181305.6,
+      "agencies": [
+        "COMMERCE, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "PERATON ENTERPRISE SOLUTIONS LLC",
+      "organization": "PERATON ENTERPRISE SOLUTIONS LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 3,
+      "total_value": 14391237.280000001,
+      "agencies": [
+        "LABOR, DEPARTMENT OF",
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "Medium"
+    },
+    {
+      "name": "FRONTGRADE GAISLER AB",
+      "organization": "FRONTGRADE GAISLER AB",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 11150.0,
+      "agencies": [
+        "NATIONAL AERONAUTICS AND SPACE ADMINISTRATION"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "METAPHASE CONSULTING LLC",
+      "organization": "METAPHASE CONSULTING LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 919035.94,
+      "agencies": [
+        "EDUCATION, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "MANTECH ADVANCED SYSTEMS INTERNATIONAL, INC.",
+      "organization": "MANTECH ADVANCED SYSTEMS INTERNATIONAL, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 42327960.0,
+      "agencies": [
+        "GENERAL SERVICES ADMINISTRATION"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "BOEING COMPANY, THE",
+      "organization": "BOEING COMPANY, THE",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 995085.92,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "BOOZ ALLEN HAMILTON INC.",
+      "organization": "BOOZ ALLEN HAMILTON INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 4,
+      "total_value": 5968252.899999999,
+      "agencies": [
+        "HEALTH AND HUMAN SERVICES, DEPARTMENT OF",
+        "ENERGY, DEPARTMENT OF",
+        "DEPT OF DEFENSE",
+        "GENERAL SERVICES ADMINISTRATION"
+      ],
+      "relationship_strength": "Medium"
+    },
+    {
+      "name": "DELOITTE CONSULTING LLP",
+      "organization": "DELOITTE CONSULTING LLP",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 2,
+      "total_value": 33506540.24,
+      "agencies": [
+        "DEPT OF DEFENSE",
+        "HEALTH AND HUMAN SERVICES, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "SPAARK INC",
+      "organization": "SPAARK INC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 475000.0,
+      "agencies": [
+        "STATE, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "PHOENIX LOGISTICS, LLC",
+      "organization": "PHOENIX LOGISTICS, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 7456922.29,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "ICF INCORPORATED, L.L.C.",
+      "organization": "ICF INCORPORATED, L.L.C.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 188462.33,
+      "agencies": [
+        "PENSION BENEFIT GUARANTY CORPORATION"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "TYTO GOVERNMENT SOLUTIONS, INC.",
+      "organization": "TYTO GOVERNMENT SOLUTIONS, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 0.0,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "UNCOMN, LLC",
+      "organization": "UNCOMN, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 3038277.11,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "CYBERDATA TECHNOLOGIES INC",
+      "organization": "CYBERDATA TECHNOLOGIES INC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 1753037.52,
+      "agencies": [
+        "HEALTH AND HUMAN SERVICES, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "CHEROKEE NATION SYSTEM SOLUTIONS, LLC",
+      "organization": "CHEROKEE NATION SYSTEM SOLUTIONS, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 805728.23,
+      "agencies": [
+        "ENVIRONMENTAL PROTECTION AGENCY"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "OSI VISION LLC",
+      "organization": "OSI VISION LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 842952.0,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "AKIMA SYSTEMS ENGINEERING, LLC",
+      "organization": "AKIMA SYSTEMS ENGINEERING, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 156788.41,
+      "agencies": [
+        "HOMELAND SECURITY, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "OBSIDIAN GLOBAL, LLC",
+      "organization": "OBSIDIAN GLOBAL, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 2612878.08,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "GOLDEN IT LLC",
+      "organization": "GOLDEN IT LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 168000.0,
+      "agencies": [
+        "CONSUMER FINANCIAL PROTECTION BUREAU"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "CDW GOVERNMENT LLC",
+      "organization": "CDW GOVERNMENT LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 2,
+      "total_value": 138215.03999999998,
+      "agencies": [
+        "TRANSPORTATION, DEPARTMENT OF",
+        "ENERGY, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "INNOVATION EVOLUTION TECHNOLOGIES JV, LLC",
+      "organization": "INNOVATION EVOLUTION TECHNOLOGIES JV, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 845328.92,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "CHAGS HEALTH INFORMATION TECHNOLOGY LLC",
+      "organization": "CHAGS HEALTH INFORMATION TECHNOLOGY LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 411167.56,
+      "agencies": [
+        "HEALTH AND HUMAN SERVICES, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "LEISNOI PROFESSIONAL SERVICES, LLC",
+      "organization": "LEISNOI PROFESSIONAL SERVICES, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 8728231.32,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "TECHNOLOGY INFORMATION SYSTEMS LLC",
+      "organization": "TECHNOLOGY INFORMATION SYSTEMS LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 16973.6,
+      "agencies": [
+        "TREASURY, DEPARTMENT OF THE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "INTELLECT SOLUTIONS, LLC",
+      "organization": "INTELLECT SOLUTIONS, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 2465518.52,
+      "agencies": [
+        "HOMELAND SECURITY, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "BUSINESS COMPUTERS MANAGEMENT CONSULTING GROUP (BCMC) LLC",
+      "organization": "BUSINESS COMPUTERS MANAGEMENT CONSULTING GROUP (BCMC) LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 3113660.13,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "TERRESTRIS, LLC",
+      "organization": "TERRESTRIS, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 2,
+      "total_value": 2069268.1600000001,
+      "agencies": [
+        "VETERANS AFFAIRS, DEPARTMENT OF",
+        "AGRICULTURE, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "INTERNATIONAL BUSINESS MACHINES CORPORATION",
+      "organization": "INTERNATIONAL BUSINESS MACHINES CORPORATION",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 2,
+      "total_value": 3328787.34,
+      "agencies": [
+        "HOMELAND SECURITY, DEPARTMENT OF",
+        "GENERAL SERVICES ADMINISTRATION"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "DELVIOM, LLC",
+      "organization": "DELVIOM, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 1085529.6,
+      "agencies": [
+        "TREASURY, DEPARTMENT OF THE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "VETERANS EZ INFO INC",
+      "organization": "VETERANS EZ INFO INC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 24329783.08,
+      "agencies": [
+        "VETERANS AFFAIRS, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "RSC2, INC",
+      "organization": "RSC2, INC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 112953.6,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "CLINTON VAULS TECHNOLOGY GROUP LLC",
+      "organization": "CLINTON VAULS TECHNOLOGY GROUP LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 478887.48,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "WEEMS DESIGN STUDIO, INC.",
+      "organization": "WEEMS DESIGN STUDIO, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 78504.4,
+      "agencies": [
+        "HEALTH AND HUMAN SERVICES, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "IVANTIS GROUP, INC.",
+      "organization": "IVANTIS GROUP, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 200356.0,
+      "agencies": [
+        "GENERAL SERVICES ADMINISTRATION"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "JSSA INCORPORATED",
+      "organization": "JSSA INCORPORATED",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 515766.72,
+      "agencies": [
+        "STATE, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "SHIPCOM FEDERAL SOLUTIONS LLC",
+      "organization": "SHIPCOM FEDERAL SOLUTIONS LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 4337232.12,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "EAGLE TG, LLC",
+      "organization": "EAGLE TG, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 2631811.36,
+      "agencies": [
+        "JUSTICE, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "RAFT LLC",
+      "organization": "RAFT LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 2,
+      "total_value": 8119373.03,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "OPEN INTELLIGENCE, LLC",
+      "organization": "OPEN INTELLIGENCE, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 302654.0,
+      "agencies": [
+        "HEALTH AND HUMAN SERVICES, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "ALPHA OMEGA INTEGRATION LLC",
+      "organization": "ALPHA OMEGA INTEGRATION LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 500000.0,
+      "agencies": [
+        "STATE, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "AMERICAN SYSTEMS CORPORATION",
+      "organization": "AMERICAN SYSTEMS CORPORATION",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 11237188.6,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "1 SYNC TECHNOLOGIES, LLC",
+      "organization": "1 SYNC TECHNOLOGIES, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 538556.4,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "MTS SYSTEMS CORPORATION",
+      "organization": "MTS SYSTEMS CORPORATION",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 40766.9,
+      "agencies": [
+        "NATIONAL AERONAUTICS AND SPACE ADMINISTRATION"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "SPATIAL FRONT INCORPORATED",
+      "organization": "SPATIAL FRONT INCORPORATED",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 3,
+      "total_value": 2706999.6,
+      "agencies": [
+        "TRANSPORTATION, DEPARTMENT OF",
+        "NATIONAL SCIENCE FOUNDATION",
+        "HEALTH AND HUMAN SERVICES, DEPARTMENT OF"
+      ],
+      "relationship_strength": "Medium"
+    },
+    {
+      "name": "HENRY SCHEIN PRACTICE SOLUTIONS INC.",
+      "organization": "HENRY SCHEIN PRACTICE SOLUTIONS INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 6055.37,
+      "agencies": [
+        "HEALTH AND HUMAN SERVICES, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "ASSURED INFORMATION SECURITY, INC.",
+      "organization": "ASSURED INFORMATION SECURITY, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 1569495.0,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "GENERAL DYNAMICS INFORMATION TECHNOLOGY, INC.",
+      "organization": "GENERAL DYNAMICS INFORMATION TECHNOLOGY, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 3,
+      "total_value": 2470435.36,
+      "agencies": [
+        "COMMERCE, DEPARTMENT OF",
+        "ENERGY, DEPARTMENT OF"
+      ],
+      "relationship_strength": "Medium"
+    },
+    {
+      "name": "APEX LOGIC, INC",
+      "organization": "APEX LOGIC, INC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 0.0,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "NUVITEK LLC",
+      "organization": "NUVITEK LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 887300.4,
+      "agencies": [
+        "AGRICULTURE, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "DLT SOLUTIONS, LLC",
+      "organization": "DLT SOLUTIONS, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 3,
+      "total_value": 167227.22,
+      "agencies": [
+        "STATE, DEPARTMENT OF",
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "Medium"
+    },
+    {
+      "name": "BIXAL SOLUTIONS INCORPORATED",
+      "organization": "BIXAL SOLUTIONS INCORPORATED",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 1110282.0,
+      "agencies": [
+        "GENERAL SERVICES ADMINISTRATION"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "DATA INNOVATIONS LLC",
+      "organization": "DATA INNOVATIONS LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 414291.35,
+      "agencies": [
+        "VETERANS AFFAIRS, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "PERATON TECHNOLOGY SERVICES INC.",
+      "organization": "PERATON TECHNOLOGY SERVICES INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 2,
+      "total_value": 5649207.32,
+      "agencies": [
+        "TREASURY, DEPARTMENT OF THE",
+        "GENERAL SERVICES ADMINISTRATION"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "VALGENESIS, INC.",
+      "organization": "VALGENESIS, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 180000.0,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "DEV TECHNOLOGY GROUP INC",
+      "organization": "DEV TECHNOLOGY GROUP INC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 10631485.7,
+      "agencies": [
+        "HOMELAND SECURITY, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "CONCEPT SOLUTIONS, L.L.C.",
+      "organization": "CONCEPT SOLUTIONS, L.L.C.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 3,
+      "total_value": 4800549.41,
+      "agencies": [
+        "TRANSPORTATION, DEPARTMENT OF"
+      ],
+      "relationship_strength": "Medium"
+    },
+    {
+      "name": "IDSC HOLDINGS LLC",
+      "organization": "IDSC HOLDINGS LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 32400.0,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "ARDENT MANAGEMENT CONSULTING, LLC",
+      "organization": "ARDENT MANAGEMENT CONSULTING, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 1207780.8,
+      "agencies": [
+        "HOMELAND SECURITY, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "DIGITAL CHECK CORP",
+      "organization": "DIGITAL CHECK CORP",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 17389.12,
+      "agencies": [
+        "TREASURY, DEPARTMENT OF THE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "READY COMPUTING GOVERNMENT SOLUTIONS LLC",
+      "organization": "READY COMPUTING GOVERNMENT SOLUTIONS LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 2309057.4,
+      "agencies": [
+        "VETERANS AFFAIRS, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "ANCHAIN GOVERNMENT SOLUTIONS, INC",
+      "organization": "ANCHAIN GOVERNMENT SOLUTIONS, INC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 400000.0,
+      "agencies": [
+        "TREASURY, DEPARTMENT OF THE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "SHR CONSULTING GROUP, LLC",
+      "organization": "SHR CONSULTING GROUP, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 58743.6,
+      "agencies": [
+        "HOMELAND SECURITY, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "SANAMETRIX, INC.",
+      "organization": "SANAMETRIX, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 875607.37,
+      "agencies": [
+        "EDUCATION, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "INTERACTIVE COMMUNICATIONS SOLUTIONS GROUP, INC.",
+      "organization": "INTERACTIVE COMMUNICATIONS SOLUTIONS GROUP, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 61853.06,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "AIM-KEYBRIDGE ALLIANCE, LLC",
+      "organization": "AIM-KEYBRIDGE ALLIANCE, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 232301.3,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "CONSENSUS MEDICAL SYSTEMS LLC",
+      "organization": "CONSENSUS MEDICAL SYSTEMS LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 27000.0,
+      "agencies": [
+        "VETERANS AFFAIRS, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "SIERRA 7, INC.",
+      "organization": "SIERRA 7, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 213251.24,
+      "agencies": [
+        "VETERANS AFFAIRS, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "DSOFT TECHNOLOGY COMPANY",
+      "organization": "DSOFT TECHNOLOGY COMPANY",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 172139.5,
+      "agencies": [
+        "TRANSPORTATION, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "DIGITAL STRATEGY LLC",
+      "organization": "DIGITAL STRATEGY LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 350000.0,
+      "agencies": [
+        "ENERGY, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "AGILE DECISION SCIENCES, LLC",
+      "organization": "AGILE DECISION SCIENCES, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 127076.96,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "BOEING DIGITAL SOLUTIONS, INC.",
+      "organization": "BOEING DIGITAL SOLUTIONS, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 122379.0,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "EDUCE GROUP, INC., THE",
+      "organization": "EDUCE GROUP, INC., THE",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 115310.86,
+      "agencies": [
+        "HEALTH AND HUMAN SERVICES, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "J. J. KELLER & ASSOCIATES, INC.",
+      "organization": "J. J. KELLER & ASSOCIATES, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 37500.0,
+      "agencies": [
+        "INTERIOR, DEPARTMENT OF THE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "HALVIK CORP",
+      "organization": "HALVIK CORP",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 0.0,
+      "agencies": [
+        "TRANSPORTATION, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "PROJECT PERFORMANCE COMPANY LLC",
+      "organization": "PROJECT PERFORMANCE COMPANY LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 390000.0,
+      "agencies": [
+        "NUCLEAR REGULATORY COMMISSION"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "VCH PARTNERS LLC",
+      "organization": "VCH PARTNERS LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 3611356.49,
+      "agencies": [
+        "AGRICULTURE, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "IVORY CLOUD LLC",
+      "organization": "IVORY CLOUD LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 3000000.0,
+      "agencies": [
+        "ENERGY, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "NAKUPUNA SOLUTIONS, LLC",
+      "organization": "NAKUPUNA SOLUTIONS, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 1663768.96,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "CREATIVE SYSTEMS AND CONSULTING",
+      "organization": "CREATIVE SYSTEMS AND CONSULTING",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 698865.6,
+      "agencies": [
+        "TREASURY, DEPARTMENT OF THE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "MLINQS LIMITED LIABILITY COMPANY",
+      "organization": "MLINQS LIMITED LIABILITY COMPANY",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 378063.38,
+      "agencies": [
+        "COMMERCE, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "APEX RESOURCE MANAGEMENT SOLUTIONS LTD",
+      "organization": "APEX RESOURCE MANAGEMENT SOLUTIONS LTD",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 44565.0,
+      "agencies": [
+        "INTERIOR, DEPARTMENT OF THE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "ZEN STRATEGICS LLC",
+      "organization": "ZEN STRATEGICS LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 2616813.0,
+      "agencies": [
+        "EDUCATION, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "RADFORMATION, INC.",
+      "organization": "RADFORMATION, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 51000.0,
+      "agencies": [
+        "VETERANS AFFAIRS, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "FISCALNOTE, INC",
+      "organization": "FISCALNOTE, INC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 34200.0,
+      "agencies": [
+        "UNITED STATES INTERNATIONAL DEVELOPMENT FINANCE CORPORATION"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "VISION INFORMATION TECHNOLOGY CONSULTANTS LLC",
+      "organization": "VISION INFORMATION TECHNOLOGY CONSULTANTS LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 468317.67,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "GROUP W INC.",
+      "organization": "GROUP W INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 175000.0,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "INFORMATION MANAGEMENT SERVICES, INC.",
+      "organization": "INFORMATION MANAGEMENT SERVICES, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 2500000.0,
+      "agencies": [
+        "HEALTH AND HUMAN SERVICES, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "APPLIED ENTERPRISE MANAGEMENT CORPORATION",
+      "organization": "APPLIED ENTERPRISE MANAGEMENT CORPORATION",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 1656414.21,
+      "agencies": [
+        "CORPORATION FOR NATIONAL AND COMMUNITY SERVICE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "DIGITAL FOUNDATION COMPUTER CONSULTING SERVICES CORP., INC.",
+      "organization": "DIGITAL FOUNDATION COMPUTER CONSULTING SERVICES CORP., INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 2,
+      "total_value": 0.0,
+      "agencies": [
+        "JUSTICE, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "OMNI FED LLC",
+      "organization": "OMNI FED LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 1253269.0,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "OCH TECHNOLOGIES, LLC",
+      "organization": "OCH TECHNOLOGIES, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 1000000.0,
+      "agencies": [
+        "TRANSPORTATION, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "MIND OVER MACHINES, INC.",
+      "organization": "MIND OVER MACHINES, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 874754.18,
+      "agencies": [
+        "HEALTH AND HUMAN SERVICES, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "TYLER FEDERAL, LLC",
+      "organization": "TYLER FEDERAL, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 64927.22,
+      "agencies": [
+        "EQUAL EMPLOYMENT OPPORTUNITY COMMISSION"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "LEXES ASSOCIATES, INC.",
+      "organization": "LEXES ASSOCIATES, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 309000.0,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "NATO COMMUNICATIONS & INFORMATION AGENCY",
+      "organization": "NATO COMMUNICATIONS & INFORMATION AGENCY",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 124515.19,
+      "agencies": [
+        "STATE, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "INTEGRATED FINANCIAL ANALYSTS, LTD",
+      "organization": "INTEGRATED FINANCIAL ANALYSTS, LTD",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 105232.0,
+      "agencies": [
+        "TRANSPORTATION, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "DYNAMO TECHNOLOGIES LLC",
+      "organization": "DYNAMO TECHNOLOGIES LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 1448880.24,
+      "agencies": [
+        "AGRICULTURE, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "GLOBAL SOLUTIONS GROUP, INC.",
+      "organization": "GLOBAL SOLUTIONS GROUP, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 56952.3,
+      "agencies": [
+        "INTERIOR, DEPARTMENT OF THE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "FLEXION INC",
+      "organization": "FLEXION INC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 1059110.4,
+      "agencies": [
+        "GENERAL SERVICES ADMINISTRATION"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "DNI EMERGING TECHNOLOGIES, LLC",
+      "organization": "DNI EMERGING TECHNOLOGIES, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 3392838.4,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "LOCKHEED MARTIN CORPORATION",
+      "organization": "LOCKHEED MARTIN CORPORATION",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 2,
+      "total_value": 21828277.06,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "REI SYSTEMS, INC.",
+      "organization": "REI SYSTEMS, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 127099.59,
+      "agencies": [
+        "NATIONAL AERONAUTICS AND SPACE ADMINISTRATION"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "CELLENTIA INFORMATION TECHNOLOGY COMPANY",
+      "organization": "CELLENTIA INFORMATION TECHNOLOGY COMPANY",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 1404548.72,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "EFFECTUAL PUBLIC SECTOR INC.",
+      "organization": "EFFECTUAL PUBLIC SECTOR INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 26548.14,
+      "agencies": [
+        "GENERAL SERVICES ADMINISTRATION"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "ACCELGOV LLC",
+      "organization": "ACCELGOV LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 500000.0,
+      "agencies": [
+        "JUSTICE, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "AETOS LLC",
+      "organization": "AETOS LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 2261508.28,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "KBR WYLE SERVICES, LLC",
+      "organization": "KBR WYLE SERVICES, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 550000.0,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "BRIDGEPHASE LLC",
+      "organization": "BRIDGEPHASE LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 2335716.0,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "REVACOMM, INC.",
+      "organization": "REVACOMM, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 3385184.39,
+      "agencies": [
+        "GENERAL SERVICES ADMINISTRATION"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "LYNCHVAL SYSTEMS WORLDWIDE INC",
+      "organization": "LYNCHVAL SYSTEMS WORLDWIDE INC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 982626.0,
+      "agencies": [
+        "PENSION BENEFIT GUARANTY CORPORATION"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "CRESCENT ELECTRIC SUPPLY CO",
+      "organization": "CRESCENT ELECTRIC SUPPLY CO",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 16883.0,
+      "agencies": [
+        "NATIONAL AERONAUTICS AND SPACE ADMINISTRATION"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "ADVANCED COMPUTER CONCEPTS, INC.",
+      "organization": "ADVANCED COMPUTER CONCEPTS, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 3,
+      "total_value": 164835.62,
+      "agencies": [
+        "NATIONAL AERONAUTICS AND SPACE ADMINISTRATION",
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "Medium"
+    },
+    {
+      "name": "AUGUST SCHELL ENTERPRISES, INC.",
+      "organization": "AUGUST SCHELL ENTERPRISES, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 2,
+      "total_value": 39242.65,
+      "agencies": [
+        "NATIONAL AERONAUTICS AND SPACE ADMINISTRATION"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "PAGE VAULT INC.",
+      "organization": "PAGE VAULT INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 0.0,
+      "agencies": [
+        "JUSTICE, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "AURORA SYSTEMS CONSULTING, INC.",
+      "organization": "AURORA SYSTEMS CONSULTING, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 28525.66,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "MERLIN INTERNATIONAL, INC.",
+      "organization": "MERLIN INTERNATIONAL, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 114090.89,
+      "agencies": [
+        "AGENCY FOR INTERNATIONAL DEVELOPMENT"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "BAHFED CORP",
+      "organization": "BAHFED CORP",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 2,
+      "total_value": 99844.25,
+      "agencies": [
+        "NATIONAL AERONAUTICS AND SPACE ADMINISTRATION",
+        "HOMELAND SECURITY, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "STILWELL AND ASSOCIATES OF THE U.S.A., INC.",
+      "organization": "STILWELL AND ASSOCIATES OF THE U.S.A., INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 25045.0,
+      "agencies": [
+        "NATIONAL AERONAUTICS AND SPACE ADMINISTRATION"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "INFINETIX INC",
+      "organization": "INFINETIX INC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 600000.0,
+      "agencies": [
+        "NUCLEAR REGULATORY COMMISSION"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "VAE, INC.",
+      "organization": "VAE, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 304369.76,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "NEW TECH SOLUTIONS, INC.",
+      "organization": "NEW TECH SOLUTIONS, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 7,
+      "total_value": 1128980.32,
+      "agencies": [
+        "NATIONAL AERONAUTICS AND SPACE ADMINISTRATION",
+        "JUSTICE, DEPARTMENT OF",
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "Medium"
+    },
+    {
+      "name": "RIGIL CORPORATION",
+      "organization": "RIGIL CORPORATION",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 300000.0,
+      "agencies": [
+        "TRANSPORTATION, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "COUNTERTRADE PRODUCTS, INC.",
+      "organization": "COUNTERTRADE PRODUCTS, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 72505.79,
+      "agencies": [
+        "HEALTH AND HUMAN SERVICES, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "AGILE SIX APPLICATIONS, INC.",
+      "organization": "AGILE SIX APPLICATIONS, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 4684459.16,
+      "agencies": [
+        "VETERANS AFFAIRS, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "UNION5 LLC",
+      "organization": "UNION5 LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 50000.0,
+      "agencies": [
+        "NUCLEAR REGULATORY COMMISSION"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "ICATALYST, INC",
+      "organization": "ICATALYST, INC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 1500000.0,
+      "agencies": [
+        "TRANSPORTATION, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "COMPTECH COMPUTER TECHNOLOGIES, INC.",
+      "organization": "COMPTECH COMPUTER TECHNOLOGIES, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 41818.4,
+      "agencies": [
+        "ENVIRONMENTAL PROTECTION AGENCY"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "GOVPLACE, LLC",
+      "organization": "GOVPLACE, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 2,
+      "total_value": 28747.26,
+      "agencies": [
+        "HOMELAND SECURITY, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "ASSYST INC.",
+      "organization": "ASSYST INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 944503.28,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "CYNERGY PROFESSIONAL SYSTEMS LLC",
+      "organization": "CYNERGY PROFESSIONAL SYSTEMS LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 0.0,
+      "agencies": [
+        "JUSTICE, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "REDHAWK IT SOLUTIONS LLC",
+      "organization": "REDHAWK IT SOLUTIONS LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 14005.68,
+      "agencies": [
+        "HOMELAND SECURITY, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "EMERGENT, LLC",
+      "organization": "EMERGENT, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 2,
+      "total_value": 140207.12,
+      "agencies": [
+        "INTERIOR, DEPARTMENT OF THE",
+        "COMMERCE, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "SYLVER RAIN CONSULTING, LLC",
+      "organization": "SYLVER RAIN CONSULTING, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 172057.5,
+      "agencies": [
+        "HOMELAND SECURITY, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "BMNT INC",
+      "organization": "BMNT INC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 1314840.0,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "LRP PUBLICATIONS, INC.",
+      "organization": "LRP PUBLICATIONS, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 2,
+      "total_value": 76668.0,
+      "agencies": [
+        "TREASURY, DEPARTMENT OF THE",
+        "NATIONAL AERONAUTICS AND SPACE ADMINISTRATION"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "BLUE TECH INC.",
+      "organization": "BLUE TECH INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 271753.33,
+      "agencies": [
+        "HOMELAND SECURITY, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "VICTORY GLOBAL SOLUTIONS INC",
+      "organization": "VICTORY GLOBAL SOLUTIONS INC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 245360.33,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "TECHANAX LLC",
+      "organization": "TECHANAX LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 447088.38,
+      "agencies": [
+        "JUSTICE, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "PANAMERICA COMPUTERS, INC.",
+      "organization": "PANAMERICA COMPUTERS, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 17231.15,
+      "agencies": [
+        "HEALTH AND HUMAN SERVICES, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "FOUR POINTS TECHNOLOGY, L.L.C.",
+      "organization": "FOUR POINTS TECHNOLOGY, L.L.C.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 2,
+      "total_value": 978177.83,
+      "agencies": [
+        "TREASURY, DEPARTMENT OF THE",
+        "VETERANS AFFAIRS, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "GARTNER, INC.",
+      "organization": "GARTNER, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 592219.0,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "CHOISYS TECHNOLOGY INC.",
+      "organization": "CHOISYS TECHNOLOGY INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 821216.33,
+      "agencies": [
+        "VETERANS AFFAIRS, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "THE MIL CORPORATION",
+      "organization": "THE MIL CORPORATION",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 2,
+      "total_value": 510111.36,
+      "agencies": [
+        "STATE, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "KPAUL PROPERTIES, LLC",
+      "organization": "KPAUL PROPERTIES, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 51583.91,
+      "agencies": [
+        "VETERANS AFFAIRS, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "COLOSSAL CONTRACTING, LLC",
+      "organization": "COLOSSAL CONTRACTING, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 2,
+      "total_value": 80649.35,
+      "agencies": [
+        "COMMERCE, DEPARTMENT OF",
+        "JUSTICE, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "BLUE GLACIER MANAGEMENT GROUP INC.",
+      "organization": "BLUE GLACIER MANAGEMENT GROUP INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 4961677.78,
+      "agencies": [
+        "COMMERCE, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "INMARSAT GOVERNMENT, INC.",
+      "organization": "INMARSAT GOVERNMENT, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 3,
+      "total_value": 5984.15,
+      "agencies": [
+        "STATE, DEPARTMENT OF",
+        "HOMELAND SECURITY, DEPARTMENT OF"
+      ],
+      "relationship_strength": "Medium"
+    },
+    {
+      "name": "OGIS COMMUNICATION GROUP INC",
+      "organization": "OGIS COMMUNICATION GROUP INC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 30879.76,
+      "agencies": [
+        "NATIONAL AERONAUTICS AND SPACE ADMINISTRATION"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "MCI COMMUNICATIONS SERVICES INC",
+      "organization": "MCI COMMUNICATIONS SERVICES INC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 254.0,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "AFFIGENT, LLC",
+      "organization": "AFFIGENT, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 28475.01,
+      "agencies": [
+        "HOMELAND SECURITY, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "WINGMANN LLC",
+      "organization": "WINGMANN LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 30900.0,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "V3GATE, LLC",
+      "organization": "V3GATE, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 20313.6,
+      "agencies": [
+        "VETERANS AFFAIRS, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "SWISH DATA CORP",
+      "organization": "SWISH DATA CORP",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 299914.0,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "DELOITTE & TOUCHE LLP",
+      "organization": "DELOITTE & TOUCHE LLP",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 41667.0,
+      "agencies": [
+        "STATE, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "ENTERPRISE TECHNOLOGY SOLUTIONS, INC.",
+      "organization": "ENTERPRISE TECHNOLOGY SOLUTIONS, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 73229.46,
+      "agencies": [
+        "COMMERCE, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "EXECUTIVE INFORMATION SYSTEMS, LLC",
+      "organization": "EXECUTIVE INFORMATION SYSTEMS, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 16385.0,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "ACCESSAGILITY LLC",
+      "organization": "ACCESSAGILITY LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 98527.85,
+      "agencies": [
+        "AGRICULTURE, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "MINBURN TECHNOLOGY GROUP, LLC",
+      "organization": "MINBURN TECHNOLOGY GROUP, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 2,
+      "total_value": 19433433.130000003,
+      "agencies": [
+        "VETERANS AFFAIRS, DEPARTMENT OF",
+        "HOUSING AND URBAN DEVELOPMENT, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "TAPESTRY TECHNOLOGIES, INC.",
+      "organization": "TAPESTRY TECHNOLOGIES, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 4667472.0,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "DH TECHNOLOGIES, INC.",
+      "organization": "DH TECHNOLOGIES, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 79500.9,
+      "agencies": [
+        "NATIONAL AERONAUTICS AND SPACE ADMINISTRATION"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "R & K SOLUTIONS, INC.",
+      "organization": "R & K SOLUTIONS, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 1868480.17,
+      "agencies": [
+        "INTERIOR, DEPARTMENT OF THE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "CLEARSHARK LLC",
+      "organization": "CLEARSHARK LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 4067623.73,
+      "agencies": [
+        "STATE, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "GAMA-1 TECHNOLOGIES, LLC",
+      "organization": "GAMA-1 TECHNOLOGIES, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 0.0,
+      "agencies": [
+        "COMMERCE, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "METGREEN SOLUTIONS INC",
+      "organization": "METGREEN SOLUTIONS INC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 59376.0,
+      "agencies": [
+        "ENERGY, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "SLAM TECHNICAL SERVICES LLC",
+      "organization": "SLAM TECHNICAL SERVICES LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 125625.0,
+      "agencies": [
+        "TREASURY, DEPARTMENT OF THE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "PPS INFOTECH LLC",
+      "organization": "PPS INFOTECH LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 2134888.94,
+      "agencies": [
+        "EDUCATION, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "KPMG LLP",
+      "organization": "KPMG LLP",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 1267657.82,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "ETHIC TECH, LLC",
+      "organization": "ETHIC TECH, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 478045.6,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "NATIONWIDE IT SERVICES, INC.",
+      "organization": "NATIONWIDE IT SERVICES, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 737389.0,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "ASRC FEDERAL TECHNOLOGY SOLUTIONS, LLC",
+      "organization": "ASRC FEDERAL TECHNOLOGY SOLUTIONS, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 189573.56,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "STERLING COMPUTERS CORPORATION",
+      "organization": "STERLING COMPUTERS CORPORATION",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 1317210.52,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "DISYS SOLUTIONS, INC.",
+      "organization": "DISYS SOLUTIONS, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 49580.6,
+      "agencies": [
+        "COMMERCE, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "CALLYO 2009 CORP",
+      "organization": "CALLYO 2009 CORP",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 0.0,
+      "agencies": [
+        "JUSTICE, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "PAR EXCELLENCE SYSTEMS, INC",
+      "organization": "PAR EXCELLENCE SYSTEMS, INC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 12444.39,
+      "agencies": [
+        "VETERANS AFFAIRS, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "BOWHEAD LOGISTICS MANAGEMENT, LLC",
+      "organization": "BOWHEAD LOGISTICS MANAGEMENT, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 315698.2,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "TTEC GOVERNMENT SOLUTIONS, LLC",
+      "organization": "TTEC GOVERNMENT SOLUTIONS, LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 162766.78,
+      "agencies": [
+        "HOMELAND SECURITY, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "JUVARE LLC",
+      "organization": "JUVARE LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 10248.5,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "PERATON INC.",
+      "organization": "PERATON INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 45975.99,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "GOVCONNECTION, INC.",
+      "organization": "GOVCONNECTION, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 32319.25,
+      "agencies": [
+        "HEALTH AND HUMAN SERVICES, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "ABBA TECHNOLOGIES, INC.",
+      "organization": "ABBA TECHNOLOGIES, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 0.0,
+      "agencies": [
+        "DEPT OF DEFENSE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "FCN, INC.",
+      "organization": "FCN, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 2,
+      "total_value": 1013776.89,
+      "agencies": [
+        "TREASURY, DEPARTMENT OF THE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "CAROLINA ADVANCED DIGITAL, INC.",
+      "organization": "CAROLINA ADVANCED DIGITAL, INC.",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 0.0,
+      "agencies": [
+        "TREASURY, DEPARTMENT OF THE"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "SYMPLICITY CORPORATION",
+      "organization": "SYMPLICITY CORPORATION",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 1961327.05,
+      "agencies": [
+        "GENERAL SERVICES ADMINISTRATION"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "ENTERPRISE TECHNOLOGY SERVICES LLC",
+      "organization": "ENTERPRISE TECHNOLOGY SERVICES LLC",
+      "type": "Vendor",
+      "role": "Contract Holder",
+      "contract_count": 1,
+      "total_value": 594059.41,
+      "agencies": [
+        "TRANSPORTATION, DEPARTMENT OF"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "DEPT OF DEFENSE",
+      "organization": "DEPT OF DEFENSE",
+      "type": "Agency",
+      "role": "Contracting Office",
+      "contract_count": 127,
+      "total_value": 148390046.26999995,
+      "vendors": [
+        "GROUP W INC.",
+        "LOCKHEED MARTIN CORPORATION",
+        "INNOVATION EVOLUTION TECHNOLOGIES JV, LLC",
+        "UNCOMN, LLC",
+        "MCI COMMUNICATIONS SERVICES INC",
+        "SHIPCOM FEDERAL SOLUTIONS LLC",
+        "TYTO GOVERNMENT SOLUTIONS, INC.",
+        "VALGENESIS, INC.",
+        "AETOS LLC",
+        "GARTNER, INC."
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "ENVIRONMENTAL PROTECTION AGENCY",
+      "organization": "ENVIRONMENTAL PROTECTION AGENCY",
+      "type": "Agency",
+      "role": "Contracting Office",
+      "contract_count": 3,
+      "total_value": 1514100.63,
+      "vendors": [
+        "LINTECH GLOBAL, INC.",
+        "CHEROKEE NATION SYSTEM SOLUTIONS, LLC",
+        "COMPTECH COMPUTER TECHNOLOGIES, INC."
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "STATE, DEPARTMENT OF",
+      "organization": "STATE, DEPARTMENT OF",
+      "type": "Agency",
+      "role": "Contracting Office",
+      "contract_count": 12,
+      "total_value": 18169543.59,
+      "vendors": [
+        "CLEARSHARK LLC",
+        "INMARSAT GOVERNMENT, INC.",
+        "NATO COMMUNICATIONS & INFORMATION AGENCY",
+        "DELOITTE & TOUCHE LLP",
+        "ALPHA OMEGA INTEGRATION LLC",
+        "DLT SOLUTIONS, LLC",
+        "CGI FEDERAL INC.",
+        "ACCENTURE FEDERAL SERVICES LLC",
+        "SPAARK INC",
+        "JSSA INCORPORATED"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "JUSTICE, DEPARTMENT OF",
+      "organization": "JUSTICE, DEPARTMENT OF",
+      "type": "Agency",
+      "role": "Contracting Office",
+      "contract_count": 13,
+      "total_value": 3586156.26,
+      "vendors": [
+        "PAGE VAULT INC.",
+        "DIGITAL FOUNDATION COMPUTER CONSULTING SERVICES CORP., INC.",
+        "EAGLE TG, LLC",
+        "BCT PARTNERS LLC",
+        "ACCELGOV LLC",
+        "NEW TECH SOLUTIONS, INC.",
+        "TECHANAX LLC",
+        "CALLYO 2009 CORP",
+        "COLOSSAL CONTRACTING, LLC",
+        "CYNERGY PROFESSIONAL SYSTEMS LLC"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "TREASURY, DEPARTMENT OF THE",
+      "organization": "TREASURY, DEPARTMENT OF THE",
+      "type": "Agency",
+      "role": "Contracting Office",
+      "contract_count": 14,
+      "total_value": 8243589.18,
+      "vendors": [
+        "DELVIOM, LLC",
+        "ANCHAIN GOVERNMENT SOLUTIONS, INC",
+        "SLAM TECHNICAL SERVICES LLC",
+        "FOUR POINTS TECHNOLOGY, L.L.C.",
+        "FCN, INC.",
+        "DIGITAL CHECK CORP",
+        "PERATON TECHNOLOGY SERVICES INC.",
+        "CAROLINA ADVANCED DIGITAL, INC.",
+        "LRP PUBLICATIONS, INC.",
+        "SCIENCE APPLICATIONS INTERNATIONAL CORPORATION"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "HOMELAND SECURITY, DEPARTMENT OF",
+      "organization": "HOMELAND SECURITY, DEPARTMENT OF",
+      "type": "Agency",
+      "role": "Contracting Office",
+      "contract_count": 17,
+      "total_value": 21131628.550000004,
+      "vendors": [
+        "ISHPI INFORMATION TECHNOLOGIES, INC.",
+        "SYLVER RAIN CONSULTING, LLC",
+        "ARDENT MANAGEMENT CONSULTING, LLC",
+        "BLUE TECH INC.",
+        "BAHFED CORP",
+        "GOVPLACE, LLC",
+        "SHR CONSULTING GROUP, LLC",
+        "INMARSAT GOVERNMENT, INC.",
+        "TTEC GOVERNMENT SOLUTIONS, LLC",
+        "INTELLECT SOLUTIONS, LLC"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "HEALTH AND HUMAN SERVICES, DEPARTMENT OF",
+      "organization": "HEALTH AND HUMAN SERVICES, DEPARTMENT OF",
+      "type": "Agency",
+      "role": "Contracting Office",
+      "contract_count": 15,
+      "total_value": 58328044.88999999,
+      "vendors": [
+        "DELOITTE CONSULTING LLP",
+        "EDUCE GROUP, INC., THE",
+        "INFORMATION MANAGEMENT SERVICES, INC.",
+        "MIND OVER MACHINES, INC.",
+        "GOVCONNECTION, INC.",
+        "CYBERDATA TECHNOLOGIES INC",
+        "WEEMS DESIGN STUDIO, INC.",
+        "BOOZ ALLEN HAMILTON INC.",
+        "COUNTERTRADE PRODUCTS, INC.",
+        "OPEN INTELLIGENCE, LLC"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "GENERAL SERVICES ADMINISTRATION",
+      "organization": "GENERAL SERVICES ADMINISTRATION",
+      "type": "Agency",
+      "role": "Contracting Office",
+      "contract_count": 12,
+      "total_value": 93574385.92,
+      "vendors": [
+        "SYMPLICITY CORPORATION",
+        "REVACOMM, INC.",
+        "IVANTIS GROUP, INC.",
+        "BIXAL SOLUTIONS INCORPORATED",
+        "EFFECTUAL PUBLIC SECTOR INC.",
+        "MANTECH ADVANCED SYSTEMS INTERNATIONAL, INC.",
+        "PERATON TECHNOLOGY SERVICES INC.",
+        "FLEXION INC",
+        "INTERNATIONAL BUSINESS MACHINES CORPORATION",
+        "SCIENCE APPLICATIONS INTERNATIONAL CORPORATION"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "LABOR, DEPARTMENT OF",
+      "organization": "LABOR, DEPARTMENT OF",
+      "type": "Agency",
+      "role": "Contracting Office",
+      "contract_count": 2,
+      "total_value": 10809380.59,
+      "vendors": [
+        "PERATON ENTERPRISE SOLUTIONS LLC",
+        "MICRO SYSTEMS CONSULTANTS, INC."
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "VETERANS AFFAIRS, DEPARTMENT OF",
+      "organization": "VETERANS AFFAIRS, DEPARTMENT OF",
+      "type": "Agency",
+      "role": "Contracting Office",
+      "contract_count": 15,
+      "total_value": 136045718.62999997,
+      "vendors": [
+        "PAR EXCELLENCE SYSTEMS, INC",
+        "CONSENSUS MEDICAL SYSTEMS LLC",
+        "MINBURN TECHNOLOGY GROUP, LLC",
+        "FOUR POINTS TECHNOLOGY, L.L.C.",
+        "CHOISYS TECHNOLOGY INC.",
+        "IT CONCEPTS, INC.",
+        "VETERANS EZ INFO INC",
+        "AGILE SIX APPLICATIONS, INC.",
+        "KPAUL PROPERTIES, LLC",
+        "TERRESTRIS, LLC"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "COMMERCE, DEPARTMENT OF",
+      "organization": "COMMERCE, DEPARTMENT OF",
+      "type": "Agency",
+      "role": "Contracting Office",
+      "contract_count": 10,
+      "total_value": 6041449.09,
+      "vendors": [
+        "DISYS SOLUTIONS, INC.",
+        "BLUE GLACIER MANAGEMENT GROUP INC.",
+        "ENTERPRISE TECHNOLOGY SOLUTIONS, INC.",
+        "CHEROKEE NATION TECHNOLOGIES, L.L.C.",
+        "COLOSSAL CONTRACTING, LLC",
+        "EMERGENT, LLC",
+        "GENERAL DYNAMICS INFORMATION TECHNOLOGY, INC.",
+        "GAMA-1 TECHNOLOGIES, LLC",
+        "MLINQS LIMITED LIABILITY COMPANY"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "NATIONAL AERONAUTICS AND SPACE ADMINISTRATION",
+      "organization": "NATIONAL AERONAUTICS AND SPACE ADMINISTRATION",
+      "type": "Agency",
+      "role": "Contracting Office",
+      "contract_count": 14,
+      "total_value": 502203.44999999995,
+      "vendors": [
+        "OGIS COMMUNICATION GROUP INC",
+        "BAHFED CORP",
+        "AUGUST SCHELL ENTERPRISES, INC.",
+        "ADVANCED COMPUTER CONCEPTS, INC.",
+        "STILWELL AND ASSOCIATES OF THE U.S.A., INC.",
+        "MTS SYSTEMS CORPORATION",
+        "DH TECHNOLOGIES, INC.",
+        "NEW TECH SOLUTIONS, INC.",
+        "FRONTGRADE GAISLER AB",
+        "CRESCENT ELECTRIC SUPPLY CO"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "EDUCATION, DEPARTMENT OF",
+      "organization": "EDUCATION, DEPARTMENT OF",
+      "type": "Agency",
+      "role": "Contracting Office",
+      "contract_count": 4,
+      "total_value": 6546345.25,
+      "vendors": [
+        "PPS INFOTECH LLC",
+        "ZEN STRATEGICS LLC",
+        "METAPHASE CONSULTING LLC",
+        "SANAMETRIX, INC."
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "PENSION BENEFIT GUARANTY CORPORATION",
+      "organization": "PENSION BENEFIT GUARANTY CORPORATION",
+      "type": "Agency",
+      "role": "Contracting Office",
+      "contract_count": 2,
+      "total_value": 1171088.33,
+      "vendors": [
+        "LYNCHVAL SYSTEMS WORLDWIDE INC",
+        "ICF INCORPORATED, L.L.C."
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "ENERGY, DEPARTMENT OF",
+      "organization": "ENERGY, DEPARTMENT OF",
+      "type": "Agency",
+      "role": "Contracting Office",
+      "contract_count": 8,
+      "total_value": 8993841.540000001,
+      "vendors": [
+        "ACCENTURE FEDERAL SERVICES LLC",
+        "DIGITAL STRATEGY LLC",
+        "CDW GOVERNMENT LLC",
+        "IVORY CLOUD LLC",
+        "GENERAL DYNAMICS INFORMATION TECHNOLOGY, INC.",
+        "METGREEN SOLUTIONS INC",
+        "BOOZ ALLEN HAMILTON INC."
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "CONSUMER FINANCIAL PROTECTION BUREAU",
+      "organization": "CONSUMER FINANCIAL PROTECTION BUREAU",
+      "type": "Agency",
+      "role": "Contracting Office",
+      "contract_count": 1,
+      "total_value": 168000.0,
+      "vendors": [
+        "GOLDEN IT LLC"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "TRANSPORTATION, DEPARTMENT OF",
+      "organization": "TRANSPORTATION, DEPARTMENT OF",
+      "type": "Agency",
+      "role": "Contracting Office",
+      "contract_count": 12,
+      "total_value": 10013231.9,
+      "vendors": [
+        "RIGIL CORPORATION",
+        "DSOFT TECHNOLOGY COMPANY",
+        "HALVIK CORP",
+        "CONCEPT SOLUTIONS, L.L.C.",
+        "OCH TECHNOLOGIES, LLC",
+        "INTEGRATED FINANCIAL ANALYSTS, LTD",
+        "ENTERPRISE TECHNOLOGY SERVICES LLC",
+        "CDW GOVERNMENT LLC",
+        "ICATALYST, INC",
+        "SPATIAL FRONT INCORPORATED"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "AGRICULTURE, DEPARTMENT OF",
+      "organization": "AGRICULTURE, DEPARTMENT OF",
+      "type": "Agency",
+      "role": "Contracting Office",
+      "contract_count": 5,
+      "total_value": 7256064.34,
+      "vendors": [
+        "ACCESSAGILITY LLC",
+        "NUVITEK LLC",
+        "VCH PARTNERS LLC",
+        "TERRESTRIS, LLC",
+        "DYNAMO TECHNOLOGIES LLC"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "NATIONAL SCIENCE FOUNDATION",
+      "organization": "NATIONAL SCIENCE FOUNDATION",
+      "type": "Agency",
+      "role": "Contracting Office",
+      "contract_count": 1,
+      "total_value": 277102.8,
+      "vendors": [
+        "SPATIAL FRONT INCORPORATED"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "INTERIOR, DEPARTMENT OF THE",
+      "organization": "INTERIOR, DEPARTMENT OF THE",
+      "type": "Agency",
+      "role": "Contracting Office",
+      "contract_count": 5,
+      "total_value": 2021497.47,
+      "vendors": [
+        "R & K SOLUTIONS, INC.",
+        "GLOBAL SOLUTIONS GROUP, INC.",
+        "J. J. KELLER & ASSOCIATES, INC.",
+        "APEX RESOURCE MANAGEMENT SOLUTIONS LTD",
+        "EMERGENT, LLC"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "NUCLEAR REGULATORY COMMISSION",
+      "organization": "NUCLEAR REGULATORY COMMISSION",
+      "type": "Agency",
+      "role": "Contracting Office",
+      "contract_count": 3,
+      "total_value": 1040000.0,
+      "vendors": [
+        "PROJECT PERFORMANCE COMPANY LLC",
+        "UNION5 LLC",
+        "INFINETIX INC"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "UNITED STATES INTERNATIONAL DEVELOPMENT FINANCE CORPORATION",
+      "organization": "UNITED STATES INTERNATIONAL DEVELOPMENT FINANCE CORPORATION",
+      "type": "Agency",
+      "role": "Contracting Office",
+      "contract_count": 1,
+      "total_value": 34200.0,
+      "vendors": [
+        "FISCALNOTE, INC"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "CORPORATION FOR NATIONAL AND COMMUNITY SERVICE",
+      "organization": "CORPORATION FOR NATIONAL AND COMMUNITY SERVICE",
+      "type": "Agency",
+      "role": "Contracting Office",
+      "contract_count": 1,
+      "total_value": 1656414.21,
+      "vendors": [
+        "APPLIED ENTERPRISE MANAGEMENT CORPORATION"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "EQUAL EMPLOYMENT OPPORTUNITY COMMISSION",
+      "organization": "EQUAL EMPLOYMENT OPPORTUNITY COMMISSION",
+      "type": "Agency",
+      "role": "Contracting Office",
+      "contract_count": 1,
+      "total_value": 64927.22,
+      "vendors": [
+        "TYLER FEDERAL, LLC"
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "AGENCY FOR INTERNATIONAL DEVELOPMENT",
+      "organization": "AGENCY FOR INTERNATIONAL DEVELOPMENT",
+      "type": "Agency",
+      "role": "Contracting Office",
+      "contract_count": 1,
+      "total_value": 114090.89,
+      "vendors": [
+        "MERLIN INTERNATIONAL, INC."
+      ],
+      "relationship_strength": "New"
+    },
+    {
+      "name": "HOUSING AND URBAN DEVELOPMENT, DEPARTMENT OF",
+      "organization": "HOUSING AND URBAN DEVELOPMENT, DEPARTMENT OF",
+      "type": "Agency",
+      "role": "Contracting Office",
+      "contract_count": 1,
+      "total_value": 16648257.13,
+      "vendors": [
+        "MINBURN TECHNOLOGY GROUP, LLC"
+      ],
+      "relationship_strength": "New"
+    }
+  ]
+}

@@ -1,0 +1,135 @@
+===============================================================================
+HOW TO GROW YOUR CONTACTS DATABASE
+===============================================================================
+
+You currently have 124 contacts (mostly demo/seed data).
+Here's how to grow it to thousands:
+
+
+METHOD 1: EXTRACT FROM CONTRACTS (Recommended — No Extra API Calls!)
+-------------------------------------------------------------------------------
+When you collect contracts, you get vendor names and agencies for FREE.
+This is the most efficient way to bootstrap your contact database.
+
+Step 1: Collect Contracts (if you haven't already)
+    $ python quick_fpds_setup.py --count 1000
+    
+    This will:
+    - Hit SAM.gov Contract Awards API (10 calls on free tier)
+    - Collect ~500-1000 IT contracts
+    - Store them in Neo4j with vendor + agency info
+
+Step 2: Extract Contacts from Contracts
+    $ python extract_contacts_from_contracts.py
+    
+    This will:
+    - Read all contracts from Neo4j
+    - Extract unique vendors as contacts
+    - Extract agencies as organizational contacts
+    - Sync to SQLite contacts database
+    - NO API calls — just data mining what you already have!
+    
+    Expected result: +100 to +500 contacts depending on contract diversity
+
+
+METHOD 2: OPPORTUNITY SCOUT (Bonus Contacts from Solicitations)
+-------------------------------------------------------------------------------
+When you collect opportunities, some include POC (Point of Contact) info.
+
+Command:
+    $ python scout_samgov.py --days 90
+    
+This will:
+- Collect opportunities from SAM.gov (uses your 10 req/day limit)
+- Extract any POC info embedded in solicitations
+- Auto-sync contacts to database
+    
+Expected result: +20 to +50 contacts (not all opportunities have POCs)
+
+
+METHOD 3: MANUAL IMPORT (When You Have Spreadsheets/Lists)
+-------------------------------------------------------------------------------
+If you have:
+- Conference attendee lists
+- Linkedin export
+- Email contact lists
+- Past proposal team rosters
+
+You can import via the UI:
+1. Go to localhost:8080/contacts
+2. Click "Add Contact" 
+3. Fill in details
+4. OR use bulk import (CSV upload coming soon)
+
+
+METHOD 4: NETWORK EXPANSION (LinkedIn/Conference Intelligence)
+-------------------------------------------------------------------------------
+Once you have 200+ contacts:
+
+1. Use the Contact Research Agent to enrich profiles:
+   - Opens contact detail page
+   - Click "Research Contact"
+   - Agent searches web for latest info
+   
+2. Use the Network View to find clusters:
+   - localhost:8080/opportunities/network
+   - Search for agencies (e.g., "Navy")
+   - See who's connected
+   - Manually add their colleagues
+
+
+RATE LIMIT MANAGEMENT
+-------------------------------------------------------------------------------
+Current tier: 10 requests/day (free)
+
+To upgrade to 1,000 requests/day (still free):
+1. Go to sam.gov
+2. Sign in
+3. Workspace → Request Role (any read-only role is fine)
+4. Wait ~1 business day for approval
+5. Automatically upgraded to 1,000 req/day
+
+This lets you collect 50,000+ contracts in one run.
+
+
+RECOMMENDED WORKFLOW (Coffee-Powered 🚀)
+-------------------------------------------------------------------------------
+TODAY (with 10 req/day limit):
+    1. python quick_fpds_setup.py --count 1000
+       → Hits rate limit after ~500-1000 contracts
+    
+    2. python extract_contacts_from_contracts.py
+       → +200-300 contacts from vendors/agencies
+    
+    3. Request SAM.gov workspace role upgrade
+       → Takes 1 business day
+
+TOMORROW (with 1,000 req/day limit):
+    1. python quick_fpds_setup.py --count 10000
+       → Collect 10,000+ IT contracts
+    
+    2. python extract_contacts_from_contracts.py
+       → +1,000-2,000 contacts
+    
+    3. python scout_samgov.py --days 180
+       → Collect 6 months of opportunities
+       → +50-100 POC contacts
+
+END STATE:
+    - 10,000+ contracts in Neo4j
+    - 2,000+ contacts in database
+    - Rich network visualization
+    - Deep opportunity intelligence
+
+
+CURRENT STATUS
+-------------------------------------------------------------------------------
+Contacts: 124 (seed data)
+Contracts: Unknown (check Neo4j or run quick_fpds_setup.py)
+API Limit: 10 req/day
+
+Next action: Run extract_contacts_from_contracts.py if you've already
+             collected contracts, OR run quick_fpds_setup.py first.
+
+
+===============================================================================

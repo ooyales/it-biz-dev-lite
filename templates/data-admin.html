@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Admin - Federal Contracting System</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Archivo:wght@300;500;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #0A2540;
+            --secondary: #1E4D7B;
+            --accent: #00D4FF;
+            --success: #00C896;
+            --warning: #FFB020;
+            --danger: #FF4757;
+            --bg: #0D1117;
+            --surface: #161B22;
+            --surface-light: #1F2937;
+            --text: #E6EDF3;
+            --text-muted: #8B949E;
+            --border: #30363D;
+        }
+        
+        body {
+            font-family: 'Archivo', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            padding: 1.5rem 2rem;
+            border-bottom: 2px solid var(--accent);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        h1 {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--accent);
+            text-transform: uppercase;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .nav-link {
+            padding: 0.6rem 1.2rem;
+            background: transparent;
+            border: 1px solid var(--accent);
+            border-radius: 6px;
+            color: var(--accent);
+            text-decoration: none;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            background: rgba(0, 212, 255, 0.1);
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-box {
+            background: var(--surface-light);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-top: 0.5rem;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn-primary {
+            background: var(--accent);
+            color: var(--primary);
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: var(--warning);
+            color: var(--primary);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .action-card {
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .action-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px);
+        }
+        
+        .action-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        .action-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .action-description {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        
+        .data-table th {
+            background: var(--surface-light);
+            padding: 1rem;
+            text-align: left;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            font-family: 'IBM Plex Mono', monospace;
+            color: var(--accent);
+            border-bottom: 2px solid var(--border);
+        }
+        
+        .data-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .data-table tr:hover {
+            background: var(--surface-light);
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .badge-new {
+            background: var(--accent);
+            color: var(--primary);
+        }
+        
+        .badge-pursuing {
+            background: var(--success);
+            color: white;
+        }
+        
+        .badge-watch {
+            background: var(--warning);
+            color: var(--primary);
+        }
+        
+        .badge-passed {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .alert {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+        
+        .alert.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .alert-success {
+            background: rgba(0, 200, 150, 0.1);
+            border: 1px solid var(--success);
+            color: var(--success);
+        }
+        
+        .alert-error {
+            background: rgba(255, 71, 87, 0.1);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+        }
+        
+        .alert-warning {
+            background: rgba(255, 176, 32, 0.1);
+            border: 1px solid var(--warning);
+            color: var(--warning);
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>🎲 Data Admin Panel</h1>
+            <div class="nav-links">
+                <a href="/" class="nav-link">← Dashboard</a>
+                <a href="/admin" class="nav-link">Config Admin</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="alert" class="alert"></div>
+
+        <!-- Statistics -->
+        <div class="section">
+            <h2 class="section-title">Current Data Overview</h2>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-label">Total Opportunities</div>
+                    <div class="stat-value" id="totalOpps">-</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">High Priority</div>
+                    <div class="stat-value" id="highPriority">-</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Pursuing</div>
+                    <div class="stat-value" id="pursuing">-</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Watch List</div>
+                    <div class="stat-value" id="watchList">-</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Database Size</div>
+                    <div class="stat-value" id="dbSize">-</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Demo Data Actions -->
+        <div class="section">
+            <h2 class="section-title">Demo Data Management</h2>
+            <div class="action-grid">
+                <div class="action-card">
+                    <div class="action-icon">🎭</div>
+                    <div class="action-title">Generate Demo Data</div>
+                    <div class="action-description">
+                        Create realistic dummy opportunities for demos and testing
+                    </div>
+                    <div class="form-group">
+                        <label>Number of Opportunities</label>
+                        <input type="number" id="numOpps" value="30" min="1" max="100">
+                    </div>
+                    <button class="btn btn-success" onclick="generateDemoData()">Generate Demo Data</button>
+                </div>
+
+                <div class="action-card">
+                    <div class="action-icon">🎬</div>
+                    <div class="action-title">Quick Demo Setup</div>
+                    <div class="action-description">
+                        Instant demo with pre-configured realistic data
+                    </div>
+                    <p style="margin-bottom: 1rem; color: var(--text-muted); font-size: 0.85rem;">
+                        Creates 40 opportunities:<br>
+                        • 15 high priority<br>
+                        • 8 actively pursuing<br>
+                        • Timeline populated
+                    </p>
+                    <button class="btn btn-primary" onclick="quickDemo()">Quick Demo Setup</button>
+                </div>
+
+                <div class="action-card">
+                    <div class="action-icon">📊</div>
+                    <div class="action-title">Mix Demo + Real</div>
+                    <div class="action-description">
+                        Add demo data to existing real data
+                    </div>
+                    <div class="form-group">
+                        <label>Demo Opportunities to Add</label>
+                        <input type="number" id="mixOpps" value="10" min="1" max="50">
+                    </div>
+                    <button class="btn btn-warning" onclick="mixDemoData()">Add Demo Data</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Real Data Actions -->
+        <div class="section">
+            <h2 class="section-title">Real Data Management</h2>
+            <div class="action-grid">
+                <div class="action-card">
+                    <div class="action-icon">🔍</div>
+                    <div class="action-title">Fetch Real Data</div>
+                    <div class="action-description">
+                        Run scout to fetch live opportunities from SAM.gov
+                    </div>
+                    <button class="btn btn-primary" onclick="fetchRealData()">Run Scout Now</button>
+                </div>
+
+                <div class="action-card">
+                    <div class="action-icon">🔄</div>
+                    <div class="action-title">Replace with Real</div>
+                    <div class="action-description">
+                        Delete all demo data and fetch only real opportunities
+                    </div>
+                    <button class="btn btn-warning" onclick="replaceWithReal()">Clear Demo, Fetch Real</button>
+                </div>
+
+                <div class="action-card">
+                    <div class="action-icon">🗄️</div>
+                    <div class="action-title">Import from File</div>
+                    <div class="action-description">
+                        Import opportunities from previous scout runs
+                    </div>
+                    <input type="file" id="fileInput" accept=".json" style="margin-bottom: 1rem; color: var(--text);">
+                    <button class="btn btn-primary" onclick="importFromFile()">Import Data</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Cleanup -->
+        <div class="section">
+            <h2 class="section-title">⚠️ Data Cleanup</h2>
+            <div class="action-grid">
+                <div class="action-card">
+                    <div class="action-icon">🗑️</div>
+                    <div class="action-title">Clear Demo Data Only</div>
+                    <div class="action-description">
+                        Remove opportunities with DEMO notice IDs, keep real data
+                    </div>
+                    <button class="btn btn-danger" onclick="clearDemoOnly()">Clear Demo Data</button>
+                </div>
+
+                <div class="action-card">
+                    <div class="action-icon">🧹</div>
+                    <div class="action-title">Clear All Data</div>
+                    <div class="action-description">
+                        Delete all opportunities (demo and real) - fresh start
+                    </div>
+                    <button class="btn btn-danger" onclick="clearAllData()">Clear All Data</button>
+                </div>
+
+                <div class="action-card">
+                    <div class="action-icon">⏰</div>
+                    <div class="action-title">Clear Old Opportunities</div>
+                    <div class="action-description">
+                        Remove opportunities with deadlines older than 30 days
+                    </div>
+                    <button class="btn btn-warning" onclick="clearOldData()">Clear Old Data</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Current Opportunities Table -->
+        <div class="section">
+            <h2 class="section-title">
+                Current Opportunities
+                <button class="btn btn-primary" style="font-size: 0.75rem; padding: 0.5rem 1rem;" onclick="loadOpportunities()">Refresh</button>
+            </h2>
+            <table class="data-table" id="oppsTable">
+                <thead>
+                    <tr>
+                        <th>Notice ID</th>
+                        <th>Title</th>
+                        <th>Score</th>
+                        <th>Win %</th>
+                        <th>Status</th>
+                        <th>Deadline</th>
+                        <th>Type</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="oppsTableBody">
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                            Loading...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="/static/data-admin.js"></script>
+</body>
+</html>

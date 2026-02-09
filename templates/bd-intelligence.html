@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BD Intelligence Hub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/dark-theme.css') }}" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0a0e27;
+        }
+        
+        .dashboard-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+            transition: transform 0.2s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .opportunity-card {
+            background: linear-gradient(135deg, #1a2147 0%, #151b3d 100%);
+            border: 1px solid #2d3748;
+            border-left: 4px solid;
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .opportunity-card h5 {
+            color: #ffffff !important;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .opportunity-card .text-muted {
+            color: #a0aec0 !important;
+        }
+        
+        .opportunity-card:hover {
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+            transform: translateX(5px);
+            border-color: #667eea;
+        }
+        
+        .opportunity-card.priority-high {
+            border-left-color: #48bb78;
+        }
+        
+        .opportunity-card.priority-medium {
+            border-left-color: #4299e1;
+        }
+        
+        .opportunity-card.priority-low {
+            border-left-color: #718096;
+        }
+        
+        .badge-priority-high {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+        }
+        
+        .badge-priority-medium {
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+            color: white;
+        }
+        
+        .badge-priority-low {
+            background: linear-gradient(135deg, #718096 0%, #4a5568 100%);
+            color: white;
+        }
+        
+        .badge-priority-medium {
+            background-color: #ffc107;
+        }
+        
+        .badge-priority-low {
+            background-color: #6c757d;
+        }
+        
+        .win-probability {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        .contact-badge {
+            background: #e7f3ff;
+            color: #0066cc;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+        
+        .competitor-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .progress-custom {
+            height: 8px;
+            border-radius: 10px;
+        }
+        
+        .nav-tabs .nav-link {
+            color: #495057;
+            border: none;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+            background: transparent;
+        }
+        
+        .refresh-btn {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div class="container">
+            <h1><i class="fas fa-chart-line me-3"></i>BD Intelligence Hub</h1>
+            <p class="mb-0">Real-time opportunity intelligence powered by AI</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Summary Stats -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-number" id="total-opportunities">-</div>
+                    <div class="stat-label">Total Opportunities</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-number text-success" id="high-priority">-</div>
+                    <div class="stat-label">High Priority</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-number text-info" id="with-contacts">-</div>
+                    <div class="stat-label">With Contacts</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-number text-primary" id="network-contacts">-</div>
+                    <div class="stat-label">Network Contacts</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs mb-4" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="tab" href="#opportunities">
+                    <i class="fas fa-bullseye me-2"></i>Opportunities
+                </a>
+            </li>
+            <li class="nav-link" data-bs-toggle="tab" href="#competitive">
+                    <i class="fas fa-users me-2"></i>Competitive Intel
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#activity">
+                    <i class="fas fa-clock me-2"></i>Recent Activity
+                </a>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <!-- Opportunities Tab -->
+            <div class="tab-pane fade show active" id="opportunities">
+                <!-- Filters -->
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <select class="form-select" id="priority-filter">
+                            <option value="">All Priorities</option>
+                            <option value="HIGH">High Priority</option>
+                            <option value="MEDIUM">Medium Priority</option>
+                            <option value="LOW">Low Priority</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select" id="contact-filter">
+                            <option value="">All Opportunities</option>
+                            <option value="with">With Contacts</option>
+                            <option value="without">Without Contacts</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-primary w-100" onclick="runScout()">
+                            <i class="fas fa-sync me-2"></i>Run Scout
+                        </button>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-success w-100" onclick="exportToExcel()">
+                            <i class="fas fa-file-excel me-2"></i>Export Excel
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Opportunities List -->
+                <div id="opportunities-list">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-3">Loading opportunities...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Competitive Intel Tab -->
+            <div class="tab-pane fade" id="competitive">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <input type="text" class="form-control" id="agency-input" 
+                               placeholder="Enter agency name (e.g., Department of Defense)">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <button class="btn btn-primary w-100" onclick="analyzeAgency()">
+                            <i class="fas fa-search me-2"></i>Analyze Agency
+                        </button>
+                    </div>
+                </div>
+
+                <div id="intel-results">
+                    <div class="text-center py-5 text-muted">
+                        <i class="fas fa-chart-bar fa-3x mb-3"></i>
+                        <p>Enter an agency name to view competitive intelligence</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity Tab -->
+            <div class="tab-pane fade" id="activity">
+                <div id="activity-feed">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Refresh Button -->
+    <button class="btn btn-primary btn-lg rounded-circle refresh-btn" onclick="loadDashboard()" title="Refresh">
+        <i class="fas fa-sync"></i>
+    </button>
+
+    <!-- Opportunity Detail Modal -->
+    <div class="modal fade" id="opportunityModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Opportunity Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="modalBody">
+                    <!-- Dynamic content -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Load dashboard data
+        async function loadDashboard() {
+            try {
+                // Load summary stats
+                const summaryRes = await fetch('/api/scout/summary');
+                const summary = await summaryRes.json();
+                
+                document.getElementById('total-opportunities').textContent = summary.total_opportunities || 0;
+                document.getElementById('high-priority').textContent = summary.high_priority || 0;
+                document.getElementById('with-contacts').textContent = summary.with_contacts || 0;
+                
+                // Load network stats
+                const bdRes = await fetch('/api/dashboard/overview');
+                const bdData = await bdRes.json();
+                
+                document.getElementById('network-contacts').textContent = 
+                    bdData.network?.total_people || 0;
+                
+                // Load opportunities
+                loadOpportunities();
+                
+                // Load recent activity
+                loadRecentActivity();
+                
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+            }
+        }
+        
+        // Load opportunities list
+        async function loadOpportunities(priorityFilter = '', contactFilter = '') {
+            console.log('Loading opportunities...', {priorityFilter, contactFilter});
+            
+            try {
+                let url = '/api/scout/opportunities';
+                const params = new URLSearchParams();
+                
+                if (priorityFilter) params.append('priority', priorityFilter);
+                if (params.toString()) url += '?' + params.toString();
+                
+                console.log('Fetching from:', url);
+                
+                const res = await fetch(url);
+                console.log('Response status:', res.status);
+                
+                const data = await res.json();
+                console.log('Response data:', data);
+                
+                // Handle error response
+                if (data.error) {
+                    document.getElementById('opportunities-list').innerHTML = 
+                        `<div class="alert alert-warning">
+                            <strong>No scout data available</strong><br>
+                            ${data.message || 'Click "Run Scout" to fetch opportunities'}
+                        </div>`;
+                    return;
+                }
+                
+                let opportunities = data.opportunities || [];
+                console.log('Opportunities count:', opportunities.length);
+                
+                // Apply contact filter
+                if (contactFilter === 'with') {
+                    opportunities = opportunities.filter(o => {
+                        if (!o.contacts) return false;
+                        const total = o.contacts.total || o.contacts.total_contacts || 0;
+                        return total > 0;
+                    });
+                } else if (contactFilter === 'without') {
+                    opportunities = opportunities.filter(o => {
+                        if (!o.contacts) return true;
+                        const total = o.contacts.total || o.contacts.total_contacts || 0;
+                        return total === 0;
+                    });
+                }
+                
+                console.log('After filter:', opportunities.length);
+                
+                renderOpportunities(opportunities);
+                
+            } catch (error) {
+                console.error('Error loading opportunities:', error);
+                document.getElementById('opportunities-list').innerHTML = 
+                    `<div class="alert alert-danger">
+                        <strong>Error loading opportunities</strong><br>
+                        ${error.message}<br>
+                        <button class="btn btn-primary btn-sm mt-2" onclick="loadOpportunities()">
+                            Retry
+                        </button>
+                    </div>`;
+            }
+        }
+        
+        // Render opportunities
+        function renderOpportunities(opportunities) {
+            const container = document.getElementById('opportunities-list');
+            
+            if (!opportunities || opportunities.length === 0) {
+                container.innerHTML = '<div class="alert alert-info">No opportunities found</div>';
+                return;
+            }
+            
+            container.innerHTML = opportunities.map(opp => `
+                <div class="opportunity-card priority-${(opp.priority || 'low').toLowerCase()}" 
+                     onclick="showOpportunityDetail('${opp.notice_id || ''}')">
+                    <div class="row align-items-center">
+                        <div class="col-md-7">
+                            <h5>${opp.title || 'Untitled Opportunity'}</h5>
+                            <div class="text-muted small mb-2">
+                                <i class="fas fa-building me-2"></i>${opp.agency || 'Agency Not Specified'}
+                                <i class="fas fa-calendar ms-3 me-2"></i>${opp.deadline || 'No Deadline'}
+                            </div>
+                            ${opp.contacts && opp.contacts.total > 0 ? `
+                                <span class="contact-badge">
+                                    <i class="fas fa-user-friends me-1"></i>
+                                    ${opp.contacts.total} contact${opp.contacts.total > 1 ? 's' : ''}
+                                    ${opp.contacts.decision_makers > 0 ? 
+                                        `(${opp.contacts.decision_makers} decision maker${opp.contacts.decision_makers > 1 ? 's' : ''})` : ''}
+                                </span>
+                            ` : ''}
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="win-probability text-${(opp.win_probability || 0) >= 60 ? 'success' : (opp.win_probability || 0) >= 40 ? 'warning' : 'secondary'}">
+                                ${opp.win_probability || 0}%
+                            </div>
+                            <div class="small text-muted">Win Probability</div>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <span class="badge badge-priority-${(opp.priority || 'low').toLowerCase()}">
+                                ${opp.priority || 'LOW'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Show opportunity detail modal
+        async function showOpportunityDetail(noticeId) {
+            const modal = new bootstrap.Modal(document.getElementById('opportunityModal'));
+            document.getElementById('modalTitle').textContent = 'Loading...';
+            document.getElementById('modalBody').innerHTML = '<div class="text-center py-3"><div class="spinner-border"></div></div>';
+            modal.show();
+            
+            try {
+                // Find the opportunity in our current data
+                const res = await fetch('/api/scout/opportunities');
+                const data = await res.json();
+                const opp = data.opportunities.find(o => o.notice_id === noticeId);
+                
+                if (!opp) {
+                    document.getElementById('modalBody').innerHTML = '<div class="alert alert-danger">Opportunity not found</div>';
+                    return;
+                }
+                
+                console.log('Opportunity data:', opp);
+                console.log('Contacts:', opp.contacts);
+                console.log('all_contacts:', opp.contacts?.all_contacts);
+                console.log('decision_makers:', opp.contacts?.decision_makers);
+                
+                // Build the detail view
+                document.getElementById('modalTitle').textContent = opp.title || 'Opportunity Details';
+                
+                let html = `
+                    <div class="mb-4">
+                        <h6 class="text-muted">Overview</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>Notice ID:</strong></td>
+                                <td>${opp.notice_id || 'N/A'}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Agency:</strong></td>
+                                <td>${opp.agency || 'Not Specified'}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Posted Date:</strong></td>
+                                <td>${opp.posted_date || 'N/A'}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Deadline:</strong></td>
+                                <td>${opp.deadline || 'No Deadline'}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Set-Aside:</strong></td>
+                                <td>${opp.setaside || 'N/A'}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>NAICS:</strong></td>
+                                <td>${opp.naics || 'N/A'}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6 class="text-muted">Scout Analysis</h6>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <div class="display-4 text-success">${opp.win_probability || 0}%</div>
+                                    <div class="text-muted">Win Probability</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <div class="display-4">${opp.score || 0}</div>
+                                    <div class="text-muted">Total Score</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <strong>Priority:</strong> 
+                            <span class="badge badge-priority-${(opp.priority || 'low').toLowerCase()} ms-2">
+                                ${opp.priority || 'LOW'}
+                            </span>
+                        </div>
+                        <div class="mt-2">
+                            <strong>Recommendation:</strong> ${opp.recommendation || 'N/A'}
+                        </div>
+                    </div>
+                    
+                    ${opp.reasoning && opp.reasoning.length > 0 ? `
+                        <div class="mb-4">
+                            <h6 class="text-muted">Scoring Breakdown</h6>
+                            <ul class="list-unstyled">
+                                ${opp.reasoning.map(r => `<li class="mb-1">${r}</li>`).join('')}
+                            </ul>
+                        </div>
+                    ` : ''}
+                    
+                    ${opp.contacts && opp.contacts.total > 0 ? `
+                        <div class="mb-4">
+                            <h6 class="text-muted">Your Contacts at This Agency (${opp.contacts.total})</h6>
+                            
+                            ${(() => {
+                                // Build all_contacts from categorized lists if not present
+                                let allContacts = opp.contacts.all_contacts || [];
+                                if (allContacts.length === 0) {
+                                    allContacts = [
+                                        ...(opp.contacts.decision_makers || []),
+                                        ...(opp.contacts.technical_leads || []),
+                                        ...(opp.contacts.executives || []),
+                                        ...(opp.contacts.influencers || [])
+                                    ];
+                                }
+                                
+                                if (allContacts.length > 0) {
+                                    const rows = allContacts.slice(0, 10).map(contact => 
+                                        '<tr>' +
+                                            '<td><strong>' + (contact.name || 'N/A') + '</strong></td>' +
+                                            '<td>' + (contact.title || 'N/A') + '</td>' +
+                                            '<td>' + (contact.role_type ? '<span class="badge bg-info">' + contact.role_type + '</span>' : 'N/A') + '</td>' +
+                                            '<td>' + (contact.email ? '<a href="mailto:' + contact.email + '">' + contact.email + '</a>' : 'N/A') + '</td>' +
+                                        '</tr>'
+                                    ).join('');
+                                    
+                                    const showingText = allContacts.length > 10 ? 
+                                        '<p class="text-muted small">Showing 10 of ' + allContacts.length + ' contacts</p>' : '';
+                                    
+                                    return '<div class="table-responsive">' +
+                                        '<table class="table table-sm">' +
+                                            '<thead><tr>' +
+                                                '<th>Name</th><th>Title</th><th>Role</th><th>Contact</th>' +
+                                            '</tr></thead>' +
+                                            '<tbody>' + rows + '</tbody>' +
+                                        '</table>' +
+                                    '</div>' + showingText;
+                                } else {
+                                    return '<p class="text-muted">Contact details not available</p>';
+                                }
+                            })()}
+                        </div>
+                    ` : `
+                        <div class="alert alert-warning">
+                            <strong>⚠️ No Contacts at This Agency</strong><br>
+                            Consider networking or teaming to improve your chances.
+                        </div>
+                    `}
+                    
+                    ${opp.description ? `
+                        <div class="mb-3">
+                            <h6 class="text-muted">Description</h6>
+                            <p class="small">${opp.description}</p>
+                        </div>
+                    ` : ''}
+                    
+                    <!-- Agent Actions -->
+                    <div class="mb-4 p-3 bg-light rounded">
+                        <h6 class="text-muted mb-3"><i class="fas fa-robot me-2"></i>AI Agent Actions</h6>
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <button class="btn btn-outline-primary btn-sm w-100" onclick="runCapabilityAnalysis('${opp.notice_id}')">
+                                    <i class="fas fa-check-circle me-1"></i>Capability Analysis
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <button class="btn btn-outline-success btn-sm w-100" onclick="generateRFI('${opp.notice_id}')">
+                                    <i class="fas fa-file-alt me-1"></i>Generate RFI
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <button class="btn btn-outline-info btn-sm w-100" onclick="generateProposal('${opp.notice_id}')">
+                                    <i class="fas fa-file-word me-1"></i>Draft Proposal
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <button class="btn btn-outline-warning btn-sm w-100" onclick="generatePricing('${opp.notice_id}')">
+                                    <i class="fas fa-dollar-sign me-1"></i>Generate Pricing
+                                </button>
+                            </div>
+                            <div class="col-12">
+                                <button class="btn btn-outline-secondary btn-sm w-100" onclick="runCompetitiveIntel('${opp.notice_id}')">
+                                    <i class="fas fa-chart-line me-1"></i>Competitive Intelligence
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 pt-3 border-top">
+                        <button class="btn btn-primary" onclick="window.open('https://sam.gov/opp/${opp.notice_id}/view', '_blank')">
+                            <i class="fas fa-external-link-alt me-2"></i>View on SAM.gov
+                        </button>
+                    </div>
+                `;
+                
+                document.getElementById('modalBody').innerHTML = html;
+                
+            } catch (error) {
+                console.error('Error loading opportunity details:', error);
+                document.getElementById('modalBody').innerHTML = 
+                    '<div class="alert alert-danger">Error loading details</div>';
+            }
+        }
+        
+        // Analyze agency
+        async function analyzeAgency() {
+            const agency = document.getElementById('agency-input').value;
+            if (!agency) return;
+            
+            document.getElementById('intel-results').innerHTML = 
+                '<div class="text-center py-5"><div class="spinner-border"></div></div>';
+            
+            try {
+                const res = await fetch(`/api/intel/incumbents?agency=${encodeURIComponent(agency)}`);
+                const data = await res.json();
+                
+                if (!data.incumbents || data.incumbents.length === 0) {
+                    document.getElementById('intel-results').innerHTML = 
+                        '<div class="alert alert-info">No competitive data available for this agency</div>';
+                    return;
+                }
+                
+                document.getElementById('intel-results').innerHTML = `
+                    <h4>${agency}</h4>
+                    <h5 class="mt-4">Top Incumbents</h5>
+                    ${data.incumbents.slice(0, 10).map((inc, i) => `
+                        <div class="competitor-card">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>${i + 1}. ${inc.company}</strong>
+                                    <div class="small text-muted">
+                                        ${inc.contract_count} contracts 
+                                        ${inc.total_value ? `• $${(inc.total_value / 1000000).toFixed(1)}M` : ''}
+                                    </div>
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary" 
+                                        onclick="analyzeCompetitor('${inc.company}')">
+                                    View Profile
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                `;
+                
+            } catch (error) {
+                document.getElementById('intel-results').innerHTML = 
+                    '<div class="alert alert-danger">Error loading intelligence</div>';
+            }
+        }
+        
+        // Load recent activity
+        async function loadRecentActivity() {
+            try {
+                const res = await fetch('/api/dashboard/recent-activity');
+                const data = await res.json();
+                
+                const container = document.getElementById('activity-feed');
+                
+                if (!data.activities || data.activities.length === 0) {
+                    container.innerHTML = '<div class="alert alert-info">No recent activity</div>';
+                    return;
+                }
+                
+                container.innerHTML = data.activities.map(activity => `
+                    <div class="stat-card">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <i class="fas fa-${activity.type === 'scout' ? 'bullseye' : 'chart-bar'} me-2"></i>
+                                <strong>${activity.title}</strong>
+                            </div>
+                            <div class="text-muted small">
+                                ${new Date(activity.timestamp).toLocaleString()}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Error loading activity:', error);
+            }
+        }
+        
+        // Run scout
+        async function runScout() {
+            if (!confirm('Run opportunity scout? This may take a few minutes.')) return;
+            
+            try {
+                const res = await fetch('/api/scout/run', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({days: 7})
+                });
+                
+                const data = await res.json();
+                alert('Scout completed! Refreshing dashboard...');
+                loadDashboard();
+                
+            } catch (error) {
+                alert('Error running scout: ' + error.message);
+            }
+        }
+        
+        // Filters
+        document.getElementById('priority-filter')?.addEventListener('change', (e) => {
+            const contactFilter = document.getElementById('contact-filter').value;
+            loadOpportunities(e.target.value, contactFilter);
+        });
+        
+        document.getElementById('contact-filter')?.addEventListener('change', (e) => {
+            const priorityFilter = document.getElementById('priority-filter').value;
+            loadOpportunities(priorityFilter, e.target.value);
+        });
+        
+        // ========================================================================
+        // AGENT ACTION FUNCTIONS
+        // ========================================================================
+        
+        async function runCapabilityAnalysis(noticeId) {
+            const opp = await getOpportunityData(noticeId);
+            if (!opp) return;
+            
+            const btn = event.target.closest('button');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Analyzing...';
+            
+            try {
+                const res = await fetch('/api/agents/capability/analyze', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({opportunity: opp})
+                });
+                
+                const data = await res.json();
+                
+                if (data.capability_score) {
+                    alert(`✓ Capability Analysis Complete!
+
+Score: ${data.capability_score}/100
+Win Probability: ${data.technical_win_probability}
+
+Matched: ${data.requirements.matched} requirements
+Gaps: ${data.requirements.unmatched} requirements
+
+${data.recommendation}`);
+                } else {
+                    alert('Error: ' + (data.error || 'Analysis failed'));
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-check-circle me-1"></i>Capability Analysis';
+            }
+        }
+        
+        async function generateRFI(noticeId) {
+            const opp = await getOpportunityData(noticeId);
+            if (!opp) return;
+            
+            if (!confirm('Generate RFI response? This will take 30-60 seconds.')) return;
+            
+            const btn = event.target.closest('button');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Generating...';
+            
+            try {
+                const res = await fetch('/api/agents/rfi/generate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({opportunity: opp})
+                });
+                
+                const data = await res.json();
+                
+                if (data.status === 'success') {
+                    alert(`✓ RFI Response Generated!
+
+File: ${data.filename}
+
+Saved in knowledge_graph folder.
+Review and customize before submitting.`);
+                } else {
+                    alert('Error: ' + (data.error || 'Failed'));
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-file-alt me-1"></i>Generate RFI';
+            }
+        }
+        
+        async function generateProposal(noticeId) {
+            const opp = await getOpportunityData(noticeId);
+            if (!opp) return;
+            
+            if (!confirm('Generate proposal draft? This will take 2-3 minutes.')) return;
+            
+            const btn = event.target.closest('button');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Drafting...';
+            
+            try {
+                const res = await fetch('/api/agents/proposal/generate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({opportunity: opp})
+                });
+                
+                const data = await res.json();
+                
+                if (data.status === 'success') {
+                    alert(`✓ Proposal Draft Generated!
+
+File: ${data.filename}
+
+Saved in knowledge_graph folder.
+Review and customize before submission.`);
+                } else {
+                    alert('Error: ' + (data.error || 'Failed'));
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-file-word me-1"></i>Draft Proposal';
+            }
+        }
+        
+        async function generatePricing(noticeId) {
+            const opp = await getOpportunityData(noticeId);
+            if (!opp) return;
+            
+            if (!confirm('Generate pricing with default staffing?\n\nPM: 1 FTE, Sr Eng: 2, Eng: 3, DevOps: 1')) return;
+            
+            const btn = event.target.closest('button');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Calculating...';
+            
+            try {
+                const res = await fetch('/api/agents/pricing/generate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        opportunity: opp,
+                        staffing: {
+                            'Program Manager': 1.0,
+                            'Senior Software Engineer': 2.0,
+                            'Software Engineer': 3.0,
+                            'DevOps Engineer': 1.0
+                        },
+                        duration_months: 12,
+                        odc: {'Travel': 50000, 'Equipment': 75000}
+                    })
+                });
+                
+                const data = await res.json();
+                
+                if (data.status === 'success' && data.igce) {
+                    alert(`✓ Pricing Generated!
+
+File: ${data.filename}
+
+Total: $${data.igce.total_value.toLocaleString()}
+Labor: $${data.igce.labor.total_cost.toLocaleString()}
+ODC: $${data.igce.odc_total.toLocaleString()}
+Monthly: $${data.igce.monthly_burn.toLocaleString()}`);
+                } else {
+                    alert('Error: ' + (data.error || 'Failed'));
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-dollar-sign me-1"></i>Generate Pricing';
+            }
+        }
+        
+        async function runCompetitiveIntel(noticeId) {
+            const opp = await getOpportunityData(noticeId);
+            if (!opp) return;
+            
+            const btn = event.target.closest('button');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Analyzing...';
+            
+            try {
+                const res = await fetch('/api/agents/competitive/analyze', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        agency: opp.agency,
+                        naics: opp.naics
+                    })
+                });
+                
+                const data = await res.json();
+                
+                const incumbents = data.incumbents || [];
+                const partners = data.teaming_partners || [];
+                
+                alert(`Competitive Intelligence
+
+Incumbents: ${incumbents.length} found
+Teaming Partners: ${partners.length} identified
+
+${incumbents.length > 0 ? `Top: ${incumbents[0].name}` : ''}
+
+See browser console for details.`);
+                
+                console.log('Competitive Intelligence:', data);
+                
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-chart-line me-1"></i>Competitive Intelligence';
+            }
+        }
+        
+        // Helper: Get opportunity data
+        async function getOpportunityData(noticeId) {
+            try {
+                const res = await fetch('/api/scout/opportunities');
+                const data = await res.json();
+                return data.opportunities.find(o => o.notice_id === noticeId);
+            } catch (error) {
+                console.error('Error fetching opportunity:', error);
+                return null;
+            }
+        }
+        
+        // Export to Excel
+        async function exportToExcel() {
+            if (!confirm('Export all BD intelligence data to Excel?')) return;
+            
+            const btn = event.target.closest('button');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Exporting...';
+            
+            try {
+                const res = await fetch('/api/agents/excel/export', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({})
+                });
+                
+                const data = await res.json();
+                
+                if (data.status === 'success') {
+                    alert(`✓ Excel Export Complete!
+
+File: ${data.filename}
+
+Saved in knowledge_graph folder.
+Contains 5 tabs:
+• Dashboard
+• Opportunities (200 rows)
+• Contacts (200+ rows)
+• Organizations
+• Contracts`);
+                } else {
+                    alert('Error: ' + (data.error || 'Export failed'));
+                }
+            } catch (error) {
+                alert('Error exporting: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-file-excel me-2"></i>Export Excel';
+            }
+        }
+        
+        // Initial load
+        loadDashboard();
+        
+        // Auto-refresh every 5 minutes
+        setInterval(loadDashboard, 300000);
+    </script>
+</body>
+</html>

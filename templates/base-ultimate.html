@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}BD Intelligence Platform{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Dark Theme -->
+    <link href="{{ url_for('static', filename='css/dark-theme.css') }}" rel="stylesheet">
+    
+    <!-- D3.js for visualizations -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    
+    {% block extra_css %}{% endblock %}
+    
+    <style>
+        /* Enhanced Navigation */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 260px;
+            background: linear-gradient(180deg, #151b3d 0%, #0a0e27 100%);
+            border-right: 1px solid #2d3748;
+            padding-top: 1rem;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .sidebar-brand {
+            padding: 1rem 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .sidebar-brand h4 {
+            color: #fff;
+            margin: 0;
+            font-weight: 700;
+        }
+        
+        .sidebar-brand .text-muted {
+            font-size: 0.75rem;
+            color: #718096 !important;
+        }
+        
+        .nav-section {
+            padding: 0.5rem 1.5rem;
+            color: #718096;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 1.5rem;
+        }
+        
+        .nav-item {
+            margin: 0.25rem 0;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            color: #a0aec0;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+        
+        .nav-link:hover {
+            background: rgba(102, 126, 234, 0.1);
+            color: #667eea;
+            border-left-color: #667eea;
+        }
+        
+        .nav-link.active {
+            background: rgba(102, 126, 234, 0.15);
+            color: #667eea;
+            border-left-color: #667eea;
+            font-weight: 600;
+        }
+        
+        .nav-link i {
+            width: 24px;
+            margin-right: 0.75rem;
+            font-size: 1.1rem;
+        }
+        
+        .nav-link .badge {
+            margin-left: auto;
+        }
+        
+        .main-content {
+            margin-left: 260px;
+            min-height: 100vh;
+            background: #0a0e27;
+        }
+        
+        .top-bar {
+            background: #151b3d;
+            border-bottom: 1px solid #2d3748;
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+        
+        .view-switcher {
+            display: flex;
+            gap: 0.5rem;
+            background: #1e2544;
+            padding: 0.25rem;
+            border-radius: 8px;
+        }
+        
+        .view-switcher .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: transparent;
+            color: #a0aec0;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+        
+        .view-switcher .btn.active {
+            background: #667eea;
+            color: white;
+        }
+        
+        .view-switcher .btn:hover:not(.active) {
+            background: rgba(102, 126, 234, 0.2);
+            color: #667eea;
+        }
+        
+        /* Stats Bar */
+        .stats-bar {
+            display: flex;
+            gap: 1.5rem;
+            padding: 1.5rem 2rem;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border-bottom: 1px solid #2d3748;
+        }
+        
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            font-size: 1.5rem;
+        }
+        
+        .stat-icon.purple {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .stat-icon.green {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+        }
+        
+        .stat-icon.blue {
+            background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+            color: white;
+        }
+        
+        .stat-icon.orange {
+            background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+            color: white;
+        }
+        
+        .stat-info h4 {
+            margin: 0;
+            color: #fff;
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        
+        .stat-info p {
+            margin: 0;
+            color: #a0aec0;
+            font-size: 0.875rem;
+        }
+        
+        /* Content Area */
+        .content-area {
+            padding: 2rem;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .stats-bar {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <div class="sidebar-brand">
+            <h4><i class="fas fa-rocket me-2"></i>BD Intelligence</h4>
+            <p class="text-muted mb-0">Enterprise Platform</p>
+        </div>
+        
+        <div class="nav-section">Dashboard</div>
+        <nav>
+            <a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}">
+                <i class="fas fa-home"></i>
+                <span>Home</span>
+            </a>
+        </nav>
+        
+        <div class="nav-section">Opportunities</div>
+        <nav>
+            <a href="/opportunities/timeline" class="nav-link {% if 'timeline' in request.path %}active{% endif %}">
+                <i class="fas fa-chart-line"></i>
+                <span>Timeline View</span>
+                <span class="badge bg-primary">NEW</span>
+            </a>
+            <a href="/opportunities/network" class="nav-link {% if 'network' in request.path %}active{% endif %}">
+                <i class="fas fa-project-diagram"></i>
+                <span>Network View</span>
+                <span class="badge bg-primary">NEW</span>
+            </a>
+            <a href="/bd-intelligence" class="nav-link {% if 'bd-intelligence' in request.path %}active{% endif %}">
+                <i class="fas fa-table"></i>
+                <span>Table View</span>
+            </a>
+            <a href="/opportunities/kanban" class="nav-link {% if 'kanban' in request.path %}active{% endif %}">
+                <i class="fas fa-columns"></i>
+                <span>Kanban Board</span>
+                <span class="badge bg-success">NEW</span>
+            </a>
+        </nav>
+        
+        <div class="nav-section">Intelligence</div>
+        <nav>
+            <a href="/contacts" class="nav-link {% if request.path == '/contacts' %}active{% endif %}">
+                <i class="fas fa-users"></i>
+                <span>Contacts</span>
+                <span class="badge bg-info" id="contacts-count">0</span>
+            </a>
+            <a href="/staff" class="nav-link {% if 'staff' in request.path %}active{% endif %}">
+                <i class="fas fa-user-tie"></i>
+                <span>Staff & Capabilities</span>
+                <span class="badge bg-warning">NEW</span>
+            </a>
+            <a href="/competitive-intel" class="nav-link {% if 'competitive' in request.path %}active{% endif %}">
+                <i class="fas fa-chart-bar"></i>
+                <span>Competitive Intel</span>
+            </a>
+        </nav>
+        
+        <div class="nav-section">AI Agents</div>
+        <nav>
+            <a href="/agents/dashboard" class="nav-link {% if 'agents/dashboard' in request.path %}active{% endif %}">
+                <i class="fas fa-robot"></i>
+                <span>Agent Dashboard</span>
+                <span class="badge" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">6</span>
+            </a>
+        </nav>
+        
+        <div class="nav-section">System</div>
+        <nav>
+            <a href="/admin" class="nav-link {% if 'admin' in request.path %}active{% endif %}">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </a>
+            <a href="/admin/data" class="nav-link">
+                <i class="fas fa-database"></i>
+                <span>Data Management</span>
+            </a>
+        </nav>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-0" style="color: #fff;">{% block page_title %}Dashboard{% endblock %}</h5>
+                    <p class="text-muted small mb-0">{% block page_subtitle %}{% endblock %}</p>
+                </div>
+                
+                <div class="d-flex align-items-center gap-3">
+                    {% block top_actions %}
+                    <button class="btn btn-outline-primary btn-sm" onclick="refreshData()">
+                        <i class="fas fa-sync-alt me-2"></i>Refresh
+                    </button>
+                    <button class="btn btn-primary btn-sm" onclick="exportToExcel()">
+                        <i class="fas fa-file-excel me-2"></i>Export
+                    </button>
+                    {% endblock %}
+                    
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-2"></i>Admin
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" style="background: #151b3d; border: 1px solid #2d3748;">
+                            <li><a class="dropdown-menu dropdown-item" href="/admin" style="color: #a0aec0;">Settings</a></li>
+                            <li><hr class="dropdown-divider" style="border-color: #2d3748;"></li>
+                            <li><a class="dropdown-item" href="#" style="color: #a0aec0;">Logout</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Stats Bar (optional - shown on some pages) -->
+        {% block stats_bar %}{% endblock %}
+        
+        <!-- Content Area -->
+        <div class="content-area">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Common JavaScript -->
+    <script>
+        // Refresh data
+        async function refreshData() {
+            const btn = event.target.closest('button');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Refreshing...';
+            btn.disabled = true;
+            
+            try {
+                // Reload current page
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                window.location.reload();
+            } catch (error) {
+                console.error('Error refreshing:', error);
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+            }
+        }
+        
+        // Export to Excel
+        async function exportToExcel() {
+            const btn = event.target.closest('button');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Exporting...';
+            btn.disabled = true;
+            
+            try {
+                const res = await fetch('/api/agents/excel/export', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({})
+                });
+                
+                const data = await res.json();
+                
+                if (data.status === 'success') {
+                    alert(`✓ Excel Export Complete!\n\nFile: ${data.filename}\n\nSaved in knowledge_graph folder.`);
+                } else {
+                    alert('Error: ' + (data.error || 'Export failed'));
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            } finally {
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+            }
+        }
+        
+        // Update contact count from API
+        async function updateStats() {
+            try {
+                const res = await fetch('/api/dashboard/stats');
+                const data = await res.json();
+                
+                if (data.contacts) {
+                    document.getElementById('contacts-count').textContent = data.contacts;
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+        
+        // Load stats on page load
+        document.addEventListener('DOMContentLoaded', updateStats);
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Details - Federal Contracting</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Archivo:wght@300;500;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #0A2540;
+            --secondary: #1E4D7B;
+            --accent: #00D4FF;
+            --success: #00C896;
+            --warning: #FFB020;
+            --danger: #FF4757;
+            --bg: #0D1117;
+            --surface: #161B22;
+            --surface-light: #1F2937;
+            --text: #E6EDF3;
+            --text-muted: #8B949E;
+            --border: #30363D;
+        }
+        
+        body {
+            font-family: 'Archivo', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            padding: 1.5rem 2rem;
+            border-bottom: 2px solid var(--accent);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        h1 {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--accent);
+            text-transform: uppercase;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .nav-link {
+            padding: 0.6rem 1.2rem;
+            background: transparent;
+            border: 1px solid var(--accent);
+            border-radius: 6px;
+            color: var(--accent);
+            text-decoration: none;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            background: rgba(0, 212, 255, 0.1);
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .contact-header {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .contact-name {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+        
+        .contact-title {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+        
+        .badges {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+        
+        .badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .badge-role {
+            background: rgba(255, 107, 107, 0.2);
+            color: #FF6B6B;
+        }
+        
+        .badge-influence {
+            background: rgba(255, 176, 32, 0.2);
+            color: var(--warning);
+        }
+        
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        
+        @media (max-width: 968px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: 140px 1fr;
+            gap: 0.75rem;
+            line-height: 1.8;
+        }
+        
+        .info-label {
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        
+        .info-value {
+            color: var(--text);
+        }
+        
+        .relationship-card {
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .relationship-name {
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 0.25rem;
+        }
+        
+        .relationship-type {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+        
+        .interaction-card {
+            background: var(--surface-light);
+            border-left: 3px solid var(--accent);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .interaction-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 0.75rem;
+        }
+        
+        .interaction-type {
+            font-weight: 700;
+            color: var(--accent);
+        }
+        
+        .interaction-date {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+        
+        .interaction-subject {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .interaction-summary {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        
+        .outcome-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+        
+        .outcome-positive {
+            background: rgba(0, 200, 150, 0.2);
+            color: var(--success);
+        }
+        
+        .outcome-neutral {
+            background: rgba(0, 212, 255, 0.2);
+            color: var(--accent);
+        }
+        
+        .outcome-negative {
+            background: rgba(255, 71, 87, 0.2);
+            color: var(--danger);
+        }
+        
+        .tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+        }
+        
+        .loading-spinner {
+            border: 3px solid var(--surface-light);
+            border-top: 3px solid var(--accent);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1 id="pageTitle">Loading...</h1>
+            <div class="nav-links">
+                <a href="/contacts" class="nav-link">← Back to Contacts</a>
+                <a href="/network" class="nav-link">Network View</a>
+                <a href="/" class="nav-link">Dashboard</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="loadingState" class="loading">
+            <div class="loading-spinner"></div>
+            <p>Loading contact details...</p>
+        </div>
+
+        <div id="contactContent" style="display: none;">
+            <!-- Contact Header -->
+            <div class="contact-header">
+                <div class="contact-name" id="contactName"></div>
+                <div class="contact-title" id="contactTitle"></div>
+                <div id="contactOrg"></div>
+                <div class="badges" id="badges"></div>
+                <div id="tags" style="margin-top: 1rem;"></div>
+            </div>
+
+            <div class="content-grid">
+                <!-- Left Column -->
+                <div>
+                    <!-- Contact Information -->
+                    <div class="section">
+                        <div class="section-title">📞 Contact Information</div>
+                        <div class="info-grid" id="contactInfo"></div>
+                    </div>
+
+                    <!-- Relationships -->
+                    <div class="section">
+                        <div class="section-title">🤝 Relationships</div>
+                        <div id="relationships"></div>
+                    </div>
+
+                    <!-- AI Professional Research -->
+                    <div class="section">
+                        <div class="section-title" style="display: flex; justify-content: space-between; align-items: center;">
+                            <span>🤖 Professional Research</span>
+                            <button id="researchBtn" class="btn btn-sm" style="
+                                background: linear-gradient(135deg, #00D4FF 0%, #0099CC 100%);
+                                color: #0D1117;
+                                border: none;
+                                padding: 0.35rem 0.75rem;
+                                border-radius: 6px;
+                                font-weight: 600;
+                                font-size: 0.8rem;
+                                cursor: pointer;
+                                font-family: 'IBM Plex Mono', monospace;
+                            " onclick="runResearch()">
+                                <i class="fas fa-search me-1"></i> Research
+                            </button>
+                        </div>
+                        <div id="researchResults">
+                            <div class="empty-state" style="color: var(--text-muted); font-size: 0.9rem; padding: 1rem 0;">
+                                Click <strong style="color: var(--accent);">Research</strong> to have the AI buddy look up this contact's public professional writings and interests.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column -->
+                <div>
+                    <!-- Interaction History -->
+                    <div class="section">
+                        <div class="section-title">📝 Interaction History</div>
+                        <div id="interactions"></div>
+                    </div>
+                    
+                    <!-- Notes -->
+                    <div class="section">
+                        <div class="section-title">📋 Notes</div>
+                        <div id="notes"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const contactId = {{ contact_id }};
+
+        async function loadContact() {
+            try {
+                const response = await fetch(`/api/contacts/${contactId}`);
+                
+                if (!response.ok) {
+                    throw new Error('Contact not found');
+                }
+                
+                // API returns { contact: {...}, interactions: [...], relationships: [...] }
+                const data = await response.json();
+                const contact = data.contact;
+                const interactions = data.interactions || [];
+                const relationships = data.relationships || [];
+
+                currentContact = contact;  // store for research button
+
+                // Split name into display parts (DB stores single 'name' field)
+                const nameParts = (contact.name || '').split(' ');
+                const firstName = nameParts.slice(0, -1).join(' ') || contact.name || 'Unknown';
+                const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
+                const fullName = contact.name || 'Unknown';
+
+                // Update page title
+                document.getElementById('pageTitle').textContent = `👤 ${fullName}`;
+                
+                // Update contact header
+                document.getElementById('contactName').textContent = fullName;
+                document.getElementById('contactTitle').textContent = contact.title || 'No title specified';
+                document.getElementById('contactOrg').textContent = [contact.organization, contact.role].filter(Boolean).join(' • ') || 'No organization';
+                
+                // Badges
+                const badgesHtml = `
+                    <div class="badge badge-role">${contact.role || 'Contact'}</div>
+                    <div class="badge badge-influence">${contact.relationship_strength || 'New'}</div>
+                `;
+                document.getElementById('badges').innerHTML = badgesHtml;
+                
+                // Contact info
+                const infoHtml = `
+                    <div class="info-label">Email:</div>
+                    <div class="info-value">${contact.email || 'N/A'}</div>
+                    
+                    <div class="info-label">Phone:</div>
+                    <div class="info-value">${contact.phone || 'N/A'}</div>
+                    
+                    <div class="info-label">Organization:</div>
+                    <div class="info-value">${contact.organization || 'N/A'}</div>
+
+                    <div class="info-label">Role:</div>
+                    <div class="info-value">${contact.role || 'N/A'}</div>
+
+                    <div class="info-label">Last Contact:</div>
+                    <div class="info-value">${contact.last_contact || 'N/A'}</div>
+
+                    <div class="info-label">Source:</div>
+                    <div class="info-value">${contact.source || 'N/A'}</div>
+                    
+                    ${contact.linkedin_url ? `
+                        <div class="info-label">LinkedIn:</div>
+                        <div class="info-value"><a href="${contact.linkedin_url}" target="_blank" style="color: var(--accent);">View Profile</a></div>
+                    ` : ''}
+                `;
+                document.getElementById('contactInfo').innerHTML = infoHtml;
+                
+                // Relationships
+                if (relationships.length > 0) {
+                    document.getElementById('relationships').innerHTML = relationships.map(rel => `
+                        <div class="relationship-card">
+                            <div class="relationship-name">${rel.related_contact_name || 'Unknown'}</div>
+                            <div class="relationship-type">${rel.relationship_type || 'Related'} • ${rel.strength || 'Unknown'} relationship</div>
+                            ${rel.notes ? `<div style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem;">${rel.notes}</div>` : ''}
+                        </div>
+                    `).join('');
+                } else {
+                    document.getElementById('relationships').innerHTML = '<div class="empty-state">No relationships recorded</div>';
+                }
+                
+                // Interactions
+                if (interactions.length > 0) {
+                    document.getElementById('interactions').innerHTML = interactions.map(int => `
+                        <div class="interaction-card">
+                            <div class="interaction-header">
+                                <div class="interaction-type">${int.interaction_type || 'Unknown'}</div>
+                                <div class="interaction-date">${int.interaction_date || ''}</div>
+                            </div>
+                            <div class="interaction-summary">${int.notes || 'No notes'}</div>
+                        </div>
+                    `).join('');
+                } else {
+                    document.getElementById('interactions').innerHTML = '<div class="empty-state">No interactions recorded</div>';
+                }
+                
+                // Notes
+                document.getElementById('notes').innerHTML = contact.notes || '<div class="empty-state">No notes</div>';
+                
+                // Show content, hide loading
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('contactContent').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error loading contact:', error);
+                document.getElementById('loadingState').innerHTML = `
+                    <h3>Error Loading Contact</h3>
+                    <p>${error.message}</p>
+                    <a href="/contacts" class="nav-link" style="display: inline-block; margin-top: 1rem;">← Back to Contacts</a>
+                `;
+            }
+        }
+
+        // ---------------------------------------------------------------
+        // AI Professional Research
+        // ---------------------------------------------------------------
+        let currentContact = null;  // filled after loadContact() runs
+
+        async function runResearch(forceRefresh = false) {
+            if (!currentContact) {
+                alert('Contact not loaded yet.');
+                return;
+            }
+
+            const btn = document.getElementById('researchBtn');
+            const resultsDiv = document.getElementById('researchResults');
+
+            // Button state: loading
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Researching...';
+            btn.style.opacity = '0.7';
+
+            resultsDiv.innerHTML = `
+                <div style="padding: 1.5rem; text-align: center; color: var(--text-muted);">
+                    <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🔍</div>
+                    <div style="font-size: 0.9rem;">AI buddy is searching the web...</div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem;">This may take 10-20 seconds</div>
+                </div>
+            `;
+
+            try {
+                const payload = {
+                    id: currentContact.id ? String(currentContact.id) : '',
+                    name: currentContact.name || '',
+                    title: currentContact.title || '',
+                    agency: currentContact.organization || '',
+                    organization: currentContact.organization || '',
+                    email: currentContact.email || '',
+                    force_refresh: forceRefresh
+                };
+
+                const resp = await fetch('/api/agents/contacts/research', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await resp.json();
+                renderResearchResults(data);
+
+            } catch (err) {
+                resultsDiv.innerHTML = `
+                    <div style="padding: 1rem; color: var(--danger); font-size: 0.9rem;">
+                        ⚠️ Research failed: ${err.message}
+                    </div>
+                `;
+            }
+
+            // Button state: ready
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-search me-1"></i> Research';
+            btn.style.opacity = '1';
+        }
+
+        function renderResearchResults(data) {
+            const div = document.getElementById('researchResults');
+
+            if (data.error) {
+                div.innerHTML = `<div style="color: var(--danger); padding: 0.75rem; font-size: 0.9rem;">⚠️ ${data.error}</div>`;
+                return;
+            }
+
+            // Confidence badge color
+            const confColor = {
+                'high': 'var(--success)',
+                'medium': 'var(--warning)',
+                'low': '#FF6B6B',
+                'none': 'var(--text-muted)',
+                'demo': 'var(--accent)'
+            }[data.confidence] || 'var(--text-muted)';
+
+            // Refresh button
+            const refreshHtml = `
+                <div style="text-align: right; margin-bottom: 0.5rem;">
+                    <button onclick="runResearch(true)" style="
+                        background: none; border: 1px solid var(--border);
+                        color: var(--text-muted); padding: 0.2rem 0.5rem;
+                        border-radius: 4px; cursor: pointer; font-size: 0.75rem;
+                    ">↻ Refresh</button>
+                </div>
+            `;
+
+            // Summary block
+            const summaryHtml = `
+                <div style="
+                    background: var(--surface); border: 1px solid var(--border);
+                    border-radius: 8px; padding: 1rem; margin-bottom: 1rem;
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                        <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">SUMMARY</span>
+                        <span style="
+                            background: ${confColor}22; color: ${confColor};
+                            padding: 0.15rem 0.5rem; border-radius: 10px;
+                            font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+                            font-family: 'IBM Plex Mono', monospace;
+                        ">Confidence: ${data.confidence || 'N/A'}</span>
+                    </div>
+                    <div style="font-size: 0.9rem; line-height: 1.5; color: var(--text);">
+                        ${data.summary || 'No summary available.'}
+                    </div>
+                </div>
+            `;
+
+            // Helper to render a tag list section
+            function tagSection(title, icon, items, color) {
+                if (!items || items.length === 0) return '';
+                return `
+                    <div style="margin-bottom: 0.85rem;">
+                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.3rem; text-transform: uppercase;">${icon} ${title}</div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 0.35rem;">
+                            ${items.map(item => `
+                                <span style="
+                                    background: ${color}15; color: ${color};
+                                    padding: 0.2rem 0.55rem; border-radius: 12px;
+                                    font-size: 0.8rem; border: 1px solid ${color}30;
+                                ">${item}</span>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Talking points (highlighted differently — these are actionable)
+            let talkingPointsHtml = '';
+            if (data.talking_points && data.talking_points.length > 0) {
+                talkingPointsHtml = `
+                    <div style="margin-bottom: 0.85rem;">
+                        <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin-bottom: 0.4rem; text-transform: uppercase;">💡 Suggested Talking Points</div>
+                        ${data.talking_points.map((tp, i) => `
+                            <div style="
+                                background: var(--surface); border-left: 3px solid var(--accent);
+                                padding: 0.5rem 0.75rem; margin-bottom: 0.4rem;
+                                border-radius: 0 6px 6px 0; font-size: 0.85rem; color: var(--text);
+                            ">${tp}</div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            // Sources
+            let sourcesHtml = '';
+            if (data.sources && data.sources.length > 0) {
+                sourcesHtml = `
+                    <div style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border);">
+                        <div style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.3rem;">Sources</div>
+                        ${data.sources.map(s => `
+                            <div style="font-size: 0.75rem; margin-bottom: 0.15rem;">
+                                <a href="${s}" target="_blank" style="color: var(--accent); text-decoration: none;" title="${s}">
+                                    ${s.replace(/^https?:\/\//, '').replace(/\/.*$/, '')} →
+                                </a>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            // Demo mode note
+            let demoHtml = '';
+            if (data.confidence === 'demo' || data.method === 'fallback') {
+                demoHtml = `
+                    <div style="
+                        background: var(--surface); border: 1px solid var(--border);
+                        border-radius: 6px; padding: 0.6rem 0.75rem; margin-top: 0.75rem;
+                        font-size: 0.78rem; color: var(--text-muted);
+                    ">
+                        ℹ️ This is demo data. Real research requires ANTHROPIC_API_KEY configured in your .env file.
+                    </div>
+                `;
+            }
+
+            div.innerHTML = refreshHtml + summaryHtml
+                + tagSection('Key Interests', '🎯', data.key_interests, 'var(--accent)')
+                + tagSection('Technical Focus', '⚙️', data.technical_focus, 'var(--success)')
+                + tagSection('Priorities', '📌', data.priorities, 'var(--warning)')
+                + talkingPointsHtml
+                + sourcesHtml
+                + demoHtml;
+        }
+
+        // Load on page load
+        document.addEventListener('DOMContentLoaded', loadContact);
+    </script>
+</body>
+</html>

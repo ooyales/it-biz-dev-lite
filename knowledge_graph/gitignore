@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+dist/
+*.egg-info/
+
+# Environment variables
+.env
+config.yaml
+
+# API keys and secrets
+*_api_key.txt
+*_password.txt
+*.key
+
+# Data and cache files
+processed_opportunities.json
+collection_summary.json
+*.db
+*.sqlite
+
+# Neo4j
+neo4j/
+
+# Logs
+*.log
+logs/
+
+# macOS
+.DS_Store
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo

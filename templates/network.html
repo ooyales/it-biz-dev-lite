@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relationship Network - Federal Contracting</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Archivo:wght@300;500;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #0A2540;
+            --secondary: #1E4D7B;
+            --accent: #00D4FF;
+            --success: #00C896;
+            --warning: #FFB020;
+            --danger: #FF4757;
+            --bg: #0D1117;
+            --surface: #161B22;
+            --surface-light: #1F2937;
+            --text: #E6EDF3;
+            --text-muted: #8B949E;
+            --border: #30363D;
+        }
+        
+        body {
+            font-family: 'Archivo', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            padding: 1.5rem 2rem;
+            border-bottom: 2px solid var(--accent);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        h1 {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--accent);
+            text-transform: uppercase;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .nav-link {
+            padding: 0.6rem 1.2rem;
+            background: transparent;
+            border: 1px solid var(--accent);
+            border-radius: 6px;
+            color: var(--accent);
+            text-decoration: none;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            background: rgba(0, 212, 255, 0.1);
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .controls {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .control-group label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        
+        select, input {
+            padding: 0.5rem;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 0.9rem;
+        }
+        
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 6px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+        
+        .btn-primary {
+            background: var(--accent);
+            color: var(--primary);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .network-container {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        #network {
+            width: 100%;
+            height: 700px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: #0a0e14;
+        }
+        
+        .legend {
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .legend-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        
+        .legend-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .legend-icon {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+        }
+        
+        .legend-label {
+            font-size: 0.85rem;
+            color: var(--text);
+        }
+        
+        .tooltip {
+            position: absolute;
+            background: var(--surface);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            padding: 1rem;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            max-width: 300px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+        }
+        
+        .tooltip.active {
+            opacity: 1;
+        }
+        
+        .tooltip-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+        
+        .tooltip-info {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+        
+        /* Network node styles */
+        .node circle {
+            stroke: var(--border);
+            stroke-width: 2px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .node:hover circle {
+            stroke: var(--accent);
+            stroke-width: 3px;
+        }
+        
+        .node text {
+            font-size: 11px;
+            font-family: 'Archivo', sans-serif;
+            fill: var(--text);
+            pointer-events: none;
+        }
+        
+        .link {
+            stroke: var(--border);
+            stroke-opacity: 0.6;
+            stroke-width: 1.5px;
+        }
+        
+        .link-label {
+            font-size: 9px;
+            fill: var(--text-muted);
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>🕸️ Relationship Network</h1>
+            <div class="nav-links">
+                <a href="/" class="nav-link">← Dashboard</a>
+                <a href="/contacts" class="nav-link">Contacts</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Statistics -->
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-label">Total Contacts</div>
+                <div class="stat-value" id="totalContacts">-</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Relationships</div>
+                <div class="stat-value" id="totalRelationships">-</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Agencies</div>
+                <div class="stat-value" id="totalAgencies">-</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Decision Makers</div>
+                <div class="stat-value" id="decisionMakers">-</div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <div class="control-group">
+                <label>Filter by Agency</label>
+                <select id="agencyFilter" onchange="filterNetwork()">
+                    <option value="all">All Agencies</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Filter by Role</label>
+                <select id="roleFilter" onchange="filterNetwork()">
+                    <option value="all">All Roles</option>
+                    <option value="Decision Maker">Decision Makers</option>
+                    <option value="Technical Lead">Technical Leads</option>
+                    <option value="Executive">Executives</option>
+                    <option value="Influencer">Influencers</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Highlight</label>
+                <input type="text" id="searchBox" placeholder="Search contacts..." oninput="highlightNodes()">
+            </div>
+            <div class="control-group">
+                <label>&nbsp;</label>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <button class="btn btn-primary" onclick="zoomToMatches()" style="background: var(--success);">
+                        🔍 Zoom to Matches
+                    </button>
+                    <span id="searchResults" style="font-size: 0.85rem; color: var(--text-muted); min-width: 120px;"></span>
+                </div>
+            </div>
+            <div class="control-group">
+                <label>&nbsp;</label>
+                <button class="btn btn-primary" onclick="resetNetwork()">Reset View</button>
+            </div>
+        </div>
+
+        <!-- Network Visualization -->
+        <div class="network-container">
+            <svg id="network"></svg>
+        </div>
+
+        <!-- Legend -->
+        <div class="legend">
+            <div class="legend-title">Node Types</div>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <div class="legend-icon" style="background: #FF6B6B;"></div>
+                    <div class="legend-label">Decision Maker</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-icon" style="background: #4ECDC4;"></div>
+                    <div class="legend-label">Technical Lead</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-icon" style="background: #FFE66D;"></div>
+                    <div class="legend-label">Executive</div>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-icon" style="background: #95E1D3;"></div>
+                    <div class="legend-label">Influencer</div>
+                </div>
+            </div>
+            <div class="legend-title" style="margin-top: 1.5rem;">Connection Strength</div>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <svg width="40" height="2"><line x1="0" y1="1" x2="40" y2="1" stroke="var(--accent)" stroke-width="3"/></svg>
+                    <div class="legend-label">Strong</div>
+                </div>
+                <div class="legend-item">
+                    <svg width="40" height="2"><line x1="0" y1="1" x2="40" y2="1" stroke="var(--accent)" stroke-width="2"/></svg>
+                    <div class="legend-label">Medium</div>
+                </div>
+                <div class="legend-item">
+                    <svg width="40" height="2"><line x1="0" y1="1" x2="40" y2="1" stroke="var(--accent)" stroke-width="1" stroke-dasharray="3,3"/></svg>
+                    <div class="legend-label">Weak</div>
+                </div>
+            </div>
+            <div class="legend-title" style="margin-top: 1.5rem;">Usage Tips</div>
+            <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.8;">
+                <div>💡 <strong>Search by organization:</strong> Type "USN" or "Navy" to highlight all contacts at that agency</div>
+                <div>💡 <strong>Click</strong> any node to view contact details</div>
+                <div>💡 <strong>Shift+Click</strong> to highlight a contact's immediate network without leaving this page</div>
+                <div>💡 <strong>Drag</strong> nodes to rearrange • <strong>Scroll</strong> to zoom • <strong>Click+drag background</strong> to pan</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tooltip -->
+    <div id="tooltip" class="tooltip">
+        <div class="tooltip-name"></div>
+        <div class="tooltip-info"></div>
+    </div>
+
+    <script src="/static/network.js"></script>
+</body>
+</html>

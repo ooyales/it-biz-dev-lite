@@ -1,0 +1,93 @@
+======================================================================
+CAPABILITY MATCH ANALYSIS
+======================================================================
+
+Opportunity: Cloud Migration and Cybersecurity Services
+Agency: Department of Defense
+
+Capability Score: 24/100
+Technical Win Probability: Very Low (<25%)
+
+Recommendation: WEAK MATCH - Major capability gaps, reconsider or find strong partner
+
+
+REQUIREMENTS ANALYSIS
+----------------------------------------------------------------------
+Total Requirements: 12
+Matched: 8
+Unmatched: 4
+
+
+DETAILED REQUIREMENTS:
+
+✗ [MANDATORY] Secret clearance required
+
+✓ [OPTIONAL] CISSP certification
+   Matched by: John Smith, Mike Williams
+
+✓ [OPTIONAL] Python experience
+   Matched by: John Smith, Sarah Johnson
+
+✓ [OPTIONAL] Java experience
+   Matched by: John Smith
+
+✗ [OPTIONAL] Cloud experience
+
+✓ [OPTIONAL] AWS experience
+   Matched by: Robert Chen
+
+✓ [OPTIONAL] Azure experience
+   Matched by: Robert Chen
+
+✓ [OPTIONAL] Kubernetes experience
+   Matched by: John Smith
+
+✗ [OPTIONAL] AI experience
+
+✓ [OPTIONAL] Cybersecurity experience
+   Matched by: Mike Williams
+
+✓ [OPTIONAL] DevOps experience
+   Matched by: John Smith
+
+✗ [MANDATORY] 5+ years of experience required
+
+
+STAFF ASSIGNMENTS:
+----------------------------------------------------------------------
+
+John Smith:
+  • CISSP certification
+  • Python experience
+  • Java experience
+  • Kubernetes experience
+  • DevOps experience
+
+Mike Williams:
+  • CISSP certification
+  • Cybersecurity experience
+
+Sarah Johnson:
+  • Python experience
+
+Robert Chen:
+  • AWS experience
+  • Azure experience
+
+
+CAPABILITY GAPS:
+----------------------------------------------------------------------
+
+[High] Secret clearance required
+  → Must hire or team for this capability
+
+[Medium] Cloud experience
+  → Nice to have, consider hiring or teaming
+
+[Medium] AI experience
+  → Nice to have, consider hiring or teaming
+
+[High] 5+ years of experience required
+  → Must hire or team for this capability
+
+======================================================================

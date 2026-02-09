@@ -1,0 +1,31 @@
+# Federal Contracting AI Assistant - Python Dependencies
+
+# Core dependencies
+anthropic>=0.40.0
+pyyaml>=6.0
+requests>=2.31.0
+
+# Web dashboard dependencies
+flask>=3.0.0
+flask-cors>=4.0.0
+jinja2>=3.1.0
+markupsafe>=2.1.0
+werkzeug>=3.0.0
+
+# Optional dependencies for notifications
+# Uncomment if you plan to use email notifications
+
+# For scheduling (if using cron alternatives)
+schedule>=1.2.0
+
+# For enhanced logging and monitoring
+python-json-logger>=2.0.7
+
+# For data analysis (optional)
+pandas>=2.0.0
+
+# For environment variable management
+python-dotenv>=1.0.0
+
+# For knowledge graph (Neo4j)
+neo4j>=5.0.0

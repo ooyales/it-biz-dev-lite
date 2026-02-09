@@ -1,0 +1,761 @@
+{% extends "base-ultimate.html" %}
+
+{% block title %}Network View - BD Intelligence{% endblock %}
+{% block page_title %}Relationship Network{% endblock %}
+{% block page_subtitle %}Interactive visualization of opportunities, contacts, and organizations{% endblock %}
+
+{% block stats_bar %}
+<div class="stats-bar">
+    <div class="stat-item">
+        <div class="stat-icon purple">
+            <i class="fas fa-circle"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="node-count">0</h4>
+            <p>Total Nodes</p>
+        </div>
+    </div>
+    
+    <div class="stat-item">
+        <div class="stat-icon blue">
+            <i class="fas fa-bullseye"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="opp-nodes">0</h4>
+            <p>Opportunities</p>
+        </div>
+    </div>
+    
+    <div class="stat-item">
+        <div class="stat-icon green">
+            <i class="fas fa-user"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="contact-nodes">0</h4>
+            <p>Contacts</p>
+        </div>
+    </div>
+    
+    <div class="stat-item">
+        <div class="stat-icon orange">
+            <i class="fas fa-building"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="org-nodes">0</h4>
+            <p>Organizations</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block top_actions %}
+<div class="view-switcher">
+    <button class="btn" onclick="window.location.href='/opportunities/timeline'">
+        <i class="fas fa-chart-line me-1"></i>Timeline
+    </button>
+    <button class="btn active" onclick="window.location.href='/opportunities/network'">
+        <i class="fas fa-project-diagram me-1"></i>Network
+    </button>
+    <button class="btn" onclick="window.location.href='/bd-intelligence'">
+        <i class="fas fa-table me-1"></i>Table
+    </button>
+    <button class="btn" onclick="window.location.href='/opportunities/kanban'">
+        <i class="fas fa-columns me-1"></i>Kanban
+    </button>
+</div>
+
+<div class="btn-group">
+    <button class="btn btn-outline-primary btn-sm" onclick="zoomIn()">
+        <i class="fas fa-search-plus"></i>
+    </button>
+    <button class="btn btn-outline-primary btn-sm" onclick="zoomOut()">
+        <i class="fas fa-search-minus"></i>
+    </button>
+    <button class="btn btn-outline-primary btn-sm" onclick="resetZoom()">
+        <i class="fas fa-compress"></i>
+    </button>
+</div>
+
+<button class="btn btn-primary btn-sm" onclick="togglePhysics()">
+    <i class="fas fa-pause" id="physics-icon"></i>
+    <span id="physics-text">Pause</span>
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body p-0">
+        <!-- Network SVG Container -->
+        <div id="network-container" style="width: 100%; height: 700px; position: relative; background: #0a0e27;">
+            <svg id="network-svg"></svg>
+            
+            <!-- Loading State -->
+            <div id="network-loading" class="text-center py-5" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;"></div>
+                <p class="text-muted">Building relationship network...</p>
+                <p class="small text-muted">Loading opportunities, contacts, and organizations</p>
+            </div>
+            
+            <!-- Controls Overlay -->
+            <div style="position: absolute; top: 20px; right: 20px; background: rgba(21, 27, 61, 0.95); padding: 1rem; border-radius: 8px; border: 1px solid #2d3748; min-width: 220px;">
+                <h6 class="mb-3" style="color: #fff; font-size: 0.875rem;">Network Controls</h6>
+                
+                <!-- Search Input -->
+                <div class="mb-3">
+                    <label class="form-label small text-muted" style="margin-bottom: 0.25rem;">
+                        <i class="fas fa-search me-1"></i>Search
+                    </label>
+                    <input type="text" 
+                           id="network-search" 
+                           class="form-control form-control-sm" 
+                           placeholder="Name, org, agency..." 
+                           oninput="highlightNetworkNodes()"
+                           style="background: #1a202c; border-color: #2d3748; color: #e2e8f0; font-size: 0.8rem;">
+                    <div id="search-results" class="small mt-1" style="color: #48bb78; min-height: 1rem;"></div>
+                </div>
+                
+                <hr style="border-color: #2d3748; margin: 0.75rem 0;">
+                
+                <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" id="show-opps" checked onchange="updateVisibility()">
+                    <label class="form-check-label small text-muted" for="show-opps">
+                        Show Opportunities
+                    </label>
+                </div>
+                <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" id="show-contacts" checked onchange="updateVisibility()">
+                    <label class="form-check-label small text-muted" for="show-contacts">
+                        Show Contacts
+                    </label>
+                </div>
+                <div class="form-check form-switch mb-2">
+                    <input class="form-check-input" type="checkbox" id="show-orgs" checked onchange="updateVisibility()">
+                    <label class="form-check-label small text-muted" for="show-orgs">
+                        Show Organizations
+                    </label>
+                </div>
+                <hr style="border-color: #2d3748;">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="show-labels" onchange="toggleLabels()">
+                    <label class="form-check-label small text-muted" for="show-labels">
+                        Show Labels
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Network Legend -->
+        <div class="p-3 border-top">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="d-flex justify-content-start gap-4 flex-wrap">
+                        <div class="d-flex align-items-center gap-2">
+                            <div style="width: 16px; height: 16px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+                            <span class="small text-muted">Opportunities (size = score)</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <div style="width: 16px; height: 16px; border-radius: 50%; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);"></div>
+                            <span class="small text-muted">Contacts (size = influence)</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <div style="width: 16px; height: 16px; border-radius: 0%; background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);"></div>
+                            <span class="small text-muted">Organizations</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 text-end">
+                    <span class="small text-muted">
+                        <i class="fas fa-search me-1"></i>Use search to highlight nodes<br>
+                        <i class="fas fa-mouse me-1"></i>Click nodes for details • Drag to reposition
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Info Panel -->
+<div class="row mt-3">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-info-circle me-2"></i>Selected Node
+            </div>
+            <div class="card-body" id="node-info">
+                <p class="text-muted small">Click a node to see details</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-link me-2"></i>Connections
+            </div>
+            <div class="card-body" id="connections-info">
+                <p class="text-muted small">Node connections will appear here</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals (same as timeline) -->
+<div class="modal fade" id="opportunityModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h5 class="modal-title text-white" id="modalTitle">Opportunity Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <div class="text-center py-5">
+                    <div class="spinner-border"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="contactModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);">
+                <h5 class="modal-title text-white" id="contactModalTitle">Contact Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="contactModalBody">
+                <div class="text-center py-5">
+                    <div class="spinner-border"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Network Data
+let nodes = [];
+let links = [];
+let simulation;
+let svg, g, zoom;
+let nodeElements, linkElements, labelElements;
+
+// Load and build network
+async function loadNetwork() {
+    try {
+        // Load opportunities
+        const oppsRes = await fetch('/api/scout/opportunities');
+        const oppsData = await oppsRes.json();
+        const opportunities = oppsData.opportunities || [];
+        
+        // Load contacts
+        const contactsRes = await fetch('/api/contacts');
+        const contactsData = await contactsRes.json();
+        const contacts = contactsData.contacts || [];
+        
+        // Build nodes and links
+        buildNetwork(opportunities, contacts);
+        
+        // Update stats
+        updateStats();
+        
+        // Render network
+        renderNetwork();
+        
+        // Hide loading
+        document.getElementById('network-loading').style.display = 'none';
+        
+    } catch (error) {
+        console.error('Error loading network:', error);
+        document.getElementById('network-loading').innerHTML = 
+            '<div class="alert alert-danger">Error loading network data</div>';
+    }
+}
+
+function buildNetwork(opportunities, contacts) {
+    nodes = [];
+    links = [];
+    
+    // Create organization nodes (extract unique orgs)
+    const orgs = new Set();
+    opportunities.forEach(opp => {
+        const agency = opp.agency || opp.organizationName || 'Unknown';
+        orgs.add(agency);
+    });
+    contacts.forEach(contact => {
+        if (contact.organization) orgs.add(contact.organization);
+    });
+    
+    const orgNodes = Array.from(orgs).map(org => ({
+        id: `org-${org}`,
+        name: org,
+        type: 'organization',
+        size: 20
+    }));
+    
+    // Create opportunity nodes
+    const oppNodes = opportunities.slice(0, 50).map(opp => {  // Limit to 50 for performance
+        const score = (opp.scout_score || opp.score || {}).total_score || 50;
+        return {
+            id: `opp-${opp.noticeId || opp.notice_id}`,
+            name: opp.title,
+            type: 'opportunity',
+            size: Math.max(8, score / 5),
+            score: score,
+            priority: (opp.scout_score || opp.score || {}).priority || 'MEDIUM',
+            agency: opp.agency || opp.organizationName,
+            data: opp
+        };
+    });
+    
+    // Create contact nodes
+    const contactNodes = contacts.slice(0, 100).map(contact => {  // Limit to 100
+        const influence = contact.relationship_strength === 'Strong' ? 3 : 
+                         contact.relationship_strength === 'Warm' ? 2 : 1;
+        return {
+            id: `contact-${contact.id}`,
+            name: contact.name,
+            type: 'contact',
+            size: 6 + influence * 2,
+            organization: contact.organization,
+            data: contact
+        };
+    });
+    
+    // Combine all nodes
+    nodes = [...orgNodes, ...oppNodes, ...contactNodes];
+    
+    // Create links
+    // Opportunities → Organizations
+    oppNodes.forEach(opp => {
+        const orgId = `org-${opp.agency}`;
+        if (orgNodes.find(o => o.id === orgId)) {
+            links.push({
+                source: opp.id,
+                target: orgId,
+                type: 'agency'
+            });
+        }
+    });
+    
+    // Contacts → Organizations
+    contactNodes.forEach(contact => {
+        const orgId = `org-${contact.organization}`;
+        if (orgNodes.find(o => o.id === orgId)) {
+            links.push({
+                source: contact.id,
+                target: orgId,
+                type: 'works_at'
+            });
+        }
+    });
+    
+    console.log(`Network built: ${nodes.length} nodes, ${links.length} links`);
+}
+
+function renderNetwork() {
+    const container = document.getElementById('network-container');
+    const width = container.clientWidth;
+    const height = 700;
+    
+    // Clear existing
+    d3.select('#network-svg').selectAll('*').remove();
+    
+    // Create SVG
+    svg = d3.select('#network-svg')
+        .attr('width', width)
+        .attr('height', height);
+    
+    // Create zoom behavior
+    zoom = d3.zoom()
+        .scaleExtent([0.1, 4])
+        .on('zoom', (event) => {
+            g.attr('transform', event.transform);
+        });
+    
+    svg.call(zoom);
+    
+    // Create container group
+    g = svg.append('g');
+    
+    // Create force simulation
+    simulation = d3.forceSimulation(nodes)
+        .force('link', d3.forceLink(links).id(d => d.id).distance(100))
+        .force('charge', d3.forceManyBody().strength(-300))
+        .force('center', d3.forceCenter(width / 2, height / 2))
+        .force('collision', d3.forceCollide().radius(d => d.size + 5));
+    
+    // Create links
+    linkElements = g.append('g')
+        .selectAll('line')
+        .data(links)
+        .enter()
+        .append('line')
+        .style('stroke', '#2d3748')
+        .style('stroke-width', 1)
+        .style('opacity', 0.6);
+    
+    // Create nodes
+    nodeElements = g.append('g')
+        .selectAll('circle,rect')
+        .data(nodes)
+        .enter()
+        .append(d => {
+            if (d.type === 'organization') {
+                return document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            }
+            return document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        })
+        .attr('class', d => `node-${d.type}`)
+        .attr('r', d => d.type !== 'organization' ? d.size : null)
+        .attr('width', d => d.type === 'organization' ? d.size * 2 : null)
+        .attr('height', d => d.type === 'organization' ? d.size * 2 : null)
+        .style('fill', d => {
+            if (d.type === 'opportunity') {
+                return d.priority === 'HIGH' ? 'url(#gradient-opp-high)' :
+                       d.priority === 'MEDIUM' ? 'url(#gradient-opp-med)' :
+                       'url(#gradient-opp-low)';
+            } else if (d.type === 'contact') {
+                return 'url(#gradient-contact)';
+            } else {
+                return 'url(#gradient-org)';
+            }
+        })
+        .style('stroke', '#fff')
+        .style('stroke-width', 2)
+        .style('cursor', 'pointer')
+        .call(d3.drag()
+            .on('start', dragStarted)
+            .on('drag', dragged)
+            .on('end', dragEnded))
+        .on('click', (event, d) => {
+            event.stopPropagation();
+            selectNode(d);
+        })
+        .on('mouseover', function(event, d) {
+            d3.select(this)
+                .style('stroke', '#667eea')
+                .style('stroke-width', 3);
+            showTooltip(event, d);
+        })
+        .on('mouseout', function(event, d) {
+            if (!d.selected) {
+                d3.select(this)
+                    .style('stroke', '#fff')
+                    .style('stroke-width', 2);
+            }
+            hideTooltip();
+        });
+    
+    // Create labels (hidden by default)
+    labelElements = g.append('g')
+        .selectAll('text')
+        .data(nodes)
+        .enter()
+        .append('text')
+        .text(d => d.name.substring(0, 20))
+        .style('font-size', '10px')
+        .style('fill', '#a0aec0')
+        .style('pointer-events', 'none')
+        .style('text-anchor', 'middle')
+        .style('display', 'none');
+    
+    // Define gradients
+    const defs = svg.append('defs');
+    
+    addGradient(defs, 'gradient-opp-high', '#667eea', '#764ba2');
+    addGradient(defs, 'gradient-opp-med', '#4299e1', '#3182ce');
+    addGradient(defs, 'gradient-opp-low', '#718096', '#4a5568');
+    addGradient(defs, 'gradient-contact', '#48bb78', '#38a169');
+    addGradient(defs, 'gradient-org', '#ed8936', '#dd6b20');
+    
+    // Update positions on simulation tick
+    simulation.on('tick', () => {
+        linkElements
+            .attr('x1', d => d.source.x)
+            .attr('y1', d => d.source.y)
+            .attr('x2', d => d.target.x)
+            .attr('y2', d => d.target.y);
+        
+        nodeElements
+            .attr('cx', d => d.type !== 'organization' ? d.x : null)
+            .attr('cy', d => d.type !== 'organization' ? d.y : null)
+            .attr('x', d => d.type === 'organization' ? d.x - d.size : null)
+            .attr('y', d => d.type === 'organization' ? d.y - d.size : null);
+        
+        labelElements
+            .attr('x', d => d.x)
+            .attr('y', d => d.y + d.size + 12);
+    });
+}
+
+function addGradient(defs, id, color1, color2) {
+    const gradient = defs.append('linearGradient')
+        .attr('id', id)
+        .attr('x1', '0%').attr('y1', '0%')
+        .attr('x2', '100%').attr('y2', '100%');
+    gradient.append('stop').attr('offset', '0%').style('stop-color', color1);
+    gradient.append('stop').attr('offset', '100%').style('stop-color', color2);
+}
+
+function dragStarted(event, d) {
+    if (!event.active) simulation.alphaTarget(0.3).restart();
+    d.fx = d.x;
+    d.fy = d.y;
+}
+
+function dragged(event, d) {
+    d.fx = event.x;
+    d.fy = event.y;
+}
+
+function dragEnded(event, d) {
+    if (!event.active) simulation.alphaTarget(0);
+    d.fx = null;
+    d.fy = null;
+}
+
+function selectNode(node) {
+    // Clear previous selection
+    nodes.forEach(n => n.selected = false);
+    nodeElements.style('stroke', '#fff').style('stroke-width', 2);
+    
+    // Mark as selected
+    node.selected = true;
+    nodeElements
+        .filter(d => d.id === node.id)
+        .style('stroke', '#667eea')
+        .style('stroke-width', 4);
+    
+    // Show info
+    showNodeInfo(node);
+    
+    // Open modal if opportunity or contact
+    if (node.type === 'opportunity') {
+        openOpportunityModal(node.data);
+    } else if (node.type === 'contact') {
+        openContactModal(node.data);
+    }
+}
+
+function showNodeInfo(node) {
+    const infoPanel = document.getElementById('node-info');
+    const connectionsPanel = document.getElementById('connections-info');
+    
+    // Node info
+    let html = `<h6>${node.name}</h6>`;
+    html += `<p class="small text-muted mb-2">Type: ${node.type}</p>`;
+    
+    if (node.type === 'opportunity') {
+        html += `<p class="small mb-1">Score: ${node.score}/100</p>`;
+        html += `<p class="small mb-1">Priority: <span class="badge bg-${node.priority === 'HIGH' ? 'success' : 'info'}">${node.priority}</span></p>`;
+    }
+    
+    infoPanel.innerHTML = html;
+    
+    // Connections
+    const nodeLinks = links.filter(l => l.source.id === node.id || l.target.id === node.id);
+    let connectionsHtml = `<p class="small text-muted mb-2">${nodeLinks.length} connections</p>`;
+    
+    nodeLinks.slice(0, 10).forEach(link => {
+        const other = link.source.id === node.id ? link.target : link.source;
+        connectionsHtml += `<div class="small mb-1">→ ${other.name} (${other.type})</div>`;
+    });
+    
+    connectionsPanel.innerHTML = connectionsHtml;
+}
+
+function showTooltip(event, d) {
+    const tooltip = d3.select('body').append('div')
+        .attr('class', 'network-tooltip')
+        .style('position', 'absolute')
+        .style('background', '#151b3d')
+        .style('color', '#fff')
+        .style('padding', '8px 12px')
+        .style('border-radius', '6px')
+        .style('border', '1px solid #2d3748')
+        .style('font-size', '12px')
+        .style('pointer-events', 'none')
+        .style('z-index', '10000')
+        .html(d.name);
+    
+    tooltip
+        .style('left', (event.pageX + 10) + 'px')
+        .style('top', (event.pageY - 10) + 'px');
+}
+
+function hideTooltip() {
+    d3.selectAll('.network-tooltip').remove();
+}
+
+// Controls
+function zoomIn() {
+    svg.transition().call(zoom.scaleBy, 1.3);
+}
+
+function zoomOut() {
+    svg.transition().call(zoom.scaleBy, 0.7);
+}
+
+function resetZoom() {
+    svg.transition().call(zoom.transform, d3.zoomIdentity);
+}
+
+function togglePhysics() {
+    if (simulation.alpha() > 0) {
+        simulation.stop();
+        document.getElementById('physics-icon').className = 'fas fa-play';
+        document.getElementById('physics-text').textContent = 'Resume';
+    } else {
+        simulation.alpha(0.3).restart();
+        document.getElementById('physics-icon').className = 'fas fa-pause';
+        document.getElementById('physics-text').textContent = 'Pause';
+    }
+}
+
+function toggleLabels() {
+    const show = document.getElementById('show-labels').checked;
+    labelElements.style('display', show ? 'block' : 'none');
+}
+
+function updateVisibility() {
+    const showOpps = document.getElementById('show-opps').checked;
+    const showContacts = document.getElementById('show-contacts').checked;
+    const showOrgs = document.getElementById('show-orgs').checked;
+    
+    nodeElements
+        .style('display', d => {
+            if (d.type === 'opportunity' && !showOpps) return 'none';
+            if (d.type === 'contact' && !showContacts) return 'none';
+            if (d.type === 'organization' && !showOrgs) return 'none';
+            return 'block';
+        });
+    
+    labelElements
+        .style('display', d => {
+            if (d.type === 'opportunity' && !showOpps) return 'none';
+            if (d.type === 'contact' && !showContacts) return 'none';
+            if (d.type === 'organization' && !showOrgs) return 'none';
+            return document.getElementById('show-labels').checked ? 'block' : 'none';
+        });
+}
+
+function updateStats() {
+    const oppCount = nodes.filter(n => n.type === 'opportunity').length;
+    const contactCount = nodes.filter(n => n.type === 'contact').length;
+    const orgCount = nodes.filter(n => n.type === 'organization').length;
+    
+    document.getElementById('node-count').textContent = nodes.length;
+    document.getElementById('opp-nodes').textContent = oppCount;
+    document.getElementById('contact-nodes').textContent = contactCount;
+    document.getElementById('org-nodes').textContent = orgCount;
+}
+
+async function openOpportunityModal(opp) {
+    // Same as timeline view
+    const modal = new bootstrap.Modal(document.getElementById('opportunityModal'));
+    modal.show();
+    document.getElementById('modalTitle').textContent = opp.title;
+    // TODO: Load full details with agent actions
+}
+
+async function openContactModal(contact) {
+    const modal = new bootstrap.Modal(document.getElementById('contactModal'));
+    modal.show();
+    document.getElementById('contactModalTitle').textContent = contact.name;
+    document.getElementById('contactModalBody').innerHTML = `
+        <h6>Title:</h6>
+        <p>${contact.role || 'Unknown'}</p>
+        <h6>Organization:</h6>
+        <p>${contact.organization || 'Unknown'}</p>
+        <h6>Email:</h6>
+        <p><a href="mailto:${contact.email}">${contact.email}</a></p>
+        <h6>Relationship:</h6>
+        <p><span class="badge bg-success">${contact.relationship_strength || 'New'}</span></p>
+    `;
+}
+
+// Network search and highlight
+function highlightNetworkNodes() {
+    const searchTerm = document.getElementById('network-search').value.toLowerCase().trim();
+    const resultsEl = document.getElementById('search-results');
+    
+    if (!searchTerm) {
+        // Reset all nodes
+        if (nodeElements) {
+            nodeElements
+                .style('opacity', 1)
+                .select('circle, rect')
+                .style('stroke', null)
+                .style('stroke-width', null)
+                .style('filter', null);
+            
+            if (labelElements) {
+                labelElements.style('opacity', 1);
+            }
+        }
+        resultsEl.textContent = '';
+        return;
+    }
+    
+    let matchCount = 0;
+    const matchedNodes = [];
+    
+    // Highlight matching nodes
+    nodeElements.each(function(d) {
+        let match = false;
+        
+        // Search across different node types
+        if (d.type === 'opportunity') {
+            match = (d.name || '').toLowerCase().includes(searchTerm) ||
+                   (d.agency || '').toLowerCase().includes(searchTerm) ||
+                   (d.title || '').toLowerCase().includes(searchTerm);
+        } else if (d.type === 'contact') {
+            match = (d.name || '').toLowerCase().includes(searchTerm) ||
+                   (d.organization || '').toLowerCase().includes(searchTerm) ||
+                   (d.agency || '').toLowerCase().includes(searchTerm) ||
+                   (d.title || '').toLowerCase().includes(searchTerm);
+        } else if (d.type === 'organization') {
+            match = (d.name || '').toLowerCase().includes(searchTerm);
+        }
+        
+        if (match) {
+            matchCount++;
+            matchedNodes.push(d);
+        }
+        
+        // Apply visual highlighting
+        d3.select(this)
+            .style('opacity', match ? 1 : 0.2)
+            .select('circle, rect')
+            .style('stroke', match ? '#00d4ff' : null)
+            .style('stroke-width', match ? '3px' : null)
+            .style('filter', match ? 'drop-shadow(0 0 8px #00d4ff)' : null);
+    });
+    
+    // Dim labels for non-matches
+    if (labelElements) {
+        labelElements.each(function(d) {
+            const match = matchedNodes.some(m => m.id === d.id);
+            d3.select(this).style('opacity', match ? 1 : 0.3);
+        });
+    }
+    
+    // Show result count
+    if (matchCount > 0) {
+        resultsEl.textContent = `✓ ${matchCount} match${matchCount !== 1 ? 'es' : ''}`;
+        resultsEl.style.color = '#48bb78';
+    } else {
+        resultsEl.textContent = '✗ No matches';
+        resultsEl.style.color = '#fc8181';
+    }
+    
+    // Store for potential zoom feature
+    window.currentNetworkMatches = matchedNodes;
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', loadNetwork);
+</script>
+{% endblock %}

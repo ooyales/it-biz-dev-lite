@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-01-30T23:19:44.803160",
+  "opportunities_fetched": 300,
+  "opportunities_skipped": 173,
+  "opportunities_processed": 100,
+  "people_created": 98,
+  "orgs_created": 126,
+  "relationships_created": 96,
+  "cost": 0.52,
+  "total_cached": 141,
+  "final_graph_size": {
+    "people": 125,
+    "organizations": 244,
+    "relationships": 425
+  }
+}

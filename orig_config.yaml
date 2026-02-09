@@ -1,0 +1,179 @@
+# Federal Contracting AI Assistant System Configuration
+# Fill in your business-specific information below
+
+# Company Information
+company:
+  # Optional: Company name for reference in reports (not required)
+  name: "My Company"  # Change this to your company name if desired
+  
+  # NAICS codes you compete under (REQUIRED - add/remove as needed)
+  naics_codes:
+    - "541330"  # Engineering Services
+    - "541512"  # Computer Systems Design
+    - "541519"  # Other Computer Related Services
+    - "541611"  # Administrative Management Consulting
+    - "541690"  # Other Scientific and Technical Consulting
+  
+  # Set-aside categories that apply to your business (REQUIRED)
+  set_asides:
+    - "small_business"
+    # Uncomment if applicable:
+    # - "8a"
+    # - "hubzone"
+    # - "wosb"
+    # - "vosb"
+    # - "sdvosb"
+  
+  # Optional: Contract vehicles you hold (for reference only)
+  contract_vehicles:
+    - "GSA MAS"  # Example: GSA Multiple Award Schedule
+    # Add your specific vehicles, GWACs, etc.
+
+# SAM.gov API Configuration
+sam_gov:
+  api_key: "YOUR_SAM_GOV_API_KEY"  # Get from https://open.gsa.gov/api/entity-api/
+  
+  # Search parameters
+  search:
+    # Opportunity types to monitor
+    opportunity_types:
+      - "Presolicitation"
+      - "Solicitation"
+      - "Sources Sought"
+      - "Special Notice"
+    
+    # Minimum and maximum contract values ($)
+    value_range:
+      min: 50000
+      max: 10000000
+    
+    # How many days back to search
+    lookback_days: 7
+    
+    # Keywords to filter opportunities (will search in title and description)
+    keywords:
+      - "IT services"
+      - "cybersecurity"
+      - "software development"
+      - "cloud"
+      # Add your domain-specific keywords
+
+# Anthropic Claude API Configuration
+claude:
+  api_key: "YOUR_ANTHROPIC_API_KEY"  # Get from https://console.anthropic.com/
+  model: "claude-sonnet-4-20250514"
+  max_tokens: 4000
+
+# Staff Database Configuration
+staff:
+  # Path to your staff database file (we'll create a template)
+  database_path: "data/staff_database.json"
+
+# Notification Settings (OPTIONAL - disable if not needed)
+notifications:
+  email:
+    enabled: false  # Set to true if you want email notifications
+    # Only fill these out if you enable email notifications
+    smtp_server: "smtp.gmail.com"
+    smtp_port: 587
+    from_address: "your-email@company.com"
+    to_addresses:
+      - "recipient@company.com"
+    # Note: For Gmail, use an "App Password" not your regular password
+    # Generate at: https://myaccount.google.com/apppasswords
+    password: "YOUR_APP_PASSWORD_HERE"
+  
+  slack:
+    enabled: false  # Set to true if you want Slack notifications
+    # Only fill this out if you enable Slack notifications
+    # Get webhook at: https://api.slack.com/apps
+    webhook_url: "YOUR_SLACK_WEBHOOK_URL"
+
+# Automation Schedule
+schedule:
+  # How often to check SAM.gov (in hours)
+  sam_check_frequency: 12
+  
+  # Time of day for daily digest (24-hour format)
+  daily_digest_time: "09:00"
+
+# File Storage
+storage:
+  # Where to save opportunities, analysis, and drafts
+  base_path: "data"
+  opportunities_path: "data/opportunities"
+  analysis_path: "data/analysis"
+  proposals_path: "data/proposals"
+  reports_path: "data/reports"
+
+# Agent Configuration
+agents:
+  opportunity_scout:
+    enabled: true
+    # Scoring criteria for opportunities (1-10)
+    scoring_weights:
+      naics_match: 10
+      set_aside_match: 8
+      value_appropriate: 7
+      keyword_match: 6
+      incumbent_intel: 5
+  
+  capability_matcher:
+    enabled: true
+    # Minimum match percentage to flag as qualified
+    min_match_threshold: 70
+  
+  competitive_intel:
+    enabled: true
+    # Sources to check
+    sources:
+      - "usaspending.gov"
+      - "fpds.gov"
+      - "sam.gov"
+  
+  rfi_responder:
+    enabled: true
+    # Auto-draft RFIs for opportunities scored above this threshold
+    auto_draft_threshold: 7
+  
+  proposal_writer:
+    enabled: true
+    # Only auto-draft proposals for highly qualified opportunities
+    auto_draft_threshold: 8
+
+# Competitive Intelligence Settings
+competitive_intelligence:
+  enabled: true
+  
+  # When to run competitive intelligence
+  triggers:
+    min_value: 0  # Run for all opportunities (set to 500000 for $500K+ only)
+    high_priority_only: false  # Or only run for opportunities scoring 7+ on initial review
+    naics_codes: []  # Empty = all NAICS; or specify codes like ["541512", "541519"]
+  
+  # What intelligence to gather
+  features:
+    incumbent_identification: true  # Find who currently has the contract
+    pricing_analysis: true  # Analyze historical pricing
+    market_trends: true  # Track market growth/decline
+    teaming_partners: false  # Find potential partners (slower, enable if needed)
+    competitor_profiling: true  # Profile incumbent contractors
+  
+  # Performance settings
+  timeout: 30  # Seconds per data source query
+  cache_duration: 86400  # Cache intel for 24 hours (seconds)
+  
+  # Analysis parameters
+  lookback_years: 3  # How many years of historical data
+  min_sample_size: 5  # Minimum contracts needed for pricing analysis
+  
+  # Teaming partner criteria (if enabled)
+  teaming:
+    min_revenue: 1000000  # $1M minimum 3-year gov revenue
+    max_revenue: 50000000  # $50M maximum
+    prefer_small_business: true
+
+# Logging
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  file_path: "logs/fed_contracting_ai.log"

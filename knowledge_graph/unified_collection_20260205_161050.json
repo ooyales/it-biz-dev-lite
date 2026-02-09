@@ -1,0 +1,21 @@
+{
+  "collection_date": "2026-02-05T16:10:50.029732",
+  "search_period_days": 90,
+  "api_calls_used": 8,
+  "opportunities": [],
+  "contracts": [],
+  "contacts": [],
+  "competitive_intelligence": {
+    "incumbents": {},
+    "agency_patterns": {},
+    "detected_incumbents_in_opportunities": {}
+  },
+  "summary": {
+    "opportunities_count": 0,
+    "contracts_count": 0,
+    "contacts_count": 0,
+    "incumbents_count": 0,
+    "vendors_count": 0,
+    "agencies_count": 0
+  }
+}

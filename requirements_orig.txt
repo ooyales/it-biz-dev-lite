@@ -1,0 +1,18 @@
+# Federal Contracting AI Assistant - Python Dependencies
+
+# Core dependencies
+anthropic>=0.40.0
+pyyaml>=6.0
+requests>=2.31.0
+
+# Optional dependencies for notifications
+# Uncomment if you plan to use email notifications
+
+# For scheduling (if using cron alternatives)
+schedule>=1.2.0
+
+# For enhanced logging and monitoring
+python-json-logger>=2.0.7
+
+# For data analysis (optional)
+pandas>=2.0.0

@@ -1,0 +1,718 @@
+{% extends "base-ultimate.html" %}
+
+{% block title %}Contacts - BD Intelligence{% endblock %}
+{% block page_title %}Contact Intelligence{% endblock %}
+{% block page_subtitle %}Manage relationships and decision makers{% endblock %}
+
+{% block stats_bar %}
+<div class="stats-bar">
+    <div class="stat-item">
+        <div class="stat-icon purple">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="total-contacts">0</h4>
+            <p>Total Contacts</p>
+        </div>
+    </div>
+    
+    <div class="stat-item">
+        <div class="stat-icon green">
+            <i class="fas fa-star"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="decision-makers">0</h4>
+            <p>Decision Makers</p>
+        </div>
+    </div>
+    
+    <div class="stat-item">
+        <div class="stat-icon blue">
+            <i class="fas fa-building"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="agencies">0</h4>
+            <p>Agencies Covered</p>
+        </div>
+    </div>
+    
+    <div class="stat-item">
+        <div class="stat-icon orange">
+            <i class="fas fa-handshake"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="strong-relationships">0</h4>
+            <p>Strong Relationships</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block top_actions %}
+<button class="btn btn-primary" onclick="showAddContactModal()">
+    <i class="fas fa-user-plus me-2"></i>Add Contact
+</button>
+
+<button class="btn btn-success" onclick="syncFromNeo4j()">
+    <i class="fas fa-sync me-2"></i>Sync from Neo4j
+</button>
+
+<div class="input-group" style="width: 300px;">
+    <span class="input-group-text"><i class="fas fa-search"></i></span>
+    <input type="text" class="form-control" id="search-contacts" placeholder="Search contacts..." onkeyup="searchContacts()">
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-3">
+        <select class="form-select" id="filter-agency" onchange="filterContacts()">
+            <option value="">All Agencies</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <select class="form-select" id="filter-role" onchange="filterContacts()">
+            <option value="">All Roles</option>
+            <option value="Decision Maker">Decision Makers</option>
+            <option value="Influencer">Influencers</option>
+            <option value="Technical">Technical</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <select class="form-select" id="filter-relationship" onchange="filterContacts()">
+            <option value="">All Relationships</option>
+            <option value="Strong">Strong</option>
+            <option value="Warm">Warm</option>
+            <option value="New">New</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <button class="btn btn-outline-primary w-100" onclick="exportContacts()">
+            <i class="fas fa-download me-2"></i>Export
+        </button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Title</th>
+                        <th>Organization</th>
+                        <th>Role</th>
+                        <th>Relationship</th>
+                        <th>Contact</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="contacts-table-body">
+                    <tr>
+                        <td colspan="7" class="text-center py-5">
+                            <div class="spinner-border text-primary mb-3"></div>
+                            <p class="text-muted">Loading contacts...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <div class="text-muted small" id="showing-info">
+                Showing 0 of 0 contacts
+            </div>
+            <div>
+                <button class="btn btn-sm btn-outline-primary" id="prev-page" onclick="prevPage()" disabled>
+                    <i class="fas fa-chevron-left"></i> Previous
+                </button>
+                <span class="mx-3" id="page-info">Page 1 of 1</span>
+                <button class="btn btn-sm btn-outline-primary" id="next-page" onclick="nextPage()" disabled>
+                    Next <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Contact Modal -->
+<div class="modal fade" id="contactModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);">
+                <h5 class="modal-title text-white" id="contactModalTitle">
+                    <i class="fas fa-user-plus me-2"></i>Add Contact
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="contactForm">
+                    <input type="hidden" id="contact-id">
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Full Name *</label>
+                            <input type="text" class="form-control" id="contact-name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Title/Position</label>
+                            <input type="text" class="form-control" id="contact-title" placeholder="e.g., CIO, Program Manager">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Organization *</label>
+                            <input type="text" class="form-control" id="contact-organization" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Role Type</label>
+                            <select class="form-select" id="contact-role">
+                                <option value="">Select role...</option>
+                                <option value="Decision Maker">Decision Maker</option>
+                                <option value="Influencer">Influencer</option>
+                                <option value="Technical">Technical Contact</option>
+                                <option value="Administrative">Administrative</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="contact-email">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Phone</label>
+                            <input type="tel" class="form-control" id="contact-phone">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Relationship Strength</label>
+                        <select class="form-select" id="contact-relationship">
+                            <option value="New">New</option>
+                            <option value="Warm">Warm</option>
+                            <option value="Strong">Strong</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" id="contact-notes" rows="3" placeholder="Meeting notes, interests, background..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="saveContact()">
+                    <i class="fas fa-save me-2"></i>Save Contact
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Yellow/Gold hover effect for contact rows */
+.table-hover tbody tr:hover {
+    background: linear-gradient(90deg, rgba(255, 193, 7, 0.15) 0%, rgba(255, 235, 59, 0.1) 100%) !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.table-hover tbody tr:hover td {
+    color: #fff !important;
+    border-color: rgba(255, 193, 7, 0.3) !important;
+}
+
+/* Highlight the badges on hover */
+.table-hover tbody tr:hover .badge {
+    box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let allContacts = [];
+let filteredContacts = [];
+let currentPage = 1;
+const pageSize = 20;
+
+// Load contacts
+async function loadContacts() {
+    try {
+        const res = await fetch('/api/contacts');
+        
+        if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+        }
+        
+        const data = await res.json();
+        allContacts = data.contacts || [];
+        filteredContacts = [...allContacts];
+        
+        console.log(`Loaded ${allContacts.length} contacts`);
+        
+        populateFilters();
+        updateStats();
+        renderContacts();
+        
+    } catch (error) {
+        console.error('Error loading contacts:', error);
+        document.getElementById('contacts-table-body').innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center py-5">
+                    <div class="alert alert-danger mb-0">
+                        <h5>Error Loading Contacts</h5>
+                        <p>${error.message}</p>
+                        <p class="small mb-0">Contacts may not be loaded yet. Try syncing from Neo4j.</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }
+}
+
+function populateFilters() {
+    // Get unique agencies
+    const agencies = [...new Set(allContacts.map(c => c.organization).filter(Boolean))];
+    const agencyFilter = document.getElementById('filter-agency');
+    agencies.forEach(agency => {
+        const option = document.createElement('option');
+        option.value = agency;
+        option.textContent = agency;
+        agencyFilter.appendChild(option);
+    });
+}
+
+function updateStats() {
+    const decisionMakers = allContacts.filter(c => 
+        c.role && c.role.toLowerCase().includes('decision')).length;
+    const agencies = new Set(allContacts.map(c => c.organization).filter(Boolean)).size;
+    const strongRels = allContacts.filter(c => c.relationship_strength === 'Strong').length;
+    
+    document.getElementById('total-contacts').textContent = allContacts.length;
+    document.getElementById('decision-makers').textContent = decisionMakers;
+    document.getElementById('agencies').textContent = agencies;
+    document.getElementById('strong-relationships').textContent = strongRels;
+}
+
+function renderContacts() {
+    const start = (currentPage - 1) * pageSize;
+    const end = start + pageSize;
+    const pageContacts = filteredContacts.slice(start, end);
+    
+    const tbody = document.getElementById('contacts-table-body');
+    
+    if (pageContacts.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" class="text-center py-5">
+                    <i class="fas fa-users fa-3x mb-3 text-muted"></i>
+                    <p class="text-muted">No contacts found</p>
+                    <button class="btn btn-primary btn-sm" onclick="showAddContactModal()">
+                        <i class="fas fa-user-plus me-2"></i>Add Your First Contact
+                    </button>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = pageContacts.map(contact => `
+        <tr>
+            <td>
+                <a href="/contact/${contact.id}" style="color: var(--accent, #00D4FF); text-decoration: none; font-weight: 600; cursor: pointer;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${contact.name || 'Unknown'}</a>
+            </td>
+            <td>${contact.title || contact.role || '-'}</td>
+            <td>${contact.organization || '-'}</td>
+            <td>
+                ${contact.role ? `<span class="badge bg-info">${contact.role}</span>` : '-'}
+            </td>
+            <td>
+                <span class="badge bg-${
+                    contact.relationship_strength === 'Strong' ? 'success' :
+                    contact.relationship_strength === 'Warm' ? 'warning' : 'secondary'
+                }">
+                    ${contact.relationship_strength || 'New'}
+                </span>
+            </td>
+            <td class="small">
+                ${contact.email ? `<div><i class="fas fa-envelope me-1"></i>${contact.email}</div>` : ''}
+                ${contact.phone ? `<div><i class="fas fa-phone me-1"></i>${contact.phone}</div>` : ''}
+            </td>
+            <td>
+                <button class="btn btn-sm me-1 research-btn" 
+                    onclick="viewResearch(${contact.id}, '${(contact.name || '').replace(/'/g, "\\'")}')" 
+                    title="${contact.has_research ? 'View Research Profile' : 'Research Contact'}"
+                    style="background: ${contact.has_research ? '#00C896' : 'transparent'}; 
+                           border: 1px solid ${contact.has_research ? '#00C896' : '#8B949E'}; 
+                           color: ${contact.has_research ? '#fff' : '#8B949E'};">
+                    <i class="fas fa-brain"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="window.location.href='/contact/${contact.id}'" title="Open Detail">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-sm me-1" onclick="editContact(${contact.id})" style="background: transparent; border: 1px solid #00D4FF; color: #00D4FF;" title="Edit">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteContact(${contact.id})" title="Delete">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
+    
+    // Update pagination
+    const totalPages = Math.ceil(filteredContacts.length / pageSize);
+    document.getElementById('showing-info').textContent = 
+        `Showing ${start + 1}-${Math.min(end, filteredContacts.length)} of ${filteredContacts.length} contacts`;
+    document.getElementById('page-info').textContent = `Page ${currentPage} of ${totalPages}`;
+    document.getElementById('prev-page').disabled = currentPage === 1;
+    document.getElementById('next-page').disabled = currentPage === totalPages;
+}
+
+function searchContacts() {
+    const search = document.getElementById('search-contacts').value.toLowerCase();
+    
+    if (!search) {
+        filteredContacts = [...allContacts];
+    } else {
+        filteredContacts = allContacts.filter(c => 
+            (c.name || '').toLowerCase().includes(search) ||
+            (c.title || '').toLowerCase().includes(search) ||
+            (c.organization || '').toLowerCase().includes(search) ||
+            (c.email || '').toLowerCase().includes(search)
+        );
+    }
+    
+    currentPage = 1;
+    renderContacts();
+}
+
+function filterContacts() {
+    const agency = document.getElementById('filter-agency').value;
+    const role = document.getElementById('filter-role').value;
+    const relationship = document.getElementById('filter-relationship').value;
+    
+    filteredContacts = allContacts.filter(c => {
+        if (agency && c.organization !== agency) return false;
+        if (role && c.role !== role) return false;
+        if (relationship && c.relationship_strength !== relationship) return false;
+        return true;
+    });
+    
+    currentPage = 1;
+    renderContacts();
+}
+
+function prevPage() {
+    if (currentPage > 1) {
+        currentPage--;
+        renderContacts();
+    }
+}
+
+function nextPage() {
+    const totalPages = Math.ceil(filteredContacts.length / pageSize);
+    if (currentPage < totalPages) {
+        currentPage++;
+        renderContacts();
+    }
+}
+
+function showAddContactModal() {
+    document.getElementById('contactModalTitle').innerHTML = 
+        '<i class="fas fa-user-plus me-2"></i>Add Contact';
+    document.getElementById('contactForm').reset();
+    document.getElementById('contact-id').value = '';
+    
+    const modal = new bootstrap.Modal(document.getElementById('contactModal'));
+    modal.show();
+}
+
+function editContact(id) {
+    const contact = allContacts.find(c => c.id === id);
+    if (!contact) return;
+    
+    document.getElementById('contactModalTitle').innerHTML = 
+        '<i class="fas fa-user-edit me-2"></i>Edit Contact';
+    
+    document.getElementById('contact-id').value = contact.id;
+    document.getElementById('contact-name').value = contact.name || '';
+    document.getElementById('contact-title').value = contact.title || '';
+    document.getElementById('contact-organization').value = contact.organization || '';
+    document.getElementById('contact-role').value = contact.role || '';
+    document.getElementById('contact-email').value = contact.email || '';
+    document.getElementById('contact-phone').value = contact.phone || '';
+    document.getElementById('contact-relationship').value = contact.relationship_strength || 'New';
+    document.getElementById('contact-notes').value = contact.notes || '';
+    
+    const modal = new bootstrap.Modal(document.getElementById('contactModal'));
+    modal.show();
+}
+
+async function saveContact() {
+    const id = document.getElementById('contact-id').value;
+    const name = document.getElementById('contact-name').value;
+    const organization = document.getElementById('contact-organization').value;
+    
+    if (!name || !organization) {
+        alert('Please fill in required fields');
+        return;
+    }
+    
+    const contact = {
+        name,
+        title: document.getElementById('contact-title').value,
+        organization,
+        role: document.getElementById('contact-role').value,
+        email: document.getElementById('contact-email').value,
+        phone: document.getElementById('contact-phone').value,
+        relationship_strength: document.getElementById('contact-relationship').value,
+        notes: document.getElementById('contact-notes').value
+    };
+    
+    try {
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `/api/contacts/${id}` : '/api/contacts';
+        
+        const res = await fetch(url, {
+            method,
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(contact)
+        });
+        
+        if (!res.ok) throw new Error('Failed to save contact');
+        
+        alert('✓ Contact saved successfully!');
+        
+        bootstrap.Modal.getInstance(document.getElementById('contactModal')).hide();
+        loadContacts();
+        
+    } catch (error) {
+        alert('Error saving contact: ' + error.message);
+    }
+}
+
+async function deleteContact(id) {
+    if (!confirm('Are you sure you want to delete this contact?')) return;
+    
+    try {
+        const res = await fetch(`/api/contacts/${id}`, {
+            method: 'DELETE'
+        });
+        
+        if (!res.ok) throw new Error('Failed to delete contact');
+        
+        alert('✓ Contact deleted');
+        loadContacts();
+        
+    } catch (error) {
+        alert('Error deleting contact: ' + error.message);
+    }
+}
+
+async function syncFromNeo4j() {
+    if (!confirm('Sync contacts from Neo4j?\n\nThis will import all contacts from the graph database.')) return;
+    
+    const btn = event.target;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Syncing...';
+    
+    try {
+        const res = await fetch('/api/contacts/sync', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'}
+        });
+        
+        const data = await res.json();
+        
+        if (data.status === 'success') {
+            alert(`✓ Contacts Synced!\n\nTotal: ${data.synced}\nCreated: ${data.created}\nUpdated: ${data.updated}`);
+            loadContacts();
+        } else {
+            alert('Error: ' + (data.error || 'Sync failed'));
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-sync me-2"></i>Sync from Neo4j';
+    }
+}
+
+function exportContacts() {
+    alert('Export functionality coming soon!\n\nWill export to CSV/Excel format.');
+}
+
+// Research Modal Functions
+async function viewResearch(contactId, contactName) {
+    const modal = new bootstrap.Modal(document.getElementById('researchModal'));
+    document.getElementById('research-contact-name').textContent = contactName;
+    document.getElementById('research-loading').style.display = 'block';
+    document.getElementById('research-content').style.display = 'none';
+    document.getElementById('research-empty').style.display = 'none';
+    document.getElementById('run-research-btn').dataset.contactId = contactId;
+    document.getElementById('run-research-btn').dataset.contactName = contactName;
+    
+    modal.show();
+    
+    try {
+        const res = await fetch(`/api/contacts/${contactId}/research`);
+        const data = await res.json();
+        
+        document.getElementById('research-loading').style.display = 'none';
+        
+        if (data.research_profile) {
+            const profile = data.research_profile;
+            document.getElementById('research-content').style.display = 'block';
+            document.getElementById('research-confidence').textContent = profile.confidence || 'N/A';
+            document.getElementById('research-confidence').className = 
+                `badge bg-${profile.confidence === 'high' ? 'success' : profile.confidence === 'medium' ? 'warning' : 'secondary'}`;
+            document.getElementById('research-summary').textContent = profile.summary || 'No summary available';
+            
+            // Key Interests
+            const interestsList = document.getElementById('research-interests');
+            interestsList.innerHTML = (profile.key_interests || []).map(i => `<li>${i}</li>`).join('') || '<li>None found</li>';
+            
+            // Technical Focus
+            const techList = document.getElementById('research-technical');
+            techList.innerHTML = (profile.technical_focus || []).map(t => `<li>${t}</li>`).join('') || '<li>None found</li>';
+            
+            // Talking Points
+            const talkingList = document.getElementById('research-talking');
+            talkingList.innerHTML = (profile.talking_points || []).map(t => `<li>${t}</li>`).join('') || '<li>None found</li>';
+            
+            // Sources
+            const sourcesList = document.getElementById('research-sources');
+            sourcesList.innerHTML = (profile.sources || []).map(s => 
+                `<li><a href="${s}" target="_blank" style="color: #00D4FF;">${s.substring(0, 50)}...</a></li>`
+            ).join('') || '<li>No sources</li>';
+            
+            // Researched date
+            document.getElementById('research-date').textContent = profile.researched_at ? 
+                new Date(profile.researched_at).toLocaleDateString() : 'Unknown';
+        } else {
+            document.getElementById('research-empty').style.display = 'block';
+        }
+    } catch (error) {
+        document.getElementById('research-loading').style.display = 'none';
+        document.getElementById('research-empty').style.display = 'block';
+        console.error('Error loading research:', error);
+    }
+}
+
+async function runResearch() {
+    const btn = document.getElementById('run-research-btn');
+    const contactId = btn.dataset.contactId;
+    const contactName = btn.dataset.contactName;
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Researching...';
+    
+    try {
+        const res = await fetch('/api/agents/contacts/research', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ contact_id: parseInt(contactId), name: contactName })
+        });
+        
+        const data = await res.json();
+        
+        if (data.status === 'success') {
+            // Reload the research view
+            viewResearch(contactId, contactName);
+            loadContacts(); // Refresh table to show research indicator
+        } else {
+            alert('Research error: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-brain me-2"></i>Run Research';
+    }
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', loadContacts);
+</script>
+
+<!-- Research Modal -->
+<div class="modal fade" id="researchModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="background: #161B22; border: 1px solid #30363D;">
+            <div class="modal-header" style="border-bottom: 1px solid #30363D;">
+                <h5 class="modal-title">
+                    <i class="fas fa-brain me-2" style="color: #00C896;"></i>
+                    Research Profile: <span id="research-contact-name"></span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Loading -->
+                <div id="research-loading" class="text-center py-4">
+                    <i class="fas fa-spinner fa-spin fa-2x mb-3" style="color: #00D4FF;"></i>
+                    <p>Loading research profile...</p>
+                </div>
+                
+                <!-- Empty State -->
+                <div id="research-empty" style="display: none;" class="text-center py-4">
+                    <i class="fas fa-search fa-3x mb-3" style="color: #8B949E;"></i>
+                    <h5>No Research Data Yet</h5>
+                    <p class="text-muted">Click below to research this contact's public professional presence.</p>
+                    <button id="run-research-btn" class="btn btn-success" onclick="runResearch()">
+                        <i class="fas fa-brain me-2"></i>Run Research
+                    </button>
+                </div>
+                
+                <!-- Research Content -->
+                <div id="research-content" style="display: none;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span>Confidence: <span id="research-confidence" class="badge bg-success">high</span></span>
+                        <span class="text-muted small">Researched: <span id="research-date"></span></span>
+                    </div>
+                    
+                    <div class="mb-4 p-3" style="background: #1F2937; border-radius: 8px;">
+                        <h6><i class="fas fa-quote-left me-2" style="color: #00D4FF;"></i>Summary</h6>
+                        <p id="research-summary" class="mb-0"></p>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <h6><i class="fas fa-star me-2" style="color: #FFB020;"></i>Key Interests</h6>
+                            <ul id="research-interests" class="small"></ul>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6><i class="fas fa-cogs me-2" style="color: #00D4FF;"></i>Technical Focus</h6>
+                            <ul id="research-technical" class="small"></ul>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6><i class="fas fa-comments me-2" style="color: #00C896;"></i>Suggested Talking Points</h6>
+                        <ul id="research-talking" class="small"></ul>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6><i class="fas fa-link me-2" style="color: #8B949E;"></i>Sources</h6>
+                        <ul id="research-sources" class="small"></ul>
+                    </div>
+                    
+                    <div class="text-end">
+                        <button id="run-research-btn" class="btn btn-outline-success btn-sm" onclick="runResearch()">
+                            <i class="fas fa-sync me-2"></i>Refresh Research
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Federal Contracting Team Dashboard</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Archivo:wght@300;500;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #0A2540;
+            --secondary: #1E4D7B;
+            --accent: #00D4FF;
+            --success: #00C896;
+            --warning: #FFB020;
+            --danger: #FF4757;
+            --bg: #0D1117;
+            --surface: #161B22;
+            --surface-light: #1F2937;
+            --text: #E6EDF3;
+            --text-muted: #8B949E;
+            --border: #30363D;
+        }
+        
+        body {
+            font-family: 'Archivo', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            padding: 1.5rem 2rem;
+            border-bottom: 2px solid var(--accent);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        h1 {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            color: var(--accent);
+            text-transform: uppercase;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 6px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn-primary {
+            background: var(--accent);
+            color: var(--primary);
+        }
+        
+        .btn-primary:hover {
+            background: #00F0FF;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 212, 255, 0.3);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(0, 212, 255, 0.1);
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Main Container */
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--accent), transparent);
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1;
+        }
+        
+        .stat-trend {
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            color: var(--success);
+        }
+        
+        /* Timeline View */
+        .timeline-section {
+            margin-bottom: 2rem;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+        
+        .timeline-container {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            overflow-x: auto;
+        }
+        
+        .timeline {
+            position: relative;
+            min-width: 1200px;
+            height: 400px;
+        }
+        
+        .timeline-axis {
+            position: absolute;
+            bottom: 40px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--border);
+        }
+        
+        .timeline-marker {
+            position: absolute;
+            bottom: 20px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        
+        .opportunity-bubble {
+            position: absolute;
+            padding: 0.75rem;
+            background: var(--surface-light);
+            border: 2px solid var(--accent);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            max-width: 200px;
+        }
+        
+        .opportunity-bubble:hover {
+            transform: scale(1.1);
+            z-index: 10;
+            box-shadow: 0 8px 24px rgba(0, 212, 255, 0.3);
+        }
+        
+        .bubble-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .bubble-meta {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        
+        .bubble-score {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            border: 3px solid var(--bg);
+        }
+        
+        /* Opportunities Grid */
+        .opportunities-grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+        
+        .opportunity-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .opportunity-card:hover {
+            border-color: var(--accent);
+            transform: translateX(8px);
+        }
+        
+        .opp-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+        
+        .opp-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text);
+            flex: 1;
+        }
+        
+        .opp-scores {
+            display: flex;
+            gap: 0.75rem;
+            flex-shrink: 0;
+        }
+        
+        .score-badge {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.5rem;
+            background: var(--surface-light);
+            border-radius: 6px;
+            min-width: 60px;
+        }
+        
+        .score-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        
+        .score-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        
+        .opp-meta {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .opp-intel {
+            background: var(--surface-light);
+            border-left: 3px solid var(--accent);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+        
+        .intel-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        
+        .intel-content {
+            font-size: 0.9rem;
+            color: var(--text);
+        }
+        
+        .opp-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+        
+        .btn-sm {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.75rem;
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: var(--warning);
+            color: var(--primary);
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+        }
+        
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: var(--text-muted);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+        
+        .tab:hover {
+            color: var(--text);
+        }
+        
+        .tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 800px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        
+        .close-btn:hover {
+            color: var(--danger);
+        }
+        
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+        
+        .spinner {
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-actions {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>🎯 FedCon OpCenter</h1>
+            <div class="header-actions">
+                <div class="status-indicator">
+                    <span class="status-dot"></span>
+                    <span id="lastUpdate">System Ready</span>
+                </div>
+                <button class="btn btn-secondary" onclick="refreshData()">Refresh</button>
+                <button class="btn btn-primary" onclick="runScout()">Run Scout</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Opportunities</div>
+                <div class="stat-value" id="totalOpps">-</div>
+                <div class="stat-trend">↑ Last 30 days</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">High Priority</div>
+                <div class="stat-value" id="highPriority">-</div>
+                <div class="stat-trend">Score ≥ 7.0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Active Pursuits</div>
+                <div class="stat-value" id="activePursuits">-</div>
+                <div class="stat-trend">In progress</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Upcoming Deadlines</div>
+                <div class="stat-value" id="upcomingDeadlines">-</div>
+                <div class="stat-trend">Next 7 days</div>
+            </div>
+        </div>
+
+        <!-- Timeline Section -->
+        <div class="timeline-section">
+            <div class="section-header">
+                <h2 class="section-title">Contract Expiration Timeline</h2>
+                <span class="stat-label">Shift-Left View: Build Relationships Early</span>
+            </div>
+            <div class="timeline-container">
+                <div id="timeline" class="timeline">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <div>Loading timeline data...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('all')">All Opportunities</button>
+            <button class="tab" onclick="switchTab('high-priority')">High Priority</button>
+            <button class="tab" onclick="switchTab('pursuing')">Pursuing</button>
+            <button class="tab" onclick="switchTab('watch')">Watch List</button>
+        </div>
+
+        <!-- Opportunities Grid -->
+        <div id="opportunitiesContainer" class="opportunities-grid">
+            <div class="loading">
+                <div class="spinner"></div>
+                <div>Loading opportunities...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Opportunity Detail Modal -->
+    <div id="opportunityModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">Opportunity Details</h3>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modalBody">
+                <!-- Dynamic content -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API base URL
+        const API_BASE = '/api';
+        
+        // State
+        let currentTab = 'all';
+        let opportunities = [];
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDashboardStats();
+            loadOpportunities();
+            loadTimeline();
+            
+            // Auto-refresh every 5 minutes
+            setInterval(refreshData, 5 * 60 * 1000);
+        });
+        
+        // Load dashboard statistics
+        async function loadDashboardStats() {
+            try {
+                const response = await fetch(`${API_BASE}/dashboard/stats`);
+                const data = await response.json();
+                
+                document.getElementById('totalOpps').textContent = data.total_opportunities;
+                document.getElementById('highPriority').textContent = data.high_priority;
+                document.getElementById('activePursuits').textContent = data.pursuing;
+                document.getElementById('upcomingDeadlines').textContent = data.upcoming_deadlines.length;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+        
+        // Load opportunities
+        async function loadOpportunities(status = null) {
+            try {
+                const url = status ? `${API_BASE}/opportunities?status=${status}` : `${API_BASE}/opportunities`;
+                const response = await fetch(url);
+                opportunities = await response.json();
+                
+                renderOpportunities(opportunities);
+            } catch (error) {
+                console.error('Error loading opportunities:', error);
+            }
+        }
+        
+        // Render opportunities
+        function renderOpportunities(opps) {
+            const container = document.getElementById('opportunitiesContainer');
+            
+            if (opps.length === 0) {
+                container.innerHTML = '<div class="loading">No opportunities found</div>';
+                return;
+            }
+            
+            container.innerHTML = opps.map(opp => `
+                <div class="opportunity-card" onclick="openOpportunity('${opp.notice_id}')">
+                    <div class="opp-header">
+                        <h3 class="opp-title">${opp.title || 'Untitled Opportunity'}</h3>
+                        <div class="opp-scores">
+                            <div class="score-badge">
+                                <span class="score-label">Fit</span>
+                                <span class="score-value">${opp.fit_score ? opp.fit_score.toFixed(1) : '-'}</span>
+                            </div>
+                            ${opp.win_probability ? `
+                            <div class="score-badge">
+                                <span class="score-label">Win %</span>
+                                <span class="score-value">${opp.win_probability}%</span>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="opp-meta">
+                        <div class="meta-item">📅 ${opp.posted_date || 'N/A'}</div>
+                        <div class="meta-item">⏰ ${opp.deadline || 'No deadline'}</div>
+                        <div class="meta-item">🏷️ ${opp.naics_code || 'N/A'}</div>
+                    </div>
+                    
+                    <div class="opp-actions">
+                        <button class="btn btn-sm btn-success" onclick="event.stopPropagation(); updateStatus('${opp.notice_id}', 'pursuing')">Pursue</button>
+                        <button class="btn btn-sm btn-warning" onclick="event.stopPropagation(); updateStatus('${opp.notice_id}', 'watch')">Watch</button>
+                        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); updateStatus('${opp.notice_id}', 'passed')">Pass</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Load timeline
+        async function loadTimeline() {
+            try {
+                const response = await fetch(`${API_BASE}/opportunities`);
+                const opps = await response.json();
+                
+                renderTimeline(opps);
+            } catch (error) {
+                console.error('Error loading timeline:', error);
+            }
+        }
+        
+        // Render timeline
+        function renderTimeline(opps) {
+            const container = document.getElementById('timeline');
+            const today = new Date();
+            const maxDays = 365; // Show 1 year timeline
+            
+            // Filter opportunities with deadlines
+            const timedOpps = opps.filter(o => o.deadline);
+            
+            if (timedOpps.length === 0) {
+                container.innerHTML = '<div class="loading">No deadlines to display</div>';
+                return;
+            }
+            
+            let html = '<div class="timeline-axis"></div>';
+            
+            // Add time markers
+            for (let i = 0; i <= 12; i++) {
+                const monthOffset = i * 30;
+                const date = new Date(today.getTime() + monthOffset * 24 * 60 * 60 * 1000);
+                const left = (monthOffset / maxDays) * 100;
+                
+                html += `<div class="timeline-marker" style="left: ${left}%">${date.toLocaleDateString('en-US', {month: 'short', year: '2-digit'})}</div>`;
+            }
+            
+            // Add opportunity bubbles
+            timedOpps.forEach(opp => {
+                const deadline = new Date(opp.deadline);
+                const daysUntil = Math.floor((deadline - today) / (1000 * 60 * 60 * 24));
+                
+                if (daysUntil >= 0 && daysUntil <= maxDays) {
+                    const left = (daysUntil / maxDays) * 100;
+                    const bottom = 80 + (Math.random() * 200); // Random vertical position
+                    
+                    const color = opp.fit_score >= 7 ? 'var(--success)' : 'var(--warning)';
+                    
+                    html += `
+                        <div class="opportunity-bubble" style="left: ${left}%; bottom: ${bottom}px; border-color: ${color}" onclick="openOpportunity('${opp.notice_id}')">
+                            <div class="bubble-score">${opp.fit_score ? opp.fit_score.toFixed(1) : '?'}</div>
+                            <div class="bubble-title">${opp.title}</div>
+                            <div class="bubble-meta">${daysUntil}d | ${opp.naics_code}</div>
+                        </div>
+                    `;
+                }
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // Switch tabs
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            // Update tab UI
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Filter opportunities
+            if (tab === 'all') {
+                renderOpportunities(opportunities);
+            } else if (tab === 'high-priority') {
+                renderOpportunities(opportunities.filter(o => o.fit_score >= 7));
+            } else {
+                loadOpportunities(tab);
+            }
+        }
+        
+        // Update opportunity status
+        async function updateStatus(noticeId, status) {
+            try {
+                await fetch(`${API_BASE}/opportunities/${noticeId}/status`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({status})
+                });
+                
+                refreshData();
+            } catch (error) {
+                console.error('Error updating status:', error);
+            }
+        }
+        
+        // Open opportunity detail
+        async function openOpportunity(noticeId) {
+            try {
+                const response = await fetch(`${API_BASE}/opportunities/${noticeId}`);
+                const data = await response.json();
+                
+                // Build modal content
+                const analysis = data.analysis || {};
+                const compIntel = data.competitive_intelligence || {};
+                const capMatch = data.capability_match || {};
+                
+                document.getElementById('modalTitle').textContent = data.title;
+                document.getElementById('modalBody').innerHTML = `
+                    <div class="opp-intel">
+                        <div class="intel-title">Analysis Summary</div>
+                        <div class="intel-content">
+                            <p><strong>Fit Score:</strong> ${analysis.fit_score}/10</p>
+                            <p><strong>Win Probability:</strong> ${compIntel.competitive_assessment?.win_probability || 'N/A'}%</p>
+                            <p><strong>Recommendation:</strong> ${analysis.recommendation || 'N/A'}</p>
+                            <p><strong>Rationale:</strong> ${analysis.rationale || 'N/A'}</p>
+                        </div>
+                    </div>
+                    
+                    ${compIntel.incumbent ? `
+                    <div class="opp-intel">
+                        <div class="intel-title">Incumbent Intelligence</div>
+                        <div class="intel-content">
+                            <p><strong>Current Contractor:</strong> ${compIntel.incumbent.contractor_name}</p>
+                            ${compIntel.incumbent_profile ? `
+                                <p><strong>3-Year Revenue:</strong> $${(compIntel.incumbent_profile.total_contract_value_3yr || 0).toLocaleString()}</p>
+                            ` : ''}
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    ${capMatch.recommended_team ? `
+                    <div class="opp-intel">
+                        <div class="intel-title">Recommended Team</div>
+                        <div class="intel-content">
+                            <p><strong>Coverage Score:</strong> ${capMatch.coverage_score}%</p>
+                            <p><strong>Team Size:</strong> ${capMatch.team_size_estimate} people</p>
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    <div style="margin-top: 1.5rem;">
+                        <a href="https://sam.gov/opp/${noticeId}" target="_blank" class="btn btn-primary">View on SAM.gov</a>
+                    </div>
+                `;
+                
+                document.getElementById('opportunityModal').classList.add('active');
+            } catch (error) {
+                console.error('Error loading opportunity details:', error);
+            }
+        }
+        
+        // Close modal
+        function closeModal() {
+            document.getElementById('opportunityModal').classList.remove('active');
+        }
+        
+        // Run scout
+        async function runScout() {
+            if (confirm('This will search SAM.gov for new opportunities. Continue?')) {
+                try {
+                    document.getElementById('lastUpdate').textContent = 'Running scout...';
+                    
+                    await fetch(`${API_BASE}/system/run-scout`, {method: 'POST'});
+                    
+                    document.getElementById('lastUpdate').textContent = 'Scout running in background...';
+                    
+                    setTimeout(refreshData, 30000); // Refresh after 30 seconds
+                } catch (error) {
+                    console.error('Error running scout:', error);
+                }
+            }
+        }
+        
+        // Refresh all data
+        function refreshData() {
+            loadDashboardStats();
+            loadOpportunities();
+            loadTimeline();
+            document.getElementById('lastUpdate').textContent = `Updated ${new Date().toLocaleTimeString()}`;
+        }
+    </script>
+</body>
+</html>

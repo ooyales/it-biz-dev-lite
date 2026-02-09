@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Management - Federal Contracting</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Archivo:wght@300;500;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #0A2540;
+            --secondary: #1E4D7B;
+            --accent: #00D4FF;
+            --success: #00C896;
+            --warning: #FFB020;
+            --danger: #FF4757;
+            --bg: #0D1117;
+            --surface: #161B22;
+            --surface-light: #1F2937;
+            --text: #E6EDF3;
+            --text-muted: #8B949E;
+            --border: #30363D;
+        }
+        
+        body {
+            font-family: 'Archivo', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            padding: 1.5rem 2rem;
+            border-bottom: 2px solid var(--accent);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        h1 {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--accent);
+            text-transform: uppercase;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .nav-link {
+            padding: 0.6rem 1.2rem;
+            background: transparent;
+            border: 1px solid var(--accent);
+            border-radius: 6px;
+            color: var(--accent);
+            text-decoration: none;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .nav-link:hover {
+            background: rgba(0, 212, 255, 0.1);
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        /* Toolbar */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .toolbar-left {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .search-box {
+            position: relative;
+        }
+        
+        .search-box input {
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 0.95rem;
+            width: 300px;
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Archivo', sans-serif;
+        }
+        
+        .btn-primary {
+            background: var(--accent);
+            color: var(--primary);
+        }
+        
+        .btn-primary:hover {
+            background: #00B8E6;
+        }
+        
+        .btn-secondary {
+            background: var(--surface-light);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--surface);
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #E63946;
+        }
+        
+        /* Filters */
+        .filters {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .filter-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        
+        select {
+            padding: 0.5rem 1rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        
+        /* Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        
+        /* Table */
+        .table-container {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        thead {
+            background: var(--surface-light);
+        }
+        
+        th {
+            padding: 1rem;
+            text-align: left;
+            font-weight: 700;
+            color: var(--accent);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        th:hover {
+            background: rgba(0, 212, 255, 0.1);
+        }
+        
+        th .sort-icon {
+            margin-left: 0.5rem;
+            font-size: 0.7rem;
+        }
+        
+        tbody tr {
+            border-bottom: 1px solid var(--border);
+            transition: background 0.2s ease;
+        }
+        
+        tbody tr:hover {
+            background: var(--surface-light);
+        }
+        
+        td {
+            padding: 1rem;
+        }
+        
+        .contact-name {
+            font-weight: 700;
+            color: var(--accent);
+            cursor: pointer;
+        }
+        
+        .contact-name:hover {
+            text-decoration: underline;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .badge-decision-maker {
+            background: rgba(255, 107, 107, 0.2);
+            color: #FF6B6B;
+        }
+        
+        .badge-technical-lead {
+            background: rgba(0, 212, 255, 0.2);
+            color: var(--accent);
+        }
+        
+        .badge-executive {
+            background: rgba(255, 176, 32, 0.2);
+            color: var(--warning);
+        }
+        
+        .badge-influencer {
+            background: rgba(0, 200, 150, 0.2);
+            color: var(--success);
+        }
+        
+        .badge-very-high {
+            background: rgba(255, 107, 107, 0.2);
+            color: #FF6B6B;
+        }
+        
+        .badge-high {
+            background: rgba(255, 176, 32, 0.2);
+            color: var(--warning);
+        }
+        
+        .badge-medium {
+            background: rgba(0, 212, 255, 0.2);
+            color: var(--accent);
+        }
+        
+        .badge-low {
+            background: rgba(139, 148, 158, 0.2);
+            color: var(--text-muted);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .icon-btn {
+            padding: 0.5rem;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .icon-btn:hover {
+            background: var(--surface-light);
+            color: var(--accent);
+        }
+        
+        .icon-btn.delete:hover {
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+        
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="url"],
+        textarea {
+            padding: 0.75rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 0.95rem;
+            font-family: 'Archivo', sans-serif;
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        /* Bulk actions bar */
+        .bulk-actions-bar {
+            display: none;
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--surface);
+            border: 2px solid var(--accent);
+            border-radius: 12px;
+            padding: 1rem 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            z-index: 100;
+        }
+        
+        .bulk-actions-bar.active {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .selected-count {
+            font-weight: 700;
+            color: var(--accent);
+        }
+        
+        /* Upload area */
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 3rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-area:hover {
+            border-color: var(--accent);
+            background: rgba(0, 212, 255, 0.05);
+        }
+        
+        .upload-area.dragover {
+            border-color: var(--accent);
+            background: rgba(0, 212, 255, 0.1);
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+        }
+        
+        .pagination button {
+            padding: 0.5rem 1rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            cursor: pointer;
+        }
+        
+        .pagination button:hover:not(:disabled) {
+            background: var(--surface-light);
+        }
+        
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .pagination .page-info {
+            padding: 0.5rem 1rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>📇 Contact Management</h1>
+            <div class="nav-links">
+                <a href="/network" class="nav-link">Network View</a>
+                <a href="/" class="nav-link">Dashboard</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="searchInput" placeholder="Search contacts...">
+                </div>
+                <button class="btn btn-primary" onclick="openAddModal()">+ Add Contact</button>
+                <button class="btn btn-secondary" onclick="openImportModal()">📤 Import CSV/Excel</button>
+                <button class="btn btn-secondary" onclick="downloadTemplate()">📥 Download Template</button>
+                <button class="btn btn-secondary" onclick="findDuplicates()">🔍 Find Duplicates</button>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters">
+            <div class="filter-group">
+                <label class="filter-label">Agency</label>
+                <select id="filterAgency" onchange="applyFilters()">
+                    <option value="">All Agencies</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Role</label>
+                <select id="filterRole" onchange="applyFilters()">
+                    <option value="">All Roles</option>
+                    <option value="Decision Maker">Decision Maker</option>
+                    <option value="Technical Lead">Technical Lead</option>
+                    <option value="Executive">Executive</option>
+                    <option value="Influencer">Influencer</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Influence</label>
+                <select id="filterInfluence" onchange="applyFilters()">
+                    <option value="">All Levels</option>
+                    <option value="Very High">Very High</option>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Tag</label>
+                <select id="filterTag" onchange="applyFilters()">
+                    <option value="">All Tags</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="totalContacts">0</div>
+                <div class="stat-label">Total Contacts</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="decisionMakers">0</div>
+                <div class="stat-label">Decision Makers</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="activeContacts">0</div>
+                <div class="stat-label">Active (90 days)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="agencyCount">0</div>
+                <div class="stat-label">Agencies Covered</div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 40px;"><input type="checkbox" id="selectAll" onchange="toggleSelectAll()"></th>
+                        <th onclick="sortTable('name')">Name <span class="sort-icon">▼</span></th>
+                        <th onclick="sortTable('title')">Title <span class="sort-icon">▼</span></th>
+                        <th onclick="sortTable('agency')">Agency <span class="sort-icon">▼</span></th>
+                        <th onclick="sortTable('role_type')">Role <span class="sort-icon">▼</span></th>
+                        <th onclick="sortTable('influence_level')">Influence <span class="sort-icon">▼</span></th>
+                        <th>Contact</th>
+                        <th style="width: 120px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="contactsTable">
+                    <!-- Populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination">
+            <button onclick="previousPage()" id="prevBtn">← Previous</button>
+            <span class="page-info" id="pageInfo">Page 1 of 1</span>
+            <button onclick="nextPage()" id="nextBtn">Next →</button>
+        </div>
+    </div>
+
+    <!-- Bulk Actions Bar -->
+    <div class="bulk-actions-bar" id="bulkActionsBar">
+        <span class="selected-count"><span id="selectedCount">0</span> selected</span>
+        <button class="btn btn-secondary" onclick="bulkTag()">🏷️ Tag</button>
+        <button class="btn btn-secondary" onclick="bulkExport()">📤 Export</button>
+        <button class="btn btn-danger" onclick="bulkDelete()">🗑️ Delete</button>
+        <button class="btn btn-secondary" onclick="clearSelection()">✕ Clear</button>
+    </div>
+
+    <!-- Add/Edit Contact Modal -->
+    <div class="modal" id="contactModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Add Contact</h2>
+                <button class="close-btn" onclick="closeModal('contactModal')">×</button>
+            </div>
+            
+            <form id="contactForm" onsubmit="saveContact(event)">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>First Name *</label>
+                        <input type="text" id="firstName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Last Name *</label>
+                        <input type="text" id="lastName" required>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Title</label>
+                        <input type="text" id="title">
+                    </div>
+                    <div class="form-group">
+                        <label>Organization *</label>
+                        <input type="text" id="organization" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Department</label>
+                        <input type="text" id="department">
+                    </div>
+                    <div class="form-group">
+                        <label>Agency *</label>
+                        <input type="text" id="agency" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Office Symbol</label>
+                        <input type="text" id="officeSymbol">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="email">
+                    </div>
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input type="tel" id="phone">
+                    </div>
+                    <div class="form-group">
+                        <label>LinkedIn URL</label>
+                        <input type="url" id="linkedinUrl">
+                    </div>
+                    <div class="form-group">
+                        <label>Location</label>
+                        <input type="text" id="location">
+                    </div>
+                    <div class="form-group">
+                        <label>Clearance Level</label>
+                        <select id="clearanceLevel">
+                            <option value="">None</option>
+                            <option value="Confidential">Confidential</option>
+                            <option value="Secret">Secret</option>
+                            <option value="Top Secret">Top Secret</option>
+                            <option value="TS/SCI">TS/SCI</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Role Type *</label>
+                        <select id="roleType" required>
+                            <option value="">Select role...</option>
+                            <option value="Decision Maker">Decision Maker</option>
+                            <option value="Technical Lead">Technical Lead</option>
+                            <option value="Executive">Executive</option>
+                            <option value="Influencer">Influencer</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Influence Level *</label>
+                        <select id="influenceLevel" required>
+                            <option value="">Select level...</option>
+                            <option value="Very High">Very High</option>
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Tags (comma-separated)</label>
+                        <input type="text" id="tags" placeholder="e.g., cloud, cybersecurity, decision-maker">
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Notes</label>
+                        <textarea id="notes"></textarea>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('contactModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Contact</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div class="modal" id="importModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Import Contacts</h2>
+                <button class="close-btn" onclick="closeModal('importModal')">×</button>
+            </div>
+            
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <h3>Drop CSV or Excel file here</h3>
+                <p style="color: var(--text-muted); margin-top: 0.5rem;">or click to browse</p>
+                <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" style="display: none;">
+            </div>
+            
+            <div id="importPreview" style="display: none; margin-top: 2rem;">
+                <h3>Preview (first 5 rows)</h3>
+                <div id="previewTable"></div>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('importModal')">Cancel</button>
+                <button type="button" class="btn btn-primary" id="importBtn" onclick="confirmImport()" style="display: none;">Import <span id="importCount">0</span> Contacts</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Duplicates Modal -->
+    <div class="modal" id="duplicatesModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Duplicate Contacts</h2>
+                <button class="close-btn" onclick="closeModal('duplicatesModal')">×</button>
+            </div>
+            
+            <div id="duplicatesList">
+                <!-- Populated by JavaScript -->
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('duplicatesModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/contacts-management.js"></script>
+</body>
+</html>

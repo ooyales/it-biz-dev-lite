@@ -1,0 +1,31 @@
+# Configuration for Knowledge Graph Collection
+# Copy this to config.yaml and fill in your credentials
+
+# SAM.gov API Key
+# Get at: https://sam.gov/content/api
+sam_api_key: "your_sam_api_key_here"
+
+# Neo4j Database
+neo4j:
+  uri: "bolt://localhost:7687"
+  user: "neo4j"
+  password: "your_neo4j_password_here"
+  database: "contactsgraphdb"
+
+# Anthropic API Key
+# Get at: https://console.anthropic.com/
+anthropic_api_key: "your_anthropic_api_key_here"
+
+# Collection Settings
+collection:
+  # NAICS codes to search (IT services by default)
+  naics_codes:
+    - "541512"  # Computer Systems Design
+    - "541511"  # Custom Programming
+    - "541519"  # Other Computer Related
+  
+  # How many days back to search
+  days_back: 30
+  
+  # Default limit for opportunities
+  default_limit: 10

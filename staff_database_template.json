@@ -1,0 +1,124 @@
+{
+  "staff_members": [
+    {
+      "id": "EMP001",
+      "name": "John Doe",
+      "title": "Senior Systems Engineer",
+      "clearance": "Secret",
+      "clearance_expiry": "2026-06-30",
+      "labor_category": "Systems Engineer III",
+      "hourly_rate": 125.00,
+      "availability": "full-time",
+      "skills": {
+        "technical": [
+          "Python",
+          "AWS",
+          "Docker",
+          "Kubernetes",
+          "CI/CD",
+          "Linux Administration"
+        ],
+        "certifications": [
+          "AWS Solutions Architect Associate",
+          "Security+ CE",
+          "CISSP"
+        ],
+        "domains": [
+          "Cloud Infrastructure",
+          "DevOps",
+          "Cybersecurity"
+        ]
+      },
+      "experience_years": 12,
+      "education": "BS Computer Science",
+      "past_performance": [
+        {
+          "contract": "DoD Cloud Migration - Contract ABC123",
+          "role": "Lead Engineer",
+          "duration_months": 24,
+          "description": "Led migration of 50+ applications to AWS GovCloud"
+        }
+      ],
+      "naics_experience": ["541512", "541519"],
+      "notes": "Strong proposal contributor, good with client presentations"
+    },
+    {
+      "id": "EMP002",
+      "name": "Jane Smith",
+      "title": "Cybersecurity Analyst",
+      "clearance": "Top Secret",
+      "clearance_expiry": "2027-03-15",
+      "labor_category": "Cybersecurity Analyst II",
+      "hourly_rate": 110.00,
+      "availability": "full-time",
+      "skills": {
+        "technical": [
+          "SIEM (Splunk, QRadar)",
+          "Incident Response",
+          "Vulnerability Assessment",
+          "NIST Framework",
+          "RMF",
+          "Threat Hunting"
+        ],
+        "certifications": [
+          "CISSP",
+          "CEH",
+          "GIAC GCIH"
+        ],
+        "domains": [
+          "Cybersecurity",
+          "Risk Management",
+          "Compliance"
+        ]
+      },
+      "experience_years": 8,
+      "education": "MS Information Security",
+      "past_performance": [
+        {
+          "contract": "DHS SOC Operations - Contract XYZ789",
+          "role": "Senior Analyst",
+          "duration_months": 36,
+          "description": "Monitored and responded to security incidents for critical infrastructure"
+        }
+      ],
+      "naics_experience": ["541512", "541690"],
+      "notes": "RMF expert, experience with FedRAMP"
+    },
+    {
+      "id": "TEMPLATE",
+      "name": "Employee Name",
+      "title": "Job Title",
+      "clearance": "None/Interim/Secret/Top Secret/TS-SCI",
+      "clearance_expiry": "YYYY-MM-DD",
+      "labor_category": "Standard Labor Category",
+      "hourly_rate": 0.00,
+      "availability": "full-time/part-time/billable-percentage",
+      "skills": {
+        "technical": [
+          "Skill 1",
+          "Skill 2"
+        ],
+        "certifications": [
+          "Cert 1",
+          "Cert 2"
+        ],
+        "domains": [
+          "Domain 1",
+          "Domain 2"
+        ]
+      },
+      "experience_years": 0,
+      "education": "Degree and Field",
+      "past_performance": [
+        {
+          "contract": "Contract Name - Number",
+          "role": "Role on Contract",
+          "duration_months": 0,
+          "description": "Brief description of work performed"
+        }
+      ],
+      "naics_experience": ["541xxx"],
+      "notes": "Any special notes about availability, preferences, etc."
+    }
+  ]
+}

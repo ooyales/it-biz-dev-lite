@@ -1,0 +1,566 @@
+{% extends "base-ultimate.html" %}
+
+{% block title %}{{ contractor_name }} - Competitive Intelligence{% endblock %}
+{% block page_title %}{{ contractor_name }}{% endblock %}
+{% block page_subtitle %}Contractor Profile & Contract History{% endblock %}
+
+{% block stats_bar %}
+<div class="stats-bar">
+    <div class="stat-item">
+        <div class="stat-icon blue">
+            <i class="fas fa-file-contract"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="contractor-contracts">0</h4>
+            <p>Total Contracts</p>
+        </div>
+    </div>
+    
+    <div class="stat-item">
+        <div class="stat-icon green">
+            <i class="fas fa-dollar-sign"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="contractor-value">$0</h4>
+            <p>Total Value</p>
+        </div>
+    </div>
+    
+    <div class="stat-item">
+        <div class="stat-icon purple">
+            <i class="fas fa-landmark"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="contractor-agencies">0</h4>
+            <p>Agencies</p>
+        </div>
+    </div>
+    
+    <div class="stat-item">
+        <div class="stat-icon orange">
+            <i class="fas fa-calendar-alt"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="contractor-recent">0</h4>
+            <p>Recent (Last 12mo)</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block top_actions %}
+<a href="/competitive-intel" class="btn btn-outline-primary">
+    <i class="fas fa-arrow-left me-2"></i>Back to Incumbents
+</a>
+
+<button class="btn btn-success" onclick="researchContractor()">
+    <i class="fas fa-brain me-2"></i>AI Research
+</button>
+
+<button class="btn btn-primary" onclick="exportContractorData()">
+    <i class="fas fa-download me-2"></i>Export to CSV
+</button>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- AI Research Profile -->
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="fas fa-brain me-2" style="color: #00C896;"></i>AI Research Profile</h6>
+                <span id="research-status" class="badge bg-secondary">Not Researched</span>
+            </div>
+            <div class="card-body" id="research-section">
+                <div id="research-loading" style="display: none;" class="text-center py-3">
+                    <i class="fas fa-spinner fa-spin fa-2x mb-3" style="color: #00D4FF;"></i>
+                    <p>Researching contractor...</p>
+                </div>
+                
+                <div id="research-empty" class="text-center py-3">
+                    <p class="text-muted mb-2">No AI research profile yet. Click the AI Research button above to generate one.</p>
+                    <small class="text-muted">Estimated cost: ~$0.02 | Time: ~30 seconds</small>
+                </div>
+                
+                <div id="research-content" style="display: none;">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3 p-3" style="background: #1F2937; border-radius: 8px;">
+                                <h6 class="small text-muted mb-2">COMPANY OVERVIEW</h6>
+                                <p id="research-overview" class="small mb-2"></p>
+                                <div class="row small">
+                                    <div class="col-6"><strong>HQ:</strong> <span id="research-hq"></span></div>
+                                    <div class="col-6"><strong>Size:</strong> <span id="research-employees"></span></div>
+                                </div>
+                                <div class="mt-2 small" id="research-website-container">
+                                    <strong>Website:</strong> <a id="research-website" href="#" target="_blank" style="color: #00D4FF;"></a>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <h6 class="small text-muted mb-2">CERTIFICATIONS</h6>
+                                <div id="research-certs"></div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <h6 class="small text-muted mb-2">CAPABILITIES</h6>
+                                <ul id="research-capabilities" class="small mb-0"></ul>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <h6 class="small text-muted mb-2">LEADERSHIP</h6>
+                                <ul id="research-leadership" class="small mb-0"></ul>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <h6 class="small text-muted mb-2">NOTABLE CONTRACTS</h6>
+                                <ul id="research-contracts" class="small mb-0"></ul>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <h6 class="small text-muted mb-2">RECENT NEWS</h6>
+                                <ul id="research-news" class="small mb-0"></ul>
+                            </div>
+                            
+                            <div class="p-3" style="background: rgba(0, 200, 150, 0.1); border-radius: 8px; border: 1px solid #00C896;">
+                                <h6 class="small mb-2" style="color: #00C896;"><i class="fas fa-handshake me-1"></i>TEAMING FIT</h6>
+                                <p id="research-teaming" class="small mb-0"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contract Timeline -->
+    <div class="col-md-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>Contract Award Timeline</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="timeline-chart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Agency Breakdown -->
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-landmark me-2"></i>Top Agencies</h6>
+            </div>
+            <div class="card-body">
+                <div id="agency-breakdown"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- NAICS Footprint -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-code-branch me-2"></i>NAICS Code Distribution</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="naics-chart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Performance Trends -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-chart-area me-2"></i>Performance Trends</h6>
+            </div>
+            <div class="card-body">
+                <div id="performance-trends">
+                    <div class="mb-3">
+                        <label class="small text-muted">Average Contract Value</label>
+                        <h4 id="avg-value">$0</h4>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small text-muted">Largest Contract</label>
+                        <h4 id="max-value">$0</h4>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small text-muted">Most Common Agency</label>
+                        <h4 id="top-agency">N/A</h4>
+                    </div>
+                    <div class="mb-3">
+                        <label class="small text-muted">Primary NAICS</label>
+                        <h4 id="primary-naics">N/A</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- All Contracts Table -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="fas fa-list me-2"></i>All Contracts</h6>
+                <div>
+                    <select class="form-select form-select-sm" id="sort-contracts" onchange="sortContracts()" style="width: auto; display: inline-block;">
+                        <option value="date">Sort by Date</option>
+                        <option value="value">Sort by Value</option>
+                        <option value="agency">Sort by Agency</option>
+                    </select>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="contracts-table">
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-spinner fa-spin fa-3x mb-3"></i>
+                        <p>Loading contracts...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const contractorName = "{{ contractor_name }}";
+let allContracts = [];
+let timelineChart = null;
+let naicsChart = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadContractorData();
+});
+
+async function loadContractorData() {
+    try {
+        const res = await fetch(`/api/competitive/contractor/${encodeURIComponent(contractorName)}`);
+        const data = await res.json();
+        
+        if (data.error) {
+            alert('Error loading contractor data: ' + data.error);
+            return;
+        }
+        
+        allContracts = data.contracts || [];
+        
+        // Update stats
+        document.getElementById('contractor-contracts').textContent = data.total_contracts || 0;
+        document.getElementById('contractor-value').textContent = formatCurrency(data.total_value || 0);
+        document.getElementById('contractor-agencies').textContent = data.agency_count || 0;
+        document.getElementById('contractor-recent').textContent = data.recent_count || 0;
+        
+        // Update trends
+        document.getElementById('avg-value').textContent = formatCurrency(data.avg_value || 0);
+        document.getElementById('max-value').textContent = formatCurrency(data.max_value || 0);
+        document.getElementById('top-agency').textContent = data.top_agency || 'N/A';
+        document.getElementById('primary-naics').textContent = data.primary_naics || 'N/A';
+        
+        // Render visualizations
+        renderTimeline(data.timeline || []);
+        renderAgencyBreakdown(data.agencies || []);
+        renderNaicsChart(data.naics_distribution || []);
+        renderContractsTable(allContracts);
+        
+    } catch (err) {
+        console.error('Error loading contractor data:', err);
+        document.getElementById('contracts-table').innerHTML = `
+            <div class="text-center text-muted py-5">
+                <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+                <p>Error loading contractor data</p>
+            </div>
+        `;
+    }
+}
+
+function renderTimeline(timeline) {
+    const ctx = document.getElementById('timeline-chart');
+    
+    if (timelineChart) {
+        timelineChart.destroy();
+    }
+    
+    timelineChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: timeline.map(t => t.month),
+            datasets: [{
+                label: 'Contract Value',
+                data: timeline.map(t => t.value),
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '$' + (value / 1000000).toFixed(1) + 'M';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderAgencyBreakdown(agencies) {
+    const container = document.getElementById('agency-breakdown');
+    
+    if (agencies.length === 0) {
+        container.innerHTML = '<p class="text-muted small">No agency data</p>';
+        return;
+    }
+    
+    let html = '<div class="list-group list-group-flush">';
+    agencies.slice(0, 5).forEach(a => {
+        const pct = (a.value / agencies.reduce((sum, x) => sum + x.value, 0) * 100).toFixed(0);
+        html += `
+            <div class="list-group-item bg-transparent border-0 px-0 py-2">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <small class="text-truncate" style="max-width: 200px;" title="${a.agency}">${a.agency}</small>
+                    <small class="text-muted">${formatCurrency(a.value)}</small>
+                </div>
+                <div class="progress" style="height: 4px;">
+                    <div class="progress-bar bg-primary" style="width: ${pct}%"></div>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    
+    container.innerHTML = html;
+}
+
+function renderNaicsChart(naics) {
+    const ctx = document.getElementById('naics-chart');
+    
+    if (naicsChart) {
+        naicsChart.destroy();
+    }
+    
+    naicsChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: naics.map(n => n.code),
+            datasets: [{
+                data: naics.map(n => n.count),
+                backgroundColor: [
+                    '#667eea',
+                    '#48bb78',
+                    '#ed8936',
+                    '#4299e1',
+                    '#9f7aea',
+                    '#f56565'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right'
+                }
+            }
+        }
+    });
+}
+
+function renderContractsTable(contracts) {
+    const container = document.getElementById('contracts-table');
+    
+    if (contracts.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center py-4">No contracts found</p>';
+        return;
+    }
+    
+    let html = '<div class="table-responsive"><table class="table table-hover table-sm">';
+    html += `<thead>
+        <tr>
+            <th>Date</th>
+            <th>Contract ID</th>
+            <th>Agency</th>
+            <th>NAICS</th>
+            <th>Value</th>
+            <th>Description</th>
+        </tr>
+    </thead><tbody>`;
+    
+    contracts.forEach(c => {
+        html += `<tr>
+            <td><small>${c.date_signed || 'N/A'}</small></td>
+            <td><small><code>${c.contract_id}</code></small></td>
+            <td><small>${c.agency || 'N/A'}</small></td>
+            <td><small><span class="badge bg-secondary">${c.naics || 'N/A'}</span></small></td>
+            <td><strong>${formatCurrency(c.value)}</strong></td>
+            <td><small class="text-muted">${(c.description || 'N/A').substring(0, 100)}${c.description && c.description.length > 100 ? '...' : ''}</small></td>
+        </tr>`;
+    });
+    
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+}
+
+function sortContracts() {
+    const sortBy = document.getElementById('sort-contracts').value;
+    
+    const sorted = [...allContracts].sort((a, b) => {
+        if (sortBy === 'date') {
+            return (b.date_signed || '').localeCompare(a.date_signed || '');
+        } else if (sortBy === 'value') {
+            return (b.value || 0) - (a.value || 0);
+        } else if (sortBy === 'agency') {
+            return (a.agency || '').localeCompare(b.agency || '');
+        }
+        return 0;
+    });
+    
+    renderContractsTable(sorted);
+}
+
+function exportContractorData() {
+    // Build CSV
+    let csv = 'Contract ID,Date,Agency,NAICS,Value,Description\n';
+    allContracts.forEach(c => {
+        csv += `"${c.contract_id}","${c.date_signed}","${c.agency}","${c.naics}","${c.value}","${(c.description || '').replace(/"/g, '""')}"\n`;
+    });
+    
+    // Download
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${contractorName.replace(/[^a-z0-9]/gi, '_')}_contracts.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+
+function formatCurrency(value) {
+    if (!value) return '$0';
+    if (value >= 1000000) return '$' + (value / 1000000).toFixed(1) + 'M';
+    if (value >= 1000) return '$' + (value / 1000).toFixed(0) + 'K';
+    return '$' + value.toLocaleString();
+}
+
+// AI Research Functions
+async function loadResearchProfile() {
+    try {
+        const res = await fetch(`/api/competitive/organization/${encodeURIComponent(contractorName)}/research`);
+        const data = await res.json();
+        
+        if (data.research_profile) {
+            displayResearch(data.research_profile);
+        }
+    } catch (err) {
+        console.error('Error loading research:', err);
+    }
+}
+
+function displayResearch(profile) {
+    document.getElementById('research-empty').style.display = 'none';
+    document.getElementById('research-content').style.display = 'block';
+    
+    // Update status badge
+    const conf = profile.confidence || 'low';
+    const statusEl = document.getElementById('research-status');
+    statusEl.textContent = `${conf.charAt(0).toUpperCase() + conf.slice(1)} Confidence`;
+    statusEl.className = `badge bg-${conf === 'high' ? 'success' : conf === 'medium' ? 'warning' : 'secondary'}`;
+    
+    // Overview
+    document.getElementById('research-overview').textContent = profile.company_overview || 'No overview available';
+    document.getElementById('research-hq').textContent = profile.headquarters || 'Unknown';
+    document.getElementById('research-employees').textContent = profile.employee_count || 'Unknown';
+    
+    // Website
+    const websiteEl = document.getElementById('research-website');
+    const websiteContainer = document.getElementById('research-website-container');
+    if (profile.website) {
+        websiteEl.href = profile.website.startsWith('http') ? profile.website : 'https://' + profile.website;
+        websiteEl.textContent = profile.website;
+        websiteContainer.style.display = 'block';
+    } else {
+        websiteContainer.style.display = 'none';
+    }
+    
+    // Certifications
+    const certs = profile.certifications || [];
+    document.getElementById('research-certs').innerHTML = certs.length ? 
+        certs.map(c => `<span class="badge bg-warning text-dark me-1 mb-1">${c}</span>`).join('') :
+        '<span class="text-muted small">None found</span>';
+    
+    // Capabilities
+    document.getElementById('research-capabilities').innerHTML = 
+        (profile.capabilities || []).map(c => `<li>${c}</li>`).join('') || '<li class="text-muted">None found</li>';
+    
+    // Leadership
+    document.getElementById('research-leadership').innerHTML = 
+        (profile.leadership || []).map(l => `<li>${l}</li>`).join('') || '<li class="text-muted">None found</li>';
+    
+    // Notable Contracts
+    document.getElementById('research-contracts').innerHTML = 
+        (profile.notable_contracts || []).map(c => `<li>${c}</li>`).join('') || '<li class="text-muted">None found</li>';
+    
+    // News
+    document.getElementById('research-news').innerHTML = 
+        (profile.recent_news || []).map(n => `<li>${n}</li>`).join('') || '<li class="text-muted">None found</li>';
+    
+    // Teaming fit
+    document.getElementById('research-teaming').textContent = profile.teaming_fit || 'No assessment available';
+}
+
+async function researchContractor() {
+    const btn = event.target.closest('button');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Researching...';
+    
+    document.getElementById('research-loading').style.display = 'block';
+    document.getElementById('research-empty').style.display = 'none';
+    document.getElementById('research-content').style.display = 'none';
+    
+    try {
+        const res = await fetch('/api/competitive/organization/research', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ name: contractorName, force_refresh: true })
+        });
+        
+        const data = await res.json();
+        
+        document.getElementById('research-loading').style.display = 'none';
+        
+        if (data.status === 'success' && data.research_profile) {
+            displayResearch(data.research_profile);
+        } else {
+            alert('Research error: ' + (data.error || 'Unknown error'));
+            document.getElementById('research-empty').style.display = 'block';
+        }
+    } catch (err) {
+        document.getElementById('research-loading').style.display = 'none';
+        document.getElementById('research-empty').style.display = 'block';
+        alert('Error: ' + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-brain me-2"></i>AI Research';
+    }
+}
+
+// Load research profile on page load
+document.addEventListener('DOMContentLoaded', loadResearchProfile);
+</script>
+{% endblock %}

@@ -1,0 +1,492 @@
+{% extends "base-ultimate.html" %}
+
+{% block title %}Timeline View - BD Intelligence{% endblock %}
+{% block page_title %}Opportunities Timeline{% endblock %}
+{% block page_subtitle %}Visual timeline of opportunities by deadline{% endblock %}
+
+{% block stats_bar %}
+<div class="stats-bar">
+    <div class="stat-item">
+        <div class="stat-icon purple">
+            <i class="fas fa-bullseye"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="total-opps">200</h4>
+            <p>Total Opportunities</p>
+        </div>
+    </div>
+    
+    <div class="stat-item">
+        <div class="stat-icon green">
+            <i class="fas fa-star"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="high-priority">160</h4>
+            <p>High Priority</p>
+        </div>
+    </div>
+    
+    <div class="stat-item">
+        <div class="stat-icon blue">
+            <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="with-contacts">174</h4>
+            <p>With Contacts</p>
+        </div>
+    </div>
+    
+    <div class="stat-item">
+        <div class="stat-icon orange">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="due-soon">23</h4>
+            <p>Due This Week</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block top_actions %}
+<div class="view-switcher">
+    <button class="btn active" onclick="window.location.href='/opportunities/timeline'">
+        <i class="fas fa-chart-line me-1"></i>Timeline
+    </button>
+    <button class="btn" onclick="window.location.href='/opportunities/network'">
+        <i class="fas fa-project-diagram me-1"></i>Network
+    </button>
+    <button class="btn" onclick="window.location.href='/bd-intelligence'">
+        <i class="fas fa-table me-1"></i>Table
+    </button>
+    <button class="btn" onclick="window.location.href='/opportunities/kanban'">
+        <i class="fas fa-columns me-1"></i>Kanban
+    </button>
+</div>
+
+<select class="form-select form-select-sm" style="width: 150px;" id="priority-filter" onchange="filterTimeline()">
+    <option value="all">All Priorities</option>
+    <option value="HIGH">High Only</option>
+    <option value="MEDIUM">Medium Only</option>
+    <option value="LOW">Low Only</option>
+</select>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body p-0">
+        <!-- Timeline SVG Container -->
+        <div id="timeline-container" style="width: 100%; height: 600px; position: relative;">
+            <svg id="timeline-svg"></svg>
+            
+            <!-- Loading State -->
+            <div id="timeline-loading" class="text-center py-5">
+                <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;"></div>
+                <p class="text-muted">Loading opportunities timeline...</p>
+            </div>
+        </div>
+        
+        <!-- Timeline Legend -->
+        <div class="p-3 border-top">
+            <div class="d-flex justify-content-center gap-4">
+                <div class="d-flex align-items-center gap-2">
+                    <div style="width: 12px; height: 12px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+                    <span class="small text-muted">High Priority</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <div style="width: 12px; height: 12px; border-radius: 50%; background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);"></div>
+                    <span class="small text-muted">Medium Priority</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <div style="width: 12px; height: 12px; border-radius: 50%; background: linear-gradient(135deg, #718096 0%, #4a5568 100%);"></div>
+                    <span class="small text-muted">Low Priority</span>
+                </div>
+                <div class="ms-4 small text-muted">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Circle size = Opportunity score (larger = higher score)
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Opportunity Detail Modal (same as bd-intelligence) -->
+<div class="modal fade" id="opportunityModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h5 class="modal-title text-white" id="modalTitle">Opportunity Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <div class="text-center py-5">
+                    <div class="spinner-border"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Agent Modal (for sequential workflow) -->
+<div class="modal fade" id="agentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="agentModalTitle">
+                    <i class="fas fa-robot me-2"></i>Agent Action
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="agentModalBody">
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;"></div>
+                    <p class="text-muted">Processing...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Timeline D3.js Visualization
+let opportunities = [];
+let filteredOpportunities = [];
+
+// Load opportunities data
+async function loadOpportunities() {
+    try {
+        const res = await fetch('/api/scout/opportunities');
+        
+        if (!res.ok) {
+            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+        
+        const data = await res.json();
+        
+        // Handle error responses
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        opportunities = data.opportunities || [];
+        
+        console.log(`Loaded ${opportunities.length} opportunities`);
+        
+        if (opportunities.length === 0) {
+            document.getElementById('timeline-loading').innerHTML = 
+                '<div class="alert alert-warning"><h5>No Opportunities Found</h5><p>Run the opportunity scout first:</p><code>cd knowledge_graph && python opportunity_scout.py --days 30</code></div>';
+            return;
+        }
+        
+        filteredOpportunities = [...opportunities];
+        
+        // Update stats
+        updateStats();
+        
+        // Render timeline
+        renderTimeline();
+        
+        // Hide loading
+        document.getElementById('timeline-loading').style.display = 'none';
+        
+    } catch (error) {
+        console.error('Error loading opportunities:', error);
+        document.getElementById('timeline-loading').innerHTML = 
+            `<div class="alert alert-danger"><h5>Error Loading Data</h5><p>${error.message}</p><p class="small mb-0">Check console for details</p></div>`;
+    }
+}
+
+function updateStats() {
+    const highPriority = opportunities.filter(o => o.priority === 'HIGH').length;
+    
+    const withContacts = opportunities.filter(o => {
+        const contacts = o.contacts || {};
+        return (contacts.total || contacts.total_contacts || 0) > 0;
+    }).length;
+    
+    const dueSoon = opportunities.filter(o => {
+        if (!o.deadline) return false;
+        const deadline = new Date(o.deadline);
+        const today = new Date();
+        const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+        return deadline >= today && deadline <= weekFromNow;
+    }).length;
+    
+    document.getElementById('total-opps').textContent = opportunities.length;
+    document.getElementById('high-priority').textContent = highPriority;
+    document.getElementById('with-contacts').textContent = withContacts;
+    document.getElementById('due-soon').textContent = dueSoon;
+}
+
+function renderTimeline() {
+    // Clear existing
+    d3.select('#timeline-svg').selectAll('*').remove();
+    
+    // Container dimensions
+    const container = document.getElementById('timeline-container');
+    const width = container.clientWidth;
+    const height = 600;
+    const margin = {top: 40, right: 40, bottom: 60, left: 60};
+    const innerWidth = width - margin.left - margin.right;
+    const innerHeight = height - margin.top - margin.bottom;
+    
+    // Create SVG
+    const svg = d3.select('#timeline-svg')
+        .attr('width', width)
+        .attr('height', height);
+    
+    const g = svg.append('g')
+        .attr('transform', `translate(${margin.left},${margin.top})`);
+    
+    // Prepare data - use correct field names from API
+    const oppsWithDates = filteredOpportunities.map(o => ({
+        ...o,
+        deadlineDate: new Date(o.deadline || Date.now() + 30*24*60*60*1000),
+        scoreValue: o.score || 50,
+        priorityLevel: o.priority || 'MEDIUM',
+        contactCount: (o.contacts || {}).total || (o.contacts || {}).total_contacts || 0
+    })).filter(o => o.deadlineDate && !isNaN(o.deadlineDate.getTime()));
+    
+    if (oppsWithDates.length === 0) {
+        g.append('text')
+            .attr('x', innerWidth / 2)
+            .attr('y', innerHeight / 2)
+            .attr('text-anchor', 'middle')
+            .style('fill', '#a0aec0')
+            .text('No opportunities with valid deadlines');
+        return;
+    }
+    
+    // X Scale (Time)
+    const today = new Date();
+    const maxDate = d3.max(oppsWithDates, d => d.deadlineDate);
+    const xScale = d3.scaleTime()
+        .domain([today, maxDate])
+        .range([0, innerWidth]);
+    
+    // Y Scale (Score)
+    const yScale = d3.scaleLinear()
+        .domain([0, 100])
+        .range([innerHeight, 0]);
+    
+    // X Axis
+    g.append('g')
+        .attr('transform', `translate(0,${innerHeight})`)
+        .call(d3.axisBottom(xScale).ticks(10))
+        .selectAll('text')
+        .style('fill', '#a0aec0');
+    
+    g.selectAll('.domain, .tick line')
+        .style('stroke', '#2d3748');
+    
+    // Y Axis
+    g.append('g')
+        .call(d3.axisLeft(yScale))
+        .selectAll('text')
+        .style('fill', '#a0aec0');
+    
+    g.selectAll('.domain, .tick line')
+        .style('stroke', '#2d3748');
+    
+    // Axis labels
+    svg.append('text')
+        .attr('x', width / 2)
+        .attr('y', height - 10)
+        .style('text-anchor', 'middle')
+        .style('fill', '#a0aec0')
+        .style('font-size', '12px')
+        .text('Response Deadline');
+    
+    svg.append('text')
+        .attr('transform', 'rotate(-90)')
+        .attr('x', -height / 2)
+        .attr('y', 15)
+        .style('text-anchor', 'middle')
+        .style('fill', '#a0aec0')
+        .style('font-size', '12px')
+        .text('Opportunity Score');
+    
+    // Color scale
+    const colorScale = d3.scaleOrdinal()
+        .domain(['HIGH', 'MEDIUM', 'LOW'])
+        .range(['url(#gradient-high)', 'url(#gradient-medium)', 'url(#gradient-low)']);
+    
+    // Define gradients
+    const defs = svg.append('defs');
+    
+    const gradientHigh = defs.append('linearGradient')
+        .attr('id', 'gradient-high')
+        .attr('x1', '0%').attr('y1', '0%')
+        .attr('x2', '100%').attr('y2', '100%');
+    gradientHigh.append('stop').attr('offset', '0%').style('stop-color', '#667eea');
+    gradientHigh.append('stop').attr('offset', '100%').style('stop-color', '#764ba2');
+    
+    const gradientMedium = defs.append('linearGradient')
+        .attr('id', 'gradient-medium')
+        .attr('x1', '0%').attr('y1', '0%')
+        .attr('x2', '100%').attr('y2', '100%');
+    gradientMedium.append('stop').attr('offset', '0%').style('stop-color', '#4299e1');
+    gradientMedium.append('stop').attr('offset', '100%').style('stop-color', '#3182ce');
+    
+    const gradientLow = defs.append('linearGradient')
+        .attr('id', 'gradient-low')
+        .attr('x1', '0%').attr('y1', '0%')
+        .attr('x2', '100%').attr('y2', '100%');
+    gradientLow.append('stop').attr('offset', '0%').style('stop-color', '#718096');
+    gradientLow.append('stop').attr('offset', '100%').style('stop-color', '#4a5568');
+    
+    // Draw opportunities as circles
+    g.selectAll('circle')
+        .data(oppsWithDates)
+        .enter()
+        .append('circle')
+        .attr('cx', d => xScale(d.deadlineDate))
+        .attr('cy', d => yScale(d.scoreValue))
+        .attr('r', d => Math.max(4, Math.min(20, d.scoreValue / 5)))
+        .style('fill', d => colorScale(d.priorityLevel))
+        .style('opacity', 0.8)
+        .style('cursor', 'pointer')
+        .style('stroke', '#fff')
+        .style('stroke-width', 2)
+        .on('mouseover', function(event, d) {
+            d3.select(this)
+                .transition()
+                .duration(200)
+                .attr('r', d => Math.max(6, Math.min(25, d.scoreValue / 5) + 3))
+                .style('opacity', 1);
+            
+            showTooltip(event, d);
+        })
+        .on('mouseout', function(event, d) {
+            d3.select(this)
+                .transition()
+                .duration(200)
+                .attr('r', d => Math.max(4, Math.min(20, d.scoreValue / 5)))
+                .style('opacity', 0.8);
+            
+            hideTooltip();
+        })
+        .on('click', (event, d) => {
+            openOpportunityModal(d);
+        });
+    
+    // Grid lines
+    g.append('g')
+        .attr('class', 'grid')
+        .call(d3.axisLeft(yScale).tickSize(-innerWidth).tickFormat(''))
+        .style('stroke', '#2d3748')
+        .style('stroke-opacity', 0.3);
+}
+
+// Tooltip
+function showTooltip(event, d) {
+    const tooltip = d3.select('body').append('div')
+        .attr('class', 'timeline-tooltip')
+        .style('position', 'absolute')
+        .style('background', '#151b3d')
+        .style('color', '#fff')
+        .style('padding', '12px')
+        .style('border-radius', '8px')
+        .style('border', '1px solid #2d3748')
+        .style('box-shadow', '0 4px 8px rgba(0,0,0,0.3)')
+        .style('pointer-events', 'none')
+        .style('z-index', '10000')
+        .html(`
+            <div style="max-width: 300px;">
+                <strong>${d.title}</strong><br>
+                <span style="color: #a0aec0;">Agency: ${d.agency || 'Unknown'}</span><br>
+                <span style="color: #a0aec0;">Score: ${d.scoreValue}/100</span><br>
+                <span style="color: #a0aec0;">Priority: ${d.priorityLevel}</span><br>
+                <span style="color: #a0aec0;">Contacts: ${d.contactCount}</span><br>
+                <span style="color: #a0aec0;">Deadline: ${d.deadlineDate.toLocaleDateString()}</span>
+            </div>
+        `);
+    
+    tooltip
+        .style('left', (event.pageX + 10) + 'px')
+        .style('top', (event.pageY - 10) + 'px');
+}
+
+function hideTooltip() {
+    d3.selectAll('.timeline-tooltip').remove();
+}
+
+// Filter timeline
+function filterTimeline() {
+    const priority = document.getElementById('priority-filter').value;
+    
+    if (priority === 'all') {
+        filteredOpportunities = [...opportunities];
+    } else {
+        filteredOpportunities = opportunities.filter(o => o.priority === priority);
+    }
+    
+    renderTimeline();
+}
+
+// Open opportunity modal
+async function openOpportunityModal(opp) {
+    const modal = new bootstrap.Modal(document.getElementById('opportunityModal'));
+    modal.show();
+    
+    document.getElementById('modalTitle').textContent = opp.title;
+    document.getElementById('modalBody').innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Agency:</h6>
+                <p>${opp.agency || 'Unknown'}</p>
+                
+                <h6>Score:</h6>
+                <p>${opp.scoreValue}/100 - <span class="badge bg-${opp.priorityLevel === 'HIGH' ? 'success' : 'info'}">${opp.priorityLevel}</span></p>
+                
+                <h6>Contacts:</h6>
+                <p>${opp.contactCount} contacts at this agency</p>
+            </div>
+            <div class="col-md-6">
+                <h6>Deadline:</h6>
+                <p>${opp.deadlineDate.toLocaleDateString()}</p>
+                
+                <h6>Win Probability:</h6>
+                <p>${opp.win_probability || 'Medium'}</p>
+                
+                <h6>NAICS:</h6>
+                <p>${opp.naics || 'Not specified'}</p>
+            </div>
+        </div>
+        
+        ${opp.description ? `
+            <div class="mt-3">
+                <h6>Description:</h6>
+                <p class="small">${opp.description}</p>
+            </div>
+        ` : ''}
+        
+        <div class="mt-4">
+            <a href="https://sam.gov/opp/${opp.notice_id}/view" target="_blank" class="btn btn-primary">
+                <i class="fas fa-external-link-alt me-2"></i>View on SAM.gov
+            </a>
+            <button class="btn btn-success ms-2" onclick="alert('AI Agent workflow coming soon!')">
+                <i class="fas fa-robot me-2"></i>Start AI Workflow
+            </button>
+        </div>
+    `;
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', () => {
+    loadOpportunities();
+    
+    // Resize handler
+    window.addEventListener('resize', () => {
+        if (opportunities.length > 0) {
+            renderTimeline();
+        }
+    });
+});
+</script>
+{% endblock %}

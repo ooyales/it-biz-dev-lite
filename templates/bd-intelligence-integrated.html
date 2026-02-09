@@ -1,0 +1,645 @@
+{% extends "base-ultimate.html" %}
+
+{% block title %}BD Intelligence Hub - BD Intelligence{% endblock %}
+{% block page_title %}BD Intelligence Hub{% endblock %}
+{% block page_subtitle %}Real-time opportunity intelligence powered by AI{% endblock %}
+
+{% block stats_bar %}
+<div class="stats-bar">
+    <div class="stat-item">
+        <div class="stat-icon purple">
+            <i class="fas fa-bullseye"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="total-opps-stat">0</h4>
+            <p>Total Opportunities</p>
+        </div>
+    </div>
+    
+    <div class="stat-item">
+        <div class="stat-icon green">
+            <i class="fas fa-star"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="high-priority-stat">0</h4>
+            <p>High Priority</p>
+        </div>
+    </div>
+    
+    <div class="stat-item">
+        <div class="stat-icon blue">
+            <i class="fas fa-user-friends"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="with-contacts-stat">0</h4>
+            <p>With Contacts</p>
+        </div>
+    </div>
+    
+    <div class="stat-item">
+        <div class="stat-icon orange">
+            <i class="fas fa-network-wired"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="network-contacts-stat">0</h4>
+            <p>Network Contacts</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block top_actions %}
+<div class="btn-group">
+    <button class="btn btn-sm" onclick="window.location.href='/opportunities/timeline'">
+        <i class="fas fa-chart-line me-1"></i>Timeline
+    </button>
+    <button class="btn btn-sm" onclick="window.location.href='/opportunities/network'">
+        <i class="fas fa-project-diagram me-1"></i>Network
+    </button>
+    <button class="btn btn-sm active" onclick="window.location.href='/bd-intelligence'">
+        <i class="fas fa-table me-1"></i>Table
+    </button>
+    <button class="btn btn-sm" onclick="window.location.href='/opportunities/kanban'">
+        <i class="fas fa-columns me-1"></i>Kanban
+    </button>
+</div>
+
+<select class="form-select form-select-sm" style="width: 150px;" id="priority-filter-top" onchange="filterOpportunities()">
+    <option value="all">All Priorities</option>
+    <option value="HIGH">High Only</option>
+    <option value="MEDIUM">Medium Only</option>
+    <option value="LOW">Low Only</option>
+</select>
+
+<button class="btn btn-primary btn-sm" onclick="runScout()">
+    <i class="fas fa-sync me-2"></i>Run Scout
+</button>
+
+<button class="btn btn-success btn-sm" onclick="exportExcel()">
+    <i class="fas fa-file-excel me-2"></i>Export Excel
+</button>
+{% endblock %}
+
+{% block content %}
+<!-- Opportunities List -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body" id="opportunities-container">
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;"></div>
+                    <p class="text-muted">Loading opportunities...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Opportunity Detail Modal -->
+<div class="modal fade" id="opportunityModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <h5 class="modal-title" id="modalTitle">Opportunity Details</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Content loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Agent Progress Modal -->
+<div class="modal fade" id="agentProgressModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-robot me-2"></i><span id="agentProgressTitle">AI Agent Working</span>
+                </h5>
+            </div>
+            <div class="modal-body" id="agentProgressBody">
+                <!-- Progress content -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.opportunity-card {
+    background: linear-gradient(135deg, #1a2147 0%, #151b3d 100%);
+    border: 1px solid #2d3748;
+    border-left: 4px solid;
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.opportunity-card h5 {
+    color: #ffffff !important;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.opportunity-card .text-muted {
+    color: #a0aec0 !important;
+}
+
+.opportunity-card:hover {
+    box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+    transform: translateX(5px);
+    border-color: #667eea;
+}
+
+.opportunity-card.priority-high {
+    border-left-color: #48bb78;
+}
+
+.opportunity-card.priority-medium {
+    border-left-color: #4299e1;
+}
+
+.opportunity-card.priority-low {
+    border-left-color: #718096;
+}
+
+.badge-priority-high {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: white;
+}
+
+.badge-priority-medium {
+    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+    color: white;
+}
+
+.badge-priority-low {
+    background: linear-gradient(135deg, #718096 0%, #4a5568 100%);
+    color: white;
+}
+
+.win-probability {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.contact-badge {
+    display: inline-block;
+    background: rgba(72, 187, 120, 0.2);
+    color: #48bb78;
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let allOpportunities = [];
+let filteredOpportunities = [];
+
+// Load opportunities
+async function loadOpportunities() {
+    try {
+        const res = await fetch('/api/scout/opportunities');
+        const data = await res.json();
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        allOpportunities = data.opportunities || [];
+        filteredOpportunities = [...allOpportunities];
+        
+        // Update stats
+        updateStats();
+        
+        // Render opportunities
+        renderOpportunities();
+        
+    } catch (error) {
+        console.error('Error loading opportunities:', error);
+        document.getElementById('opportunities-container').innerHTML = 
+            `<div class="alert alert-danger">
+                <h5>Error Loading Opportunities</h5>
+                <p>${error.message}</p>
+                <button class="btn btn-primary mt-2" onclick="location.reload()">Retry</button>
+            </div>`;
+    }
+}
+
+function updateStats() {
+    const highPriority = allOpportunities.filter(o => o.priority === 'HIGH').length;
+    const withContacts = allOpportunities.filter(o => 
+        o.contacts && (o.contacts.total || o.contacts.total_contacts || 0) > 0
+    ).length;
+    
+    document.getElementById('total-opps-stat').textContent = allOpportunities.length;
+    document.getElementById('high-priority-stat').textContent = highPriority;
+    document.getElementById('with-contacts-stat').textContent = withContacts;
+    document.getElementById('network-contacts-stat').textContent = 0; // TODO: Calculate
+}
+
+function renderOpportunities() {
+    const container = document.getElementById('opportunities-container');
+    
+    if (filteredOpportunities.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <i class="fas fa-inbox fa-4x mb-3 text-muted"></i>
+                <h4>No Opportunities Found</h4>
+                <p class="text-muted">Try adjusting your filters or run the scout to collect new opportunities</p>
+                <button class="btn btn-primary mt-3" onclick="runScout()">
+                    <i class="fas fa-sync me-2"></i>Run Scout
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = filteredOpportunities.map(opp => {
+        const contacts = opp.contacts || {};
+        const contactTotal = contacts.total || contacts.total_contacts || 0;
+        const decisionMakers = contacts.decision_makers || 0;
+        
+        return `
+            <div class="opportunity-card priority-${(opp.priority || 'low').toLowerCase()}" 
+                 onclick="showOpportunityDetail('${opp.notice_id || opp.noticeId}')">>
+                <div class="row align-items-center">
+                    <div class="col-md-7">
+                        <h5>${opp.title || 'Untitled Opportunity'}</h5>
+                        <div class="text-muted small mb-2">
+                            <i class="fas fa-building me-2"></i>${opp.agency || 'Agency Not Specified'}
+                            <i class="fas fa-calendar ms-3 me-2"></i>${opp.deadline ? new Date(opp.deadline).toLocaleDateString() : 'No Deadline'}
+                        </div>
+                        ${contactTotal > 0 ? `
+                            <span class="contact-badge">
+                                <i class="fas fa-user-friends me-1"></i>
+                                ${contactTotal} contact${contactTotal > 1 ? 's' : ''}
+                                ${decisionMakers > 0 ? 
+                                    `(${decisionMakers} decision maker${decisionMakers > 1 ? 's' : ''})` : ''}
+                            </span>
+                        ` : ''}
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="win-probability text-${(opp.win_probability || 0) >= 60 ? 'success' : (opp.win_probability || 0) >= 40 ? 'warning' : 'secondary'}">
+                            ${opp.win_probability || opp.score || 0}%
+                        </div>
+                        <div class="small text-muted">Win Probability</div>
+                    </div>
+                    <div class="col-md-2 text-end">
+                        <span class="badge badge-priority-${(opp.priority || 'low').toLowerCase()}">
+                            ${opp.priority || 'LOW'}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function filterOpportunities() {
+    const filter = document.getElementById('priority-filter-top').value;
+    
+    if (filter === 'all') {
+        filteredOpportunities = [...allOpportunities];
+    } else {
+        filteredOpportunities = allOpportunities.filter(o => o.priority === filter);
+    }
+    
+    renderOpportunities();
+}
+
+function showOpportunityDetail(noticeId) {
+    const opp = allOpportunities.find(o => o.notice_id === noticeId || o.noticeId === noticeId);
+    if (!opp) {
+        console.error('Opportunity not found:', noticeId);
+        console.log('Available opportunities:', allOpportunities.map(o => ({
+            notice_id: o.notice_id,
+            noticeId: o.noticeId,
+            title: o.title
+        })));
+        return;
+    }
+    
+    const modal = new bootstrap.Modal(document.getElementById('opportunityModal'));
+    modal.show();
+    
+    // Get the actual notice_id (handle both formats)
+    const actualNoticeId = opp.notice_id || opp.noticeId;
+    
+    document.getElementById('modalTitle').textContent = opp.title;
+    document.getElementById('modalBody').innerHTML = `
+        <div class="row">
+            <div class="col-md-8">
+                <h6>Agency:</h6>
+                <p>${opp.agency || 'Unknown'}</p>
+                
+                <h6>NAICS Code:</h6>
+                <p>${opp.naics || opp.naicsCode || 'Not specified'}</p>
+                
+                <h6>Deadline:</h6>
+                <p>${opp.deadline || opp.responseDeadLine ? new Date(opp.deadline || opp.responseDeadLine).toLocaleDateString() : 'Not specified'}</p>
+                
+                <h6>Set-Aside:</h6>
+                <p>${opp.setaside || opp.setAside || 'N/A'}</p>
+                
+                ${opp.description ? `
+                    <h6>Description:</h6>
+                    <p class="small">${opp.description.substring(0, 500)}...</p>
+                ` : ''}
+                
+                <a href="https://sam.gov/opp/${actualNoticeId}/view" target="_blank" class="btn btn-primary mt-3">
+                    <i class="fas fa-external-link-alt me-2"></i>View on SAM.gov
+                </a>
+            </div>
+            
+            <div class="col-md-4">
+                <h6>Scout Analysis:</h6>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Score:</span>
+                        <strong>${opp.score}/100</strong>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Priority:</span>
+                        <span class="badge badge-priority-${(opp.priority || 'low').toLowerCase()}">${opp.priority || 'LOW'}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Win Probability:</span>
+                        <strong>${opp.win_probability || opp.score || 0}%</strong>
+                    </div>
+                </div>
+                
+                <h6>AI Agent Actions:</h6>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-sm btn-outline-primary" onclick="runAgent(2, '${actualNoticeId}')">
+                        <i class="fas fa-chart-bar me-1"></i>Competitive Intel
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="runAgent(3, '${actualNoticeId}')">
+                        <i class="fas fa-users me-1"></i>Capability Match
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="runAgent(4, '${actualNoticeId}')">
+                        <i class="fas fa-file-alt me-1"></i>Generate RFI
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="runAgent(5, '${actualNoticeId}')">
+                        <i class="fas fa-file-word me-1"></i>Draft Proposal
+                    </button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="runAgent(6, '${actualNoticeId}')">
+                        <i class="fas fa-dollar-sign me-1"></i>Generate Pricing
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function runAgent(agentNum, noticeId) {
+    const opp = allOpportunities.find(o => o.notice_id === noticeId);
+    if (!opp) {
+        alert('Opportunity not found');
+        return;
+    }
+    
+    // Close the detail modal
+    const detailModal = bootstrap.Modal.getInstance(document.getElementById('opportunityModal'));
+    if (detailModal) detailModal.hide();
+    
+    // Show progress modal
+    const progressModal = new bootstrap.Modal(document.getElementById('agentProgressModal'));
+    progressModal.show();
+    
+    const agentNames = {
+        2: 'Competitive Intelligence',
+        3: 'Capability Matching',
+        4: 'RFI Generator',
+        5: 'Proposal Writer',
+        6: 'Pricing Generator'
+    };
+    
+    const agentName = agentNames[agentNum];
+    document.getElementById('agentProgressTitle').innerHTML = 
+        `<i class="fas fa-robot me-2"></i>Agent ${agentNum}: ${agentName}`;
+    
+    document.getElementById('agentProgressBody').innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;"></div>
+            <h5>Running ${agentName}...</h5>
+            <p class="text-muted">Analyzing opportunity: ${opp.title}</p>
+            <div class="progress mt-3" style="height: 25px;">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                     style="width: 100%">Processing...</div>
+            </div>
+        </div>
+    `;
+    
+    // Call the appropriate agent API
+    let apiEndpoint, requestData;
+    
+    switch(agentNum) {
+        case 2: // Competitive Intelligence
+            apiEndpoint = '/api/agents/competitive/analyze';
+            requestData = { notice_id: noticeId };
+            break;
+        case 3: // Capability Matching
+            apiEndpoint = '/api/agents/capability/analyze';
+            requestData = { 
+                notice_id: noticeId,
+                requirements: opp.description || opp.title
+            };
+            break;
+        case 4: // RFI Generator
+            apiEndpoint = '/api/agents/rfi/generate';
+            requestData = { notice_id: noticeId };
+            break;
+        case 5: // Proposal Writer
+            apiEndpoint = '/api/agents/proposal/generate';
+            requestData = { notice_id: noticeId };
+            break;
+        case 6: // Pricing Generator
+            apiEndpoint = '/api/agents/pricing/generate';
+            requestData = { notice_id: noticeId };
+            break;
+        default:
+            alert('Unknown agent');
+            return;
+    }
+    
+    // Execute agent
+    fetch(apiEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestData)
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        // Show success
+        document.getElementById('agentProgressBody').innerHTML = `
+            <div class="alert alert-success">
+                <h5><i class="fas fa-check-circle me-2"></i>Success!</h5>
+                <p>${agentName} completed successfully</p>
+            </div>
+            
+            ${data.file_path ? `
+                <div class="mb-3">
+                    <strong>Output File:</strong><br>
+                    <code>${data.file_path}</code>
+                </div>
+            ` : ''}
+            
+            ${data.analysis ? `
+                <div class="mb-3">
+                    <strong>Analysis:</strong>
+                    <pre class="bg-dark p-3 rounded" style="max-height: 300px; overflow-y: auto;">${JSON.stringify(data.analysis, null, 2)}</pre>
+                </div>
+            ` : ''}
+            
+            ${data.matches ? `
+                <div class="mb-3">
+                    <strong>Capability Matches:</strong>
+                    <ul class="list-group">
+                        ${data.matches.slice(0, 5).map(m => `
+                            <li class="list-group-item">
+                                <strong>${m.name}</strong> - ${m.score}% match
+                                <br><small class="text-muted">${m.matching_skills.join(', ')}</small>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            ` : ''}
+            
+            ${data.incumbents ? `
+                <div class="mb-3">
+                    <strong>Incumbents Found:</strong>
+                    <ul class="list-group">
+                        ${data.incumbents.slice(0, 5).map(inc => `
+                            <li class="list-group-item">
+                                <strong>${inc.company}</strong>
+                                <br><small class="text-muted">Past Performance: ${inc.past_performance || 'Unknown'}</small>
+                                ${inc.contract_value ? `<br><small class="text-muted">Contract Value: ${inc.contract_value}</small>` : ''}
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            ` : ''}
+            
+            ${data.teaming_partners ? `
+                <div class="mb-3">
+                    <strong>Teaming Partner Recommendations:</strong>
+                    <ul class="list-group">
+                        ${data.teaming_partners.slice(0, 3).map(partner => `
+                            <li class="list-group-item">
+                                <strong>${partner.company}</strong>
+                                ${partner.relevance_score ? `<span class="badge bg-success float-end">${partner.relevance_score}% Match</span>` : ''}
+                                <br><small class="text-muted">Capabilities: ${partner.capabilities ? partner.capabilities.join(', ') : 'N/A'}</small>
+                                ${partner.certifications ? `<br><small class="badge bg-info">${partner.certifications.join(', ')}</small>` : ''}
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            ` : ''}
+            
+            ${data.market_analysis ? `
+                <div class="mb-3">
+                    <strong>Market Analysis:</strong>
+                    <div class="card bg-dark">
+                        <div class="card-body">
+                            ${data.market_analysis.competition_level ? `<p class="mb-1"><strong>Competition:</strong> ${data.market_analysis.competition_level}</p>` : ''}
+                            ${data.market_analysis.avg_contract_value ? `<p class="mb-1"><strong>Avg Contract Value:</strong> ${data.market_analysis.avg_contract_value}</p>` : ''}
+                            ${data.market_analysis.num_competitors ? `<p class="mb-1"><strong>Competitors:</strong> ${data.market_analysis.num_competitors}</p>` : ''}
+                            ${data.market_analysis.market_trend ? `<p class="mb-0"><strong>Trend:</strong> ${data.market_analysis.market_trend}</p>` : ''}
+                        </div>
+                    </div>
+                </div>
+            ` : ''}
+            
+            ${data.recommendations ? `
+                <div class="mb-3">
+                    <strong>Recommendations:</strong>
+                    <ul class="list-group">
+                        ${data.recommendations.map(rec => `
+                            <li class="list-group-item">
+                                <i class="fas fa-lightbulb text-warning me-2"></i>${rec}
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            ` : ''}
+            
+            <div class="d-grid gap-2">
+                ${data.file_path ? `
+                    <a href="/outputs/${data.file_path.split('/').pop()}" 
+                       class="btn btn-primary" download>
+                        <i class="fas fa-download me-2"></i>Download File
+                    </a>
+                ` : ''}
+                <button class="btn btn-secondary" onclick="bootstrap.Modal.getInstance(document.getElementById('agentProgressModal')).hide()">
+                    Close
+                </button>
+            </div>
+        `;
+    })
+    .catch(error => {
+        console.error('Agent error:', error);
+        document.getElementById('agentProgressBody').innerHTML = `
+            <div class="alert alert-danger">
+                <h5><i class="fas fa-exclamation-triangle me-2"></i>Error</h5>
+                <p>${error.message}</p>
+                <p class="small mb-0">Check that all agents are configured and Claude API key is set</p>
+            </div>
+            <button class="btn btn-secondary mt-3" onclick="bootstrap.Modal.getInstance(document.getElementById('agentProgressModal')).hide()">
+                Close
+            </button>
+        `;
+    });
+}
+
+function runScout() {
+    if (!confirm('Run Opportunity Scout?\n\nThis will:\n1. Fetch new opportunities from SAM.gov\n2. Score them using AI\n3. Update the dashboard\n\nThis may take 1-2 minutes.')) {
+        return;
+    }
+    
+    const btn = event.target;
+    const originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Running Scout...';
+    
+    fetch('/api/scout/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ days: 7, limit: 25 })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        alert(`✓ Scout Complete!\n\nFound: ${data.opportunities_found || 0} opportunities\nScored: ${data.opportunities_scored || 0} opportunities`);
+        
+        // Reload opportunities
+        location.reload();
+    })
+    .catch(error => {
+        alert('Error running scout: ' + error.message);
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+    });
+}
+
+function exportExcel() {
+    window.location.href = '/api/export-excel';
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', loadOpportunities);
+</script>
+{% endblock %}

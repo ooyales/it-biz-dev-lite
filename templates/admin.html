@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Federal Contracting System</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Archivo:wght@300;500;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #0A2540;
+            --secondary: #1E4D7B;
+            --accent: #00D4FF;
+            --success: #00C896;
+            --warning: #FFB020;
+            --danger: #FF4757;
+            --bg: #0D1117;
+            --surface: #161B22;
+            --surface-light: #1F2937;
+            --text: #E6EDF3;
+            --text-muted: #8B949E;
+            --border: #30363D;
+        }
+        
+        body {
+            font-family: 'Archivo', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            padding: 1.5rem 2rem;
+            border-bottom: 2px solid var(--accent);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        h1 {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--accent);
+            text-transform: uppercase;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .nav-link {
+            padding: 0.6rem 1.2rem;
+            background: transparent;
+            border: 1px solid var(--accent);
+            border-radius: 6px;
+            color: var(--accent);
+            text-decoration: none;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            background: rgba(0, 212, 255, 0.1);
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .admin-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+        }
+        
+        .admin-tab {
+            padding: 1rem 2rem;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: var(--text-muted);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+        
+        .admin-tab:hover {
+            color: var(--text);
+        }
+        
+        .admin-tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        
+        .label-hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 400;
+            text-transform: none;
+            letter-spacing: normal;
+            margin-top: 0.25rem;
+        }
+        
+        input[type="text"],
+        input[type="number"],
+        input[type="email"],
+        input[type="date"],
+        select,
+        textarea {
+            padding: 0.75rem;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text);
+            font-size: 0.9rem;
+            font-family: 'Archivo', sans-serif;
+            transition: all 0.3s ease;
+        }
+        
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .tag-input-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            padding: 0.75rem;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            min-height: 50px;
+        }
+        
+        .tag {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0.8rem;
+            background: var(--accent);
+            color: var(--primary);
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .tag-remove {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 1.2rem;
+            line-height: 1;
+            padding: 0;
+        }
+        
+        .tag-input {
+            flex: 1;
+            min-width: 150px;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            font-size: 0.9rem;
+            padding: 0.4rem;
+        }
+        
+        .tag-input:focus {
+            outline: none;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn-primary {
+            background: var(--accent);
+            color: var(--primary);
+        }
+        
+        .btn-primary:hover {
+            background: #00F0FF;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 212, 255, 0.3);
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .staff-list {
+            display: grid;
+            gap: 1rem;
+        }
+        
+        .staff-card {
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            transition: all 0.3s ease;
+        }
+        
+        .staff-card:hover {
+            border-color: var(--accent);
+            transform: translateX(4px);
+        }
+        
+        .staff-info {
+            flex: 1;
+        }
+        
+        .staff-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 0.25rem;
+        }
+        
+        .staff-title {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+        }
+        
+        .staff-meta {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        
+        .staff-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .btn-sm {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.75rem;
+        }
+        
+        .alert {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+        
+        .alert.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .alert-success {
+            background: rgba(0, 200, 150, 0.1);
+            border: 1px solid var(--success);
+            color: var(--success);
+        }
+        
+        .alert-error {
+            background: rgba(255, 71, 87, 0.1);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+        }
+        
+        .config-preview {
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .config-preview-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        
+        .config-preview-code {
+            background: var(--bg);
+            padding: 1rem;
+            border-radius: 4px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text);
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 800px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        
+        .close-btn:hover {
+            color: var(--danger);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>⚙️ Admin Panel</h1>
+            <div class="nav-links">
+                <a href="/" class="nav-link">← Back to Dashboard</a>
+                <button class="btn btn-primary" onclick="saveAllChanges()">Save All Changes</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="alert" class="alert"></div>
+
+        <div class="admin-tabs">
+            <button class="admin-tab active" onclick="switchAdminTab('sam-config')">SAM.gov Config</button>
+            <button class="admin-tab" onclick="switchAdminTab('company-config')">Company Info</button>
+            <button class="admin-tab" onclick="switchAdminTab('staff-management')">Staff Management</button>
+            <button class="admin-tab" onclick="switchAdminTab('competitive-intel')">Competitive Intel</button>
+            <button class="admin-tab" onclick="switchAdminTab('notifications')">Notifications</button>
+        </div>
+
+        <!-- SAM.gov Configuration Tab -->
+        <div id="sam-config" class="tab-content active">
+            <div class="section">
+                <h2 class="section-title">SAM.gov API Configuration</h2>
+                
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label>
+                            API Key
+                            <span class="label-hint">Get free at https://open.gsa.gov/api/entity-api/</span>
+                        </label>
+                        <input type="text" id="sam-api-key" placeholder="YOUR_SAM_GOV_API_KEY">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            Lookback Days
+                            <span class="label-hint">How many days back to search (7-60 recommended)</span>
+                        </label>
+                        <input type="number" id="lookback-days" value="14" min="1" max="365">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            Min Contract Value ($)
+                            <span class="label-hint">Minimum opportunity size</span>
+                        </label>
+                        <input type="number" id="min-value" value="50000" step="10000">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            Max Contract Value ($)
+                            <span class="label-hint">Maximum opportunity size</span>
+                        </label>
+                        <input type="number" id="max-value" value="10000000" step="100000">
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">Search Filters</h2>
+                
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label>
+                            Opportunity Types
+                            <span class="label-hint">Select which types of opportunities to search for</span>
+                        </label>
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; text-transform: none;">
+                                <input type="checkbox" class="opp-type" value="Solicitation" checked> Solicitation
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; text-transform: none;">
+                                <input type="checkbox" class="opp-type" value="Presolicitation" checked> Presolicitation
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; text-transform: none;">
+                                <input type="checkbox" class="opp-type" value="Sources Sought"> Sources Sought
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; text-transform: none;">
+                                <input type="checkbox" class="opp-type" value="Special Notice"> Special Notice
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label>
+                            Keywords
+                            <span class="label-hint">Press Enter to add keywords to search for</span>
+                        </label>
+                        <div class="tag-input-container" id="keywords-container">
+                            <input type="text" class="tag-input" id="keyword-input" placeholder="Type keyword and press Enter...">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Company Configuration Tab -->
+        <div id="company-config" class="tab-content">
+            <div class="section">
+                <h2 class="section-title">Company Information</h2>
+                
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label>
+                            Company Name
+                            <span class="label-hint">Optional - used in reports only</span>
+                        </label>
+                        <input type="text" id="company-name" placeholder="My Company">
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label>
+                            NAICS Codes
+                            <span class="label-hint">Press Enter to add NAICS codes you compete under</span>
+                        </label>
+                        <div class="tag-input-container" id="naics-container">
+                            <input type="text" class="tag-input" id="naics-input" placeholder="Enter NAICS code (e.g., 541512)...">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label>
+                            Set-Aside Categories
+                            <span class="label-hint">Select all that apply to your business</span>
+                        </label>
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; text-transform: none;">
+                                <input type="checkbox" class="set-aside" value="small_business" checked> Small Business
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; text-transform: none;">
+                                <input type="checkbox" class="set-aside" value="8a"> 8(a)
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; text-transform: none;">
+                                <input type="checkbox" class="set-aside" value="hubzone"> HUBZone
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; text-transform: none;">
+                                <input type="checkbox" class="set-aside" value="wosb"> WOSB
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; text-transform: none;">
+                                <input type="checkbox" class="set-aside" value="sdvosb"> SDVOSB
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; text-transform: none;">
+                                <input type="checkbox" class="set-aside" value="vosb"> VOSB
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label>
+                            Contract Vehicles (Optional)
+                            <span class="label-hint">Press Enter to add contract vehicles you hold</span>
+                        </label>
+                        <div class="tag-input-container" id="vehicles-container">
+                            <input type="text" class="tag-input" id="vehicle-input" placeholder="Enter vehicle (e.g., GSA MAS)...">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Staff Management Tab -->
+        <div id="staff-management" class="tab-content">
+            <div class="section">
+                <h2 class="section-title">
+                    Team Members
+                    <button class="btn btn-success btn-sm" onclick="addNewStaff()">+ Add Staff Member</button>
+                </h2>
+                
+                <div id="staff-list" class="staff-list">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Competitive Intel Tab -->
+        <div id="competitive-intel" class="tab-content">
+            <div class="section">
+                <h2 class="section-title">Competitive Intelligence Settings</h2>
+                
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; text-transform: none;">
+                            <input type="checkbox" id="intel-enabled" checked> Enable Competitive Intelligence
+                        </label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            Min Value for Intel ($)
+                            <span class="label-hint">Only run intel on opportunities above this value (0 = all)</span>
+                        </label>
+                        <input type="number" id="intel-min-value" value="0" step="100000">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            Lookback Years
+                            <span class="label-hint">Years of historical data to analyze (1-5)</span>
+                        </label>
+                        <input type="number" id="intel-lookback-years" value="3" min="1" max="5">
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label>Intelligence Features</label>
+                        <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem;">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; text-transform: none;">
+                                <input type="checkbox" class="intel-feature" value="incumbent_identification" checked> 
+                                Incumbent Identification
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; text-transform: none;">
+                                <input type="checkbox" class="intel-feature" value="pricing_analysis" checked> 
+                                Pricing Analysis
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; text-transform: none;">
+                                <input type="checkbox" class="intel-feature" value="market_trends" checked> 
+                                Market Trends
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; text-transform: none;">
+                                <input type="checkbox" class="intel-feature" value="competitor_profiling" checked> 
+                                Competitor Profiling
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 0.5rem; text-transform: none;">
+                                <input type="checkbox" class="intel-feature" value="teaming_partners"> 
+                                Teaming Partner Discovery (slower)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications Tab -->
+        <div id="notifications" class="tab-content">
+            <div class="section">
+                <h2 class="section-title">Email Notifications</h2>
+                
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; text-transform: none;">
+                            <input type="checkbox" id="email-enabled"> Enable Email Notifications
+                        </label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>SMTP Server</label>
+                        <input type="text" id="smtp-server" placeholder="smtp.gmail.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>SMTP Port</label>
+                        <input type="number" id="smtp-port" value="587">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>From Email</label>
+                        <input type="email" id="from-email" placeholder="notifications@company.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            App Password
+                            <span class="label-hint">Gmail: Generate at myaccount.google.com/apppasswords</span>
+                        </label>
+                        <input type="password" id="email-password" placeholder="App password">
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label>
+                            To Addresses
+                            <span class="label-hint">Press Enter to add email addresses</span>
+                        </label>
+                        <div class="tag-input-container" id="email-to-container">
+                            <input type="text" class="tag-input" id="email-to-input" placeholder="email@company.com">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">Slack Notifications</h2>
+                
+                <div class="form-grid">
+                    <div class="form-group full-width">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; text-transform: none;">
+                            <input type="checkbox" id="slack-enabled"> Enable Slack Notifications
+                        </label>
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label>
+                            Webhook URL
+                            <span class="label-hint">Get from https://api.slack.com/apps</span>
+                        </label>
+                        <input type="text" id="slack-webhook" placeholder="https://hooks.slack.com/services/...">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuration Preview -->
+        <div class="config-preview">
+            <div class="config-preview-title">Preview: config.yaml</div>
+            <div class="config-preview-code" id="config-preview">
+                # Configuration will appear here
+            </div>
+        </div>
+    </div>
+
+    <!-- Staff Edit Modal -->
+    <div id="staffModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="staffModalTitle">Edit Staff Member</h3>
+                <button class="close-btn" onclick="closeStaffModal()">&times;</button>
+            </div>
+            <div id="staffModalBody">
+                <div class="form-grid">
+                    <input type="hidden" id="edit-staff-id">
+                    
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" id="edit-staff-name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Title</label>
+                        <input type="text" id="edit-staff-title">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Clearance Level</label>
+                        <select id="edit-staff-clearance">
+                            <option value="">None</option>
+                            <option value="Public Trust">Public Trust</option>
+                            <option value="Secret">Secret</option>
+                            <option value="Top Secret">Top Secret</option>
+                            <option value="TS/SCI">TS/SCI</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Clearance Expiry</label>
+                        <input type="date" id="edit-staff-clearance-expiry">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Labor Category</label>
+                        <input type="text" id="edit-staff-labor-cat">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Hourly Rate ($)</label>
+                        <input type="number" id="edit-staff-rate" step="0.01">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Experience (years)</label>
+                        <input type="number" id="edit-staff-experience" min="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Education</label>
+                        <input type="text" id="edit-staff-education">
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label>
+                            Technical Skills
+                            <span class="label-hint">Press Enter to add skills</span>
+                        </label>
+                        <div class="tag-input-container" id="edit-skills-container">
+                            <input type="text" class="tag-input" id="edit-skills-input" placeholder="e.g., Python, AWS, Cybersecurity">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label>
+                            Certifications
+                            <span class="label-hint">Press Enter to add certifications</span>
+                        </label>
+                        <div class="tag-input-container" id="edit-certs-container">
+                            <input type="text" class="tag-input" id="edit-certs-input" placeholder="e.g., PMP, AWS SAA, CISSP">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label>Availability</label>
+                        <select id="edit-staff-availability">
+                            <option value="available">Available</option>
+                            <option value="partial">Partially Available</option>
+                            <option value="unavailable">Unavailable</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="btn-group">
+                    <button class="btn btn-success" onclick="saveStaff()">Save Changes</button>
+                    <button class="btn btn-secondary" onclick="closeStaffModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Federal Contracting Team Dashboard</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Archivo:wght@300;500;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #0A2540;
+            --secondary: #1E4D7B;
+            --accent: #00D4FF;
+            --success: #00C896;
+            --warning: #FFB020;
+            --danger: #FF4757;
+            --bg: #0D1117;
+            --surface: #161B22;
+            --surface-light: #1F2937;
+            --text: #E6EDF3;
+            --text-muted: #8B949E;
+            --border: #30363D;
+        }
+        
+        body {
+            font-family: 'Archivo', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            padding: 1.5rem 2rem;
+            border-bottom: 2px solid var(--accent);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        h1 {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1.5rem;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            color: var(--accent);
+            text-transform: uppercase;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 6px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn-primary {
+            background: var(--accent);
+            color: var(--primary);
+        }
+        
+        .btn-primary:hover {
+            background: #00F0FF;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 212, 255, 0.3);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(0, 212, 255, 0.1);
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Main Container */
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--accent), transparent);
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1;
+        }
+        
+        .stat-trend {
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            color: var(--success);
+        }
+        
+        /* Timeline View */
+        .timeline-section {
+            margin-bottom: 2rem;
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+        
+        .timeline-container {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem 2rem 2rem 4rem;
+            overflow-x: auto;
+        }
+        
+        .timeline {
+            position: relative;
+            min-width: 1200px;
+            height: 400px;
+            margin-left: 60px;
+        }
+        
+        .timeline-axis {
+            position: absolute;
+            bottom: 40px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--border);
+        }
+        
+        .timeline-marker {
+            position: absolute;
+            bottom: 20px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: 'IBM Plex Mono', monospace;
+            transform: translateX(-50%);
+        }
+        
+        .timeline-y-label {
+            position: absolute;
+            left: -50px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: 'IBM Plex Mono', monospace;
+            text-align: right;
+            width: 40px;
+        }
+        
+        .opportunity-bubble {
+            position: absolute;
+            padding: 0.5rem;
+            background: var(--surface-light);
+            border: 2px solid var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transform: translate(-50%, 0);
+        }
+        
+        .opportunity-bubble:hover {
+            transform: translate(-50%, 0) scale(1.2);
+            z-index: 10;
+            box-shadow: 0 8px 24px rgba(0, 212, 255, 0.3);
+            border-radius: 8px;
+            width: auto;
+            min-width: 60px;
+            max-width: 200px;
+            padding: 0.75rem;
+        }
+        
+        .bubble-score {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        
+        .bubble-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 0.25rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 100%;
+            display: none;
+        }
+        
+        .opportunity-bubble:hover .bubble-title {
+            display: block;
+            white-space: normal;
+        }
+        
+        .bubble-meta {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            font-family: 'IBM Plex Mono', monospace;
+            margin-top: 0.25rem;
+            display: none;
+        }
+        
+        .opportunity-bubble:hover .bubble-meta {
+            display: block;
+        }
+        
+        .bubble-score {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            border: 3px solid var(--bg);
+        }
+        
+        /* Opportunities Grid */
+        .opportunities-grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+        
+        .opportunity-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .opportunity-card:hover {
+            border-color: var(--accent);
+            transform: translateX(8px);
+        }
+        
+        .opp-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+        
+        .opp-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text);
+            flex: 1;
+        }
+        
+        .opp-scores {
+            display: flex;
+            gap: 0.75rem;
+            flex-shrink: 0;
+        }
+        
+        .score-badge {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.5rem;
+            background: var(--surface-light);
+            border-radius: 6px;
+            min-width: 60px;
+        }
+        
+        .score-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        
+        .score-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        
+        .opp-meta {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .opp-intel {
+            background: var(--surface-light);
+            border-left: 3px solid var(--accent);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+        
+        .intel-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+        
+        .intel-content {
+            font-size: 0.9rem;
+            color: var(--text);
+        }
+        
+        .opp-actions {
+            display: flex;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+        
+        .btn-sm {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.75rem;
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-warning {
+            background: var(--warning);
+            color: var(--primary);
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 2px solid var(--border);
+        }
+        
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: var(--text-muted);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+        
+        .tab:hover {
+            color: var(--text);
+        }
+        
+        .tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 800px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        
+        .close-btn:hover {
+            color: var(--danger);
+        }
+        
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-muted);
+        }
+        
+        .spinner {
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-actions {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>🎯 FedCon OpCenter</h1>
+            <div class="header-actions">
+                <div class="status-indicator">
+                    <span class="status-dot"></span>
+                    <span id="lastUpdate">System Ready</span>
+                </div>
+                <button class="btn btn-secondary" onclick="refreshData()">Refresh</button>
+                <button class="btn btn-primary" onclick="runScout()">Run Scout</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Opportunities</div>
+                <div class="stat-value" id="totalOpps">-</div>
+                <div class="stat-trend">↑ Last 30 days</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">High Priority</div>
+                <div class="stat-value" id="highPriority">-</div>
+                <div class="stat-trend">Score ≥ 7.0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Active Pursuits</div>
+                <div class="stat-value" id="activePursuits">-</div>
+                <div class="stat-trend">In progress</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Upcoming Deadlines</div>
+                <div class="stat-value" id="upcomingDeadlines">-</div>
+                <div class="stat-trend">Next 7 days</div>
+            </div>
+        </div>
+
+        <!-- Timeline Section -->
+        <div class="timeline-section">
+            <div class="section-header">
+                <h2 class="section-title">Contract Expiration Timeline</h2>
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <label style="font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem;">
+                        Y-Axis:
+                        <select id="timelineYAxis" onchange="loadTimeline()" style="background: var(--surface); color: var(--text); border: 1px solid var(--border); padding: 0.4rem; border-radius: 4px;">
+                            <option value="fit_score">Fit Score</option>
+                            <option value="win_probability">Win Probability %</option>
+                            <option value="contract_value">Contract Value</option>
+                        </select>
+                    </label>
+                    <label style="font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem;">
+                        Time Range:
+                        <select id="timelineRange" onchange="loadTimeline()" style="background: var(--surface); color: var(--text); border: 1px solid var(--border); padding: 0.4rem; border-radius: 4px;">
+                            <option value="365">Next 12 Months</option>
+                            <option value="730" selected>Next 24 Months</option>
+                            <option value="1095">Next 36 Months</option>
+                        </select>
+                    </label>
+                    <span class="stat-label">Shift-Left View: Build Relationships Early</span>
+                </div>
+            </div>
+            <div class="timeline-container">
+                <div id="timeline" class="timeline">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <div>Loading timeline data...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('all')">All Opportunities</button>
+            <button class="tab" onclick="switchTab('high-priority')">High Priority</button>
+            <button class="tab" onclick="switchTab('pursuing')">Pursuing</button>
+            <button class="tab" onclick="switchTab('watch')">Watch List</button>
+        </div>
+
+        <!-- Opportunities Grid -->
+        <div id="opportunitiesContainer" class="opportunities-grid">
+            <div class="loading">
+                <div class="spinner"></div>
+                <div>Loading opportunities...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Opportunity Detail Modal -->
+    <div id="opportunityModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">Opportunity Details</h3>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modalBody">
+                <!-- Dynamic content -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API base URL
+        const API_BASE = '/api';
+        
+        // State
+        let currentTab = 'all';
+        let opportunities = [];
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDashboardStats();
+            loadOpportunities();
+            loadTimeline();
+            
+            // Auto-refresh every 5 minutes
+            setInterval(refreshData, 5 * 60 * 1000);
+        });
+        
+        // Load dashboard statistics
+        async function loadDashboardStats() {
+            try {
+                const response = await fetch(`${API_BASE}/dashboard/stats`);
+                const data = await response.json();
+                
+                document.getElementById('totalOpps').textContent = data.total_opportunities;
+                document.getElementById('highPriority').textContent = data.high_priority;
+                document.getElementById('activePursuits').textContent = data.pursuing;
+                document.getElementById('upcomingDeadlines').textContent = data.upcoming_deadlines.length;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+        
+        // Load opportunities
+        async function loadOpportunities(status = null) {
+            try {
+                const url = status ? `${API_BASE}/opportunities?status=${status}` : `${API_BASE}/opportunities`;
+                const response = await fetch(url);
+                opportunities = await response.json();
+                
+                renderOpportunities(opportunities);
+            } catch (error) {
+                console.error('Error loading opportunities:', error);
+            }
+        }
+        
+        // Render opportunities
+        function renderOpportunities(opps) {
+            const container = document.getElementById('opportunitiesContainer');
+            
+            if (opps.length === 0) {
+                container.innerHTML = '<div class="loading">No opportunities found</div>';
+                return;
+            }
+            
+            container.innerHTML = opps.map(opp => `
+                <div class="opportunity-card" onclick="openOpportunity('${opp.notice_id}')">
+                    <div class="opp-header">
+                        <h3 class="opp-title">${opp.title || 'Untitled Opportunity'}</h3>
+                        <div class="opp-scores">
+                            <div class="score-badge">
+                                <span class="score-label">Fit</span>
+                                <span class="score-value">${opp.fit_score ? opp.fit_score.toFixed(1) : '-'}</span>
+                            </div>
+                            ${opp.win_probability ? `
+                            <div class="score-badge">
+                                <span class="score-label">Win %</span>
+                                <span class="score-value">${opp.win_probability}%</span>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="opp-meta">
+                        <div class="meta-item">📅 ${opp.posted_date || 'N/A'}</div>
+                        <div class="meta-item">⏰ ${opp.deadline || 'No deadline'}</div>
+                        <div class="meta-item">🏷️ ${opp.naics_code || 'N/A'}</div>
+                    </div>
+                    
+                    <div class="opp-actions">
+                        <button class="btn btn-sm btn-success" onclick="event.stopPropagation(); updateStatus('${opp.notice_id}', 'pursuing')">Pursue</button>
+                        <button class="btn btn-sm btn-warning" onclick="event.stopPropagation(); updateStatus('${opp.notice_id}', 'watch')">Watch</button>
+                        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); updateStatus('${opp.notice_id}', 'passed')">Pass</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Load timeline
+        async function loadTimeline() {
+            try {
+                const response = await fetch(`${API_BASE}/opportunities`);
+                const opps = await response.json();
+                
+                renderTimeline(opps);
+            } catch (error) {
+                console.error('Error loading timeline:', error);
+            }
+        }
+        
+        // Render timeline
+        function renderTimeline(opps) {
+            const container = document.getElementById('timeline');
+            const today = new Date();
+            
+            // Get configuration from selectors
+            const yAxisMode = document.getElementById('timelineYAxis').value;
+            const maxDays = parseInt(document.getElementById('timelineRange').value);
+            
+            // Filter opportunities with deadlines
+            const timedOpps = opps.filter(o => o.deadline);
+            
+            if (timedOpps.length === 0) {
+                container.innerHTML = '<div class="loading">No deadlines to display</div>';
+                return;
+            }
+            
+            let html = '<div class="timeline-axis"></div>';
+            
+            // Add time markers - adjust based on range
+            const monthsToShow = Math.ceil(maxDays / 30);
+            const markerInterval = maxDays > 365 ? 60 : 30; // Every 2 months for 2+ year view
+            
+            for (let days = 0; days <= maxDays; days += markerInterval) {
+                const date = new Date(today.getTime() + days * 24 * 60 * 60 * 1000);
+                const left = (days / maxDays) * 100;
+                
+                html += `<div class="timeline-marker" style="left: ${left}%">${date.toLocaleDateString('en-US', {month: 'short', year: '2-digit'})}</div>`;
+            }
+            
+            // Get Y-axis value for each opportunity
+            const getYValue = (opp) => {
+                switch(yAxisMode) {
+                    case 'fit_score':
+                        return opp.fit_score || 5;
+                    case 'win_probability':
+                        return opp.win_probability || 50;
+                    case 'contract_value':
+                        // Normalize to 0-10 scale for display
+                        const value = parseInt(opp.contract_value) || 100000;
+                        return Math.min(10, Math.log10(value / 10000));
+                    default:
+                        return opp.fit_score || 5;
+                }
+            };
+            
+            // Get Y-axis label
+            const getYLabel = (value) => {
+                switch(yAxisMode) {
+                    case 'fit_score':
+                        return value.toFixed(1);
+                    case 'win_probability':
+                        return value.toFixed(0) + '%';
+                    case 'contract_value':
+                        const actualValue = Math.pow(10, value) * 10000;
+                        if (actualValue >= 1000000) {
+                            return '$' + (actualValue / 1000000).toFixed(1) + 'M';
+                        } else {
+                            return '$' + (actualValue / 1000).toFixed(0) + 'K';
+                        }
+                    default:
+                        return value.toFixed(1);
+                }
+            };
+            
+            // Determine Y-axis range
+            const maxY = yAxisMode === 'fit_score' ? 10 : 
+                        yAxisMode === 'win_probability' ? 100 : 10;
+            
+            // Add Y-axis labels
+            for (let i = 0; i <= 5; i++) {
+                const value = (maxY / 5) * i;
+                const bottom = 80 + (i * 50); // 250px total height
+                html += `<div class="timeline-y-label" style="bottom: ${bottom}px">${getYLabel(value)}</div>`;
+            }
+            
+            // Group opportunities by time bucket to avoid overlap
+            const bucketSize = 30; // Days per bucket
+            const buckets = {};
+            
+            timedOpps.forEach(opp => {
+                const deadline = new Date(opp.deadline);
+                const daysUntil = Math.floor((deadline - today) / (1000 * 60 * 60 * 24));
+                
+                if (daysUntil >= 0 && daysUntil <= maxDays) {
+                    const bucketIndex = Math.floor(daysUntil / bucketSize);
+                    if (!buckets[bucketIndex]) {
+                        buckets[bucketIndex] = [];
+                    }
+                    buckets[bucketIndex].push({...opp, daysUntil});
+                }
+            });
+            
+            // Add opportunity bubbles with smart positioning
+            Object.values(buckets).forEach(bucket => {
+                bucket.forEach((opp, index) => {
+                    const left = (opp.daysUntil / maxDays) * 100;
+                    
+                    // Calculate Y position based on selected metric
+                    const yValue = getYValue(opp);
+                    const yPercent = (yValue / maxY) * 100;
+                    const bottom = 80 + (yPercent * 2.5); // Scale to 250px height
+                    
+                    // Slight horizontal offset for multiple items in same bucket
+                    const offset = bucket.length > 1 ? (index - bucket.length/2) * 2 : 0;
+                    const adjustedLeft = Math.max(0, Math.min(100, left + offset));
+                    
+                    // Color based on fit score
+                    const color = opp.fit_score >= 7 ? 'var(--success)' : 
+                                 opp.fit_score >= 6 ? 'var(--warning)' : 'var(--danger)';
+                    
+                    // Bubble size based on contract value
+                    const contractValue = parseInt(opp.contract_value) || 100000;
+                    const bubbleSize = Math.max(40, Math.min(80, Math.log10(contractValue / 10000) * 10));
+                    
+                    html += `
+                        <div class="opportunity-bubble" 
+                             style="left: ${adjustedLeft}%; bottom: ${bottom}px; border-color: ${color}; width: ${bubbleSize}px; height: ${bubbleSize}px;" 
+                             onclick="openOpportunity('${opp.notice_id}')"
+                             title="${opp.title}">
+                            <div class="bubble-score">${opp.fit_score ? opp.fit_score.toFixed(1) : '?'}</div>
+                            <div class="bubble-title">${opp.title.substring(0, 30)}</div>
+                            <div class="bubble-meta">${opp.daysUntil}d | ${getYLabel(yValue)}</div>
+                        </div>
+                    `;
+                });
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // Switch tabs
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            // Update tab UI
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Filter opportunities
+            if (tab === 'all') {
+                renderOpportunities(opportunities);
+            } else if (tab === 'high-priority') {
+                renderOpportunities(opportunities.filter(o => o.fit_score >= 7));
+            } else {
+                loadOpportunities(tab);
+            }
+        }
+        
+        // Update opportunity status
+        async function updateStatus(noticeId, status) {
+            try {
+                await fetch(`${API_BASE}/opportunities/${noticeId}/status`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({status})
+                });
+                
+                refreshData();
+            } catch (error) {
+                console.error('Error updating status:', error);
+            }
+        }
+        
+        // Open opportunity detail
+        async function openOpportunity(noticeId) {
+            try {
+                const response = await fetch(`${API_BASE}/opportunities/${noticeId}`);
+                const data = await response.json();
+                
+                // Build modal content
+                const analysis = data.analysis || {};
+                const compIntel = data.competitive_intelligence || {};
+                const capMatch = data.capability_match || {};
+                
+                document.getElementById('modalTitle').textContent = data.title;
+                document.getElementById('modalBody').innerHTML = `
+                    <div class="opp-intel">
+                        <div class="intel-title">Analysis Summary</div>
+                        <div class="intel-content">
+                            <p><strong>Fit Score:</strong> ${analysis.fit_score}/10</p>
+                            <p><strong>Win Probability:</strong> ${compIntel.competitive_assessment?.win_probability || 'N/A'}%</p>
+                            <p><strong>Recommendation:</strong> ${analysis.recommendation || 'N/A'}</p>
+                            <p><strong>Rationale:</strong> ${analysis.rationale || 'N/A'}</p>
+                        </div>
+                    </div>
+                    
+                    ${compIntel.incumbent ? `
+                    <div class="opp-intel">
+                        <div class="intel-title">Incumbent Intelligence</div>
+                        <div class="intel-content">
+                            <p><strong>Current Contractor:</strong> ${compIntel.incumbent.contractor_name}</p>
+                            ${compIntel.incumbent_profile ? `
+                                <p><strong>3-Year Revenue:</strong> $${(compIntel.incumbent_profile.total_contract_value_3yr || 0).toLocaleString()}</p>
+                            ` : ''}
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    ${capMatch.recommended_team ? `
+                    <div class="opp-intel">
+                        <div class="intel-title">Recommended Team</div>
+                        <div class="intel-content">
+                            <p><strong>Coverage Score:</strong> ${capMatch.coverage_score}%</p>
+                            <p><strong>Team Size:</strong> ${capMatch.team_size_estimate} people</p>
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    <div style="margin-top: 1.5rem;">
+                        <a href="https://sam.gov/opp/${noticeId}" target="_blank" class="btn btn-primary">View on SAM.gov</a>
+                    </div>
+                `;
+                
+                document.getElementById('opportunityModal').classList.add('active');
+            } catch (error) {
+                console.error('Error loading opportunity details:', error);
+            }
+        }
+        
+        // Close modal
+        function closeModal() {
+            document.getElementById('opportunityModal').classList.remove('active');
+        }
+        
+        // Run scout
+        async function runScout() {
+            if (confirm('This will search SAM.gov for new opportunities. Continue?')) {
+                try {
+                    document.getElementById('lastUpdate').textContent = 'Running scout...';
+                    
+                    await fetch(`${API_BASE}/system/run-scout`, {method: 'POST'});
+                    
+                    document.getElementById('lastUpdate').textContent = 'Scout running in background...';
+                    
+                    setTimeout(refreshData, 30000); // Refresh after 30 seconds
+                } catch (error) {
+                    console.error('Error running scout:', error);
+                }
+            }
+        }
+        
+        // Refresh all data
+        function refreshData() {
+            loadDashboardStats();
+            loadOpportunities();
+            loadTimeline();
+            document.getElementById('lastUpdate').textContent = `Updated ${new Date().toLocaleTimeString()}`;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,390 @@
+{% extends "base-ultimate.html" %}
+
+{% block title %}Competitive Intelligence - BD Intelligence{% endblock %}
+{% block page_title %}Competitive Intelligence{% endblock %}
+{% block page_subtitle %}Analyze incumbents, identify teaming partners, and track market trends{% endblock %}
+
+{% block stats_bar %}
+<div class="stats-bar">
+    <div class="stat-item">
+        <div class="stat-icon blue">
+            <i class="fas fa-file-contract"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="total-contracts">0</h4>
+            <p>Contracts Tracked</p>
+        </div>
+    </div>
+    
+    <div class="stat-item">
+        <div class="stat-icon green">
+            <i class="fas fa-building"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="total-contractors">0</h4>
+            <p>Contractors</p>
+        </div>
+    </div>
+    
+    <div class="stat-item">
+        <div class="stat-icon purple">
+            <i class="fas fa-landmark"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="total-agencies">0</h4>
+            <p>Agencies</p>
+        </div>
+    </div>
+    
+    <div class="stat-item">
+        <div class="stat-icon orange">
+            <i class="fas fa-dollar-sign"></i>
+        </div>
+        <div class="stat-info">
+            <h4 id="total-value">$0</h4>
+            <p>Total Contract Value</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block top_actions %}
+<button class="btn btn-primary" onclick="refreshData()">
+    <i class="fas fa-sync me-2"></i>Refresh Data
+</button>
+
+<div class="btn-group">
+    <button class="btn btn-outline-primary active" id="view-incumbents" onclick="setView('incumbents')">
+        <i class="fas fa-building me-1"></i>Incumbents
+    </button>
+    <button class="btn btn-outline-primary" id="view-partners" onclick="setView('partners')">
+        <i class="fas fa-handshake me-1"></i>Teaming Partners
+    </button>
+    <button class="btn btn-outline-primary" id="view-trends" onclick="setView('trends')">
+        <i class="fas fa-chart-line me-1"></i>Market Trends
+    </button>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Incumbents View -->
+<div id="incumbents-view">
+    <div class="row">
+        <div class="col-12 mb-3">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-filter me-2"></i>Filter Incumbents</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label class="form-label small">Agency</label>
+                            <select class="form-select form-select-sm" id="filter-agency" onchange="filterIncumbents()">
+                                <option value="">All Agencies</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small">NAICS Code</label>
+                            <select class="form-select form-select-sm" id="filter-naics" onchange="filterIncumbents()">
+                                <option value="">All NAICS</option>
+                                <option value="541511">541511 - Custom Computer Programming</option>
+                                <option value="541512">541512 - Computer Systems Design</option>
+                                <option value="541519">541519 - Other Computer Services</option>
+                                <option value="518210">518210 - Data Processing</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small">Min Contract Value</label>
+                            <input type="number" class="form-control form-control-sm" id="filter-min-value" 
+                                   placeholder="e.g., 100000" onchange="filterIncumbents()">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small">Search Contractor</label>
+                            <input type="text" class="form-control form-control-sm" id="filter-search" 
+                                   placeholder="Search by name..." onkeyup="filterIncumbents()">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-trophy me-2"></i>Top Incumbents</h6>
+                </div>
+                <div class="card-body">
+                    <div id="incumbents-table">
+                        <div class="text-center text-muted py-5">
+                            <i class="fas fa-spinner fa-spin fa-3x mb-3"></i>
+                            <p>Loading contract data...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Teaming Partners View -->
+<div id="partners-view" style="display: none;">
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-crosshairs me-2"></i>Similar NAICS Codes</h6>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted mb-3">Contractors winning work in the same NAICS codes as your target opportunities</p>
+                    <div id="partners-naics"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-landmark me-2"></i>Same Agencies</h6>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted mb-3">Contractors with recent awards from your target agencies</p>
+                    <div id="partners-agencies"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-handshake me-2"></i>Recommended Partners</h6>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted mb-3">Contractors with complementary capabilities and no direct competition</p>
+                    <div id="partners-recommended"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Market Trends View -->
+<div id="trends-view" style="display: none;">
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-chart-area me-2"></i>Contract Awards Over Time</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="trends-timeline" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Market Share by Contractor</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="trends-marketshare" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-landmark me-2"></i>Top Agencies by Contract Value</h6>
+                </div>
+                <div class="card-body">
+                    <div id="trends-agencies"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-code-branch me-2"></i>NAICS Distribution</h6>
+                </div>
+                <div class="card-body">
+                    <canvas id="trends-naics" height="250"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+let currentView = 'incumbents';
+let allIncumbents = [];
+let allPartners = [];
+let marketData = {};
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    loadStats();
+    loadIncumbents();
+    loadFilterOptions();
+});
+
+async function loadStats() {
+    try {
+        const res = await fetch('/api/competitive/stats');
+        const data = await res.json();
+        
+        document.getElementById('total-contracts').textContent = (data.contract_count || 0).toLocaleString();
+        document.getElementById('total-contractors').textContent = (data.contractor_count || 0).toLocaleString();
+        document.getElementById('total-agencies').textContent = (data.agency_count || 0).toLocaleString();
+        
+        const totalValue = data.total_value || 0;
+        document.getElementById('total-value').textContent = formatCurrency(totalValue);
+    } catch (err) {
+        console.error('Error loading stats:', err);
+    }
+}
+
+async function loadIncumbents() {
+    try {
+        const res = await fetch('/api/competitive/incumbents');
+        const data = await res.json();
+        
+        allIncumbents = data.incumbents || [];
+        renderIncumbents(allIncumbents);
+    } catch (err) {
+        console.error('Error loading incumbents:', err);
+        document.getElementById('incumbents-table').innerHTML = `
+            <div class="text-center text-muted py-5">
+                <i class="fas fa-exclamation-triangle fa-3x mb-3"></i>
+                <p>Error loading contract data. Make sure Neo4j is running and contracts are loaded.</p>
+            </div>
+        `;
+    }
+}
+
+async function loadFilterOptions() {
+    try {
+        const res = await fetch('/api/competitive/filter-options');
+        const data = await res.json();
+        
+        const agencySelect = document.getElementById('filter-agency');
+        (data.agencies || []).forEach(agency => {
+            const opt = document.createElement('option');
+            opt.value = agency;
+            opt.textContent = agency;
+            agencySelect.appendChild(opt);
+        });
+    } catch (err) {
+        console.error('Error loading filter options:', err);
+    }
+}
+
+function renderIncumbents(incumbents) {
+    const container = document.getElementById('incumbents-table');
+    
+    if (incumbents.length === 0) {
+        container.innerHTML = `
+            <div class="text-center text-muted py-5">
+                <i class="fas fa-inbox fa-3x mb-3"></i>
+                <p>No contracts found matching your filters.</p>
+            </div>
+        `;
+        return;
+    }
+    
+    let html = '<div class="table-responsive"><table class="table table-hover">';
+    html += `<thead>
+        <tr>
+            <th>Rank</th>
+            <th>Contractor</th>
+            <th>Contracts</th>
+            <th>Total Value</th>
+            <th>Avg Value</th>
+            <th>Top Agency</th>
+            <th>Recent NAICS</th>
+        </tr>
+    </thead><tbody>`;
+    
+    incumbents.forEach((inc, idx) => {
+        html += `<tr>
+            <td><span class="badge bg-${idx < 3 ? 'warning' : 'secondary'}">#${idx + 1}</span></td>
+            <td><a href="/competitive-intel/contractor/${encodeURIComponent(inc.contractor)}" class="text-decoration-none"><strong>${inc.contractor}</strong></a></td>
+            <td>${inc.contract_count}</td>
+            <td>${formatCurrency(inc.total_value)}</td>
+            <td>${formatCurrency(inc.avg_value)}</td>
+            <td><small class="text-muted">${inc.top_agency || 'N/A'}</small></td>
+            <td><small class="text-muted">${inc.naics_codes ? inc.naics_codes.slice(0, 3).join(', ') : 'N/A'}</small></td>
+        </tr>`;
+    });
+    
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+}
+
+function filterIncumbents() {
+    const agency = document.getElementById('filter-agency').value;
+    const naics = document.getElementById('filter-naics').value;
+    const minValue = parseFloat(document.getElementById('filter-min-value').value) || 0;
+    const search = document.getElementById('filter-search').value.toLowerCase();
+    
+    const filtered = allIncumbents.filter(inc => {
+        if (agency && inc.top_agency !== agency) return false;
+        if (naics && (!inc.naics_codes || !inc.naics_codes.includes(naics))) return false;
+        if (minValue > 0 && inc.total_value < minValue) return false;
+        if (search && !inc.contractor.toLowerCase().includes(search)) return false;
+        return true;
+    });
+    
+    renderIncumbents(filtered);
+}
+
+function setView(view) {
+    currentView = view;
+    
+    document.getElementById('incumbents-view').style.display = view === 'incumbents' ? 'block' : 'none';
+    document.getElementById('partners-view').style.display = view === 'partners' ? 'block' : 'none';
+    document.getElementById('trends-view').style.display = view === 'trends' ? 'block' : 'none';
+    
+    document.getElementById('view-incumbents').classList.toggle('active', view === 'incumbents');
+    document.getElementById('view-partners').classList.toggle('active', view === 'partners');
+    document.getElementById('view-trends').classList.toggle('active', view === 'trends');
+    
+    if (view === 'partners' && allPartners.length === 0) {
+        loadPartners();
+    }
+    if (view === 'trends' && !marketData.timeline) {
+        loadMarketTrends();
+    }
+}
+
+async function loadPartners() {
+    // TODO: Implement teaming partner analysis
+    document.getElementById('partners-naics').innerHTML = '<p class="text-muted">Coming soon...</p>';
+    document.getElementById('partners-agencies').innerHTML = '<p class="text-muted">Coming soon...</p>';
+    document.getElementById('partners-recommended').innerHTML = '<p class="text-muted">Coming soon...</p>';
+}
+
+async function loadMarketTrends() {
+    // TODO: Implement market trends charts
+    document.getElementById('trends-agencies').innerHTML = '<p class="text-muted">Coming soon...</p>';
+}
+
+function refreshData() {
+    loadStats();
+    loadIncumbents();
+    if (currentView === 'partners') loadPartners();
+    if (currentView === 'trends') loadMarketTrends();
+}
+
+function formatCurrency(value) {
+    if (!value) return '$0';
+    if (value >= 1000000) return '$' + (value / 1000000).toFixed(1) + 'M';
+    if (value >= 1000) return '$' + (value / 1000).toFixed(0) + 'K';
+    return '$' + value.toLocaleString();
+}
+</script>
+{% endblock %}
