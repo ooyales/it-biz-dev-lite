@@ -684,7 +684,7 @@ function highlightNetworkNodes() {
     const resultsEl = document.getElementById('search-results');
     
     if (!searchTerm) {
-        // Reset all nodes
+        // Reset all nodes and zoom back out
         if (nodeElements) {
             nodeElements
                 .style('opacity', 1)
@@ -692,10 +692,13 @@ function highlightNetworkNodes() {
                 .style('stroke', null)
                 .style('stroke-width', null)
                 .style('filter', null);
-            
+
             if (labelElements) {
                 labelElements.style('opacity', 1);
             }
+        }
+        if (svg && zoom) {
+            svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity);
         }
         resultsEl.textContent = '';
         return;
@@ -744,17 +747,53 @@ function highlightNetworkNodes() {
         });
     }
     
-    // Show result count
+    // Show result count and zoom to matches
     if (matchCount > 0) {
         resultsEl.textContent = `✓ ${matchCount} match${matchCount !== 1 ? 'es' : ''}`;
         resultsEl.style.color = '#48bb78';
+        zoomToNodes(matchedNodes);
     } else {
         resultsEl.textContent = '✗ No matches';
         resultsEl.style.color = '#fc8181';
     }
-    
-    // Store for potential zoom feature
+
     window.currentNetworkMatches = matchedNodes;
+}
+
+function zoomToNodes(matchedNodes) {
+    if (!matchedNodes.length || !svg || !zoom) return;
+
+    const container = document.getElementById('network-container');
+    const width = container.clientWidth;
+    const height = 700;
+
+    // Compute bounding box of matched nodes
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    matchedNodes.forEach(d => {
+        const r = d.size || 10;
+        if (d.x - r < minX) minX = d.x - r;
+        if (d.y - r < minY) minY = d.y - r;
+        if (d.x + r > maxX) maxX = d.x + r;
+        if (d.y + r > maxY) maxY = d.y + r;
+    });
+
+    // Add padding around the bounding box
+    const padding = 80;
+    minX -= padding;  minY -= padding;
+    maxX += padding;  maxY += padding;
+
+    const bboxW = maxX - minX;
+    const bboxH = maxY - minY;
+    const scale = Math.min(width / bboxW, height / bboxH, 4);
+    const cx = (minX + maxX) / 2;
+    const cy = (minY + maxY) / 2;
+
+    const transform = d3.zoomIdentity
+        .translate(width / 2, height / 2)
+        .scale(scale)
+        .translate(-cx, -cy);
+
+    svg.transition().duration(750).call(zoom.transform, transform);
 }
 
 // Initialize
