@@ -139,6 +139,130 @@ def get_db():
     return db
 
 
+def ensure_schema_updates():
+    """Apply schema migrations to existing database"""
+    if not os.path.exists(DATABASE):
+        return
+    db = sqlite3.connect(DATABASE)
+    db.execute('''
+        CREATE TABLE IF NOT EXISTS opportunity_contacts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            opportunity_id TEXT NOT NULL,
+            contact_id INTEGER NOT NULL,
+            role TEXT,
+            poc_type TEXT,
+            notes TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (contact_id) REFERENCES contacts (id),
+            UNIQUE(opportunity_id, contact_id)
+        )
+    ''')
+    db.execute('''
+        CREATE TABLE IF NOT EXISTS opportunity_resources (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            opportunity_id TEXT NOT NULL,
+            url TEXT NOT NULL,
+            resource_type TEXT DEFAULT 'attachment',
+            label TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(opportunity_id, url)
+        )
+    ''')
+    db.commit()
+    db.close()
+
+
+# Track which scout files have been synced (avoid re-running on every request)
+_poc_synced_files = set()
+
+
+def extract_and_store_poc_contacts(opportunities):
+    """Extract POC contacts from scout opportunities and store in contacts DB."""
+    db = get_db()
+    stats = {'created': 0, 'updated': 0, 'linked': 0, 'resources': 0, 'skipped': 0}
+
+    for opp in opportunities:
+        notice_id = opp.get('noticeId')
+        if not notice_id:
+            continue
+
+        # Extract and clean agency name
+        agency = (opp.get('fullParentPathName') or
+                  opp.get('organizationName') or
+                  'Unknown Agency')
+        agency_clean = agency.split('.')[0].strip() if '.' in agency else agency
+
+        # Process each point of contact
+        for poc in (opp.get('pointOfContact') or []):
+            full_name = (poc.get('fullName') or '').strip()
+            email = (poc.get('email') or '').strip()
+            phone = (poc.get('phone') or '').strip()
+            poc_type = poc.get('type', 'primary')
+            poc_title = poc.get('title')
+
+            if not full_name and not email:
+                stats['skipped'] += 1
+                continue
+
+            role = 'Contracting Officer' if poc_type == 'primary' else 'Point of Contact'
+
+            # Deduplicate: check by email first, then name+agency
+            existing = None
+            if email:
+                existing = db.execute(
+                    'SELECT id FROM contacts WHERE email = ?', (email,)
+                ).fetchone()
+            if not existing and full_name:
+                existing = db.execute(
+                    'SELECT id FROM contacts WHERE name = ? AND agency = ?',
+                    (full_name, agency_clean)
+                ).fetchone()
+
+            if existing:
+                contact_id = existing['id']
+                if phone:
+                    db.execute('''
+                        UPDATE contacts SET phone = COALESCE(NULLIF(phone, ''), ?),
+                                           updated_at = CURRENT_TIMESTAMP
+                        WHERE id = ? AND (phone IS NULL OR phone = '')
+                    ''', (phone, contact_id))
+                stats['updated'] += 1
+            else:
+                cursor = db.execute('''
+                    INSERT INTO contacts
+                    (name, email, phone, title, organization, role,
+                     source, agency, relationship_strength, notes)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (
+                    full_name, email, phone, poc_title, agency_clean, role,
+                    'SAM.gov POC', agency_clean, 'New',
+                    f'Auto-imported from SAM.gov opportunity {notice_id}'
+                ))
+                contact_id = cursor.lastrowid
+                stats['created'] += 1
+
+            # Link contact to opportunity
+            db.execute('''
+                INSERT OR IGNORE INTO opportunity_contacts
+                (opportunity_id, contact_id, role, poc_type)
+                VALUES (?, ?, ?, ?)
+            ''', (notice_id, contact_id, role, poc_type))
+            stats['linked'] += 1
+
+        # Store resource links
+        for idx, url in enumerate(opp.get('resourceLinks') or []):
+            if url:
+                db.execute('''
+                    INSERT OR IGNORE INTO opportunity_resources
+                    (opportunity_id, url, resource_type, label)
+                    VALUES (?, ?, ?, ?)
+                ''', (notice_id, url, 'attachment', f'Attachment {idx + 1}'))
+                stats['resources'] += 1
+
+    db.commit()
+    return stats
+
+
 # ============================================================================
 # MAIN PAGES
 # ============================================================================
@@ -1542,7 +1666,17 @@ def get_scout_opportunities():
         
         opportunities = data.get('opportunities', [])
         scores = data.get('scores', [])
-        
+
+        # Auto-sync POC contacts from scout data (once per file)
+        scout_file_path = str(scout_files[0])
+        if scout_file_path not in _poc_synced_files:
+            try:
+                poc_stats = extract_and_store_poc_contacts(opportunities)
+                _poc_synced_files.add(scout_file_path)
+                print(f"POC sync: {poc_stats['created']} created, {poc_stats['updated']} updated, {poc_stats['linked']} linked, {poc_stats['resources']} resources")
+            except Exception as e:
+                print(f"Warning: POC extraction failed: {e}")
+
         # Fallback: if no scores, create basic entries for raw opportunities
         if not scores and opportunities:
             scored_opps = []
@@ -1565,7 +1699,9 @@ def get_scout_opportunities():
                     'priority': 'UNSCORED',
                     'recommendation': 'Run Opportunity Scout to score this opportunity',
                     'contacts': {'total': 0},
-                    'reasoning': 'Not yet scored'
+                    'reasoning': 'Not yet scored',
+                    'point_of_contact': opp.get('pointOfContact', []),
+                    'resource_links': opp.get('resourceLinks') or []
                 })
             
             return jsonify({
@@ -1613,7 +1749,9 @@ def get_scout_opportunities():
                 'priority': score['priority'],
                 'recommendation': score['recommendation'],
                 'contacts': contacts,
-                'reasoning': score['reasoning']
+                'reasoning': score['reasoning'],
+                'point_of_contact': opp.get('pointOfContact', []),
+                'resource_links': opp.get('resourceLinks') or []
             })
         
         scored_opps.sort(key=lambda x: x['score'], reverse=True)
@@ -1691,6 +1829,69 @@ def run_scout():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/scout/sync-contacts', methods=['POST'])
+def sync_scout_contacts():
+    """Force sync of POC contacts from scout data into contacts DB"""
+    try:
+        scout_files = list(Path('knowledge_graph').glob('scout_data_*.json'))
+        if not scout_files:
+            scout_files = list(Path('.').glob('scout_data_*.json'))
+        scout_files = sorted(scout_files, reverse=True)
+
+        if not scout_files:
+            return jsonify({'error': 'No scout data available'}), 404
+
+        with open(scout_files[0]) as f:
+            data = json.load(f)
+
+        opportunities = data.get('opportunities', [])
+        stats = extract_and_store_poc_contacts(opportunities)
+
+        return jsonify({
+            'status': 'success',
+            'file': str(scout_files[0]),
+            'total_opportunities': len(opportunities),
+            'contacts_created': stats['created'],
+            'contacts_updated': stats['updated'],
+            'links_created': stats['linked'],
+            'resources_stored': stats['resources']
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/opportunities/<notice_id>/contacts', methods=['GET'])
+def get_opportunity_contacts(notice_id):
+    """Get contacts linked to a specific opportunity"""
+    db = get_db()
+    contacts = db.execute('''
+        SELECT c.*, oc.role as opp_role, oc.poc_type
+        FROM contacts c
+        JOIN opportunity_contacts oc ON c.id = oc.contact_id
+        WHERE oc.opportunity_id = ?
+        ORDER BY oc.poc_type ASC
+    ''', (notice_id,)).fetchall()
+    return jsonify({
+        'contacts': [dict(c) for c in contacts],
+        'total': len(contacts)
+    })
+
+
+@app.route('/api/opportunities/<notice_id>/resources', methods=['GET'])
+def get_opportunity_resources(notice_id):
+    """Get resource links for a specific opportunity"""
+    db = get_db()
+    resources = db.execute('''
+        SELECT * FROM opportunity_resources
+        WHERE opportunity_id = ?
+        ORDER BY created_at ASC
+    ''', (notice_id,)).fetchall()
+    return jsonify({
+        'resources': [dict(r) for r in resources],
+        'total': len(resources)
+    })
 
 
 # ============================================================================
@@ -2002,6 +2203,7 @@ def serve_output_file(filename):
 if __name__ == '__main__':
     # Initialize database if needed
     db_created = init_database()
+    ensure_schema_updates()
     
     print("\n" + "="*70)
     print("🚀 INTEGRATED BD INTELLIGENCE DASHBOARD")

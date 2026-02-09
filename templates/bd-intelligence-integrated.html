@@ -296,8 +296,20 @@ function renderOpportunities() {
                             <span class="contact-badge">
                                 <i class="fas fa-user-friends me-1"></i>
                                 ${contactTotal} contact${contactTotal > 1 ? 's' : ''}
-                                ${decisionMakers > 0 ? 
+                                ${decisionMakers > 0 ?
                                     `(${decisionMakers} decision maker${decisionMakers > 1 ? 's' : ''})` : ''}
+                            </span>
+                        ` : ''}
+                        ${(opp.point_of_contact && opp.point_of_contact.length > 0) ? `
+                            <span class="contact-badge" style="background: rgba(102, 126, 234, 0.15); color: #667eea;">
+                                <i class="fas fa-user-tie me-1"></i>
+                                ${opp.point_of_contact.length} POC${opp.point_of_contact.length > 1 ? 's' : ''}
+                            </span>
+                        ` : ''}
+                        ${(opp.resource_links && opp.resource_links.length > 0) ? `
+                            <span class="contact-badge" style="background: rgba(23, 162, 184, 0.15); color: #17a2b8;">
+                                <i class="fas fa-paperclip me-1"></i>
+                                ${opp.resource_links.length} file${opp.resource_links.length > 1 ? 's' : ''}
                             </span>
                         ` : ''}
                     </div>
@@ -403,7 +415,42 @@ function showOpportunityDetail(noticeId) {
                     <h6>Description:</h6>
                     <p class="small">${opp.description.substring(0, 500)}...</p>
                 ` : ''}
-                
+
+                ${(opp.point_of_contact && opp.point_of_contact.length > 0) ? `
+                    <h6 class="mt-3"><i class="fas fa-user-tie me-2"></i>Points of Contact:</h6>
+                    <div class="list-group list-group-flush mb-3">
+                        ${opp.point_of_contact.map(poc => `
+                            <div class="list-group-item bg-transparent px-0 py-2" style="border-color: var(--border-color);">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <strong>${poc.fullName || 'Unknown'}</strong>
+                                        <span class="badge ${poc.type === 'primary' ? 'bg-primary' : 'bg-secondary'} ms-2">${poc.type}</span>
+                                        ${poc.title ? `<br><small class="text-muted">${poc.title}</small>` : ''}
+                                    </div>
+                                    <div class="text-end">
+                                        ${poc.email ? `<a href="mailto:${poc.email}" class="btn btn-sm btn-outline-info me-1" title="Email"><i class="fas fa-envelope"></i></a>` : ''}
+                                        ${poc.phone ? `<a href="tel:${poc.phone}" class="btn btn-sm btn-outline-info" title="Call"><i class="fas fa-phone"></i></a>` : ''}
+                                    </div>
+                                </div>
+                                ${poc.email ? `<small class="text-muted">${poc.email}</small>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+
+                ${(opp.resource_links && opp.resource_links.length > 0) ? `
+                    <h6 class="mt-3"><i class="fas fa-paperclip me-2"></i>Attachments (${opp.resource_links.length}):</h6>
+                    <div class="list-group list-group-flush mb-3">
+                        ${opp.resource_links.map((link, idx) => `
+                            <a href="${link}" target="_blank" class="list-group-item list-group-item-action bg-transparent py-2" style="border-color: var(--border-color); color: var(--accent-info);">
+                                <i class="fas fa-file-download me-2"></i>
+                                Attachment ${idx + 1}
+                                <i class="fas fa-external-link-alt ms-2 small"></i>
+                            </a>
+                        `).join('')}
+                    </div>
+                ` : ''}
+
                 <a href="https://sam.gov/opp/${actualNoticeId}/view" target="_blank" class="btn btn-primary mt-3">
                     <i class="fas fa-external-link-alt me-2"></i>View on SAM.gov
                 </a>
