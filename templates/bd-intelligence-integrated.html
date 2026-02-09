@@ -6,7 +6,7 @@
 
 {% block stats_bar %}
 <div class="stats-bar">
-    <div class="stat-item">
+    <div class="stat-item kpi-tile active" id="kpi-all" onclick="filterByKPI('all')">
         <div class="stat-icon purple">
             <i class="fas fa-bullseye"></i>
         </div>
@@ -15,8 +15,8 @@
             <p>Total Opportunities</p>
         </div>
     </div>
-    
-    <div class="stat-item">
+
+    <div class="stat-item kpi-tile" id="kpi-high" onclick="filterByKPI('high')">
         <div class="stat-icon green">
             <i class="fas fa-star"></i>
         </div>
@@ -25,8 +25,8 @@
             <p>High Priority</p>
         </div>
     </div>
-    
-    <div class="stat-item">
+
+    <div class="stat-item kpi-tile" id="kpi-with-contacts" onclick="filterByKPI('with-contacts')">
         <div class="stat-icon blue">
             <i class="fas fa-user-friends"></i>
         </div>
@@ -35,8 +35,8 @@
             <p>With Contacts</p>
         </div>
     </div>
-    
-    <div class="stat-item">
+
+    <div class="stat-item kpi-tile" id="kpi-network" onclick="filterByKPI('network')">
         <div class="stat-icon orange">
             <i class="fas fa-network-wired"></i>
         </div>
@@ -194,6 +194,22 @@
     border-radius: 4px;
     font-size: 0.875rem;
 }
+
+.kpi-tile {
+    cursor: pointer;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    transition: all 0.2s;
+}
+
+.kpi-tile:hover {
+    border-color: rgba(102, 126, 234, 0.4);
+}
+
+.kpi-tile.active {
+    border-color: #667eea;
+    box-shadow: 0 0 16px rgba(102, 126, 234, 0.35);
+}
 </style>
 {% endblock %}
 
@@ -304,13 +320,48 @@ function renderOpportunities() {
 
 function filterOpportunities() {
     const filter = document.getElementById('priority-filter-top').value;
-    
+
+    // Clear KPI highlight when using dropdown
+    document.querySelectorAll('.kpi-tile').forEach(t => t.classList.remove('active'));
+
     if (filter === 'all') {
         filteredOpportunities = [...allOpportunities];
+        document.getElementById('kpi-all').classList.add('active');
     } else {
         filteredOpportunities = allOpportunities.filter(o => o.priority === filter);
+        if (filter === 'HIGH') document.getElementById('kpi-high').classList.add('active');
     }
-    
+
+    renderOpportunities();
+}
+
+function filterByKPI(kpi) {
+    // Highlight active tile
+    document.querySelectorAll('.kpi-tile').forEach(t => t.classList.remove('active'));
+    document.getElementById('kpi-' + kpi).classList.add('active');
+
+    if (kpi === 'all') {
+        document.getElementById('priority-filter-top').value = 'all';
+        filteredOpportunities = [...allOpportunities];
+    } else if (kpi === 'high') {
+        document.getElementById('priority-filter-top').value = 'HIGH';
+        filteredOpportunities = allOpportunities.filter(o => o.priority === 'HIGH');
+    } else if (kpi === 'with-contacts') {
+        document.getElementById('priority-filter-top').value = 'all';
+        filteredOpportunities = allOpportunities.filter(o => {
+            const total = (o.contacts && (o.contacts.total || o.contacts.total_contacts)) || 0;
+            return total > 0;
+        });
+    } else if (kpi === 'network') {
+        document.getElementById('priority-filter-top').value = 'all';
+        filteredOpportunities = allOpportunities.filter(o => {
+            if (!o.contacts || !o.contacts.all_contacts) return false;
+            return o.contacts.all_contacts.some(c =>
+                c.relationship_strength === 'Strong' || c.relationship_strength === 'Warm'
+            );
+        });
+    }
+
     renderOpportunities();
 }
 

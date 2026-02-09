@@ -102,6 +102,13 @@ body {
 .stat-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 12px 24px rgba(102, 126, 234, 0.15);
+    cursor: pointer;
+}
+
+.stat-card.active {
+    border: 2px solid #667eea;
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
+    background: linear-gradient(135deg, #1a2147 0%, #1e2a5a 100%);
 }
 
 .stat-card h3 {

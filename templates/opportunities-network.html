@@ -312,7 +312,7 @@ function buildNetwork(opportunities, contacts) {
     });
     
     // Create contact nodes
-    const contactNodes = contacts.slice(0, 100).map(contact => {  // Limit to 100
+    const contactNodes = contacts.map(contact => {
         const influence = contact.relationship_strength === 'Strong' ? 3 : 
                          contact.relationship_strength === 'Warm' ? 2 : 1;
         return {

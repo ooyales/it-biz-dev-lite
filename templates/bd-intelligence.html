@@ -26,13 +26,21 @@
             padding: 1.5rem;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             margin-bottom: 1.5rem;
-            transition: transform 0.2s;
+            transition: all 0.2s;
+            cursor: pointer;
+            border: 2px solid transparent;
         }
-        
+
         .stat-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
+
+        .stat-card.active {
+            border-color: #667eea;
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.35);
+        }
+
         
         .stat-number {
             font-size: 2.5rem;
@@ -168,25 +176,25 @@
         <!-- Summary Stats -->
         <div class="row mb-4">
             <div class="col-md-3">
-                <div class="stat-card">
+                <div class="stat-card active" id="card-all" onclick="filterByKPI('all')">
                     <div class="stat-number" id="total-opportunities">-</div>
                     <div class="stat-label">Total Opportunities</div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="stat-card">
+                <div class="stat-card" id="card-high" onclick="filterByKPI('high')">
                     <div class="stat-number text-success" id="high-priority">-</div>
                     <div class="stat-label">High Priority</div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="stat-card">
+                <div class="stat-card" id="card-with-contacts" onclick="filterByKPI('with-contacts')">
                     <div class="stat-number text-info" id="with-contacts">-</div>
                     <div class="stat-label">With Contacts</div>
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="stat-card">
+                <div class="stat-card" id="card-network" onclick="filterByKPI('network')">
                     <div class="stat-number text-primary" id="network-contacts">-</div>
                     <div class="stat-label">Network Contacts</div>
                 </div>
@@ -385,6 +393,14 @@
                         if (!o.contacts) return true;
                         const total = o.contacts.total || o.contacts.total_contacts || 0;
                         return total === 0;
+                    });
+                } else if (contactFilter === 'network') {
+                    // Show only opportunities where we have network contacts (strong/warm relationships)
+                    opportunities = opportunities.filter(o => {
+                        if (!o.contacts || !o.contacts.all_contacts) return false;
+                        return o.contacts.all_contacts.some(c =>
+                            c.relationship_strength === 'Strong' || c.relationship_strength === 'Warm'
+                        );
                     });
                 }
                 
@@ -745,13 +761,50 @@
             }
         }
         
+        // KPI tile drill-through
+        let activeKPI = 'all';
+
+        function filterByKPI(kpi) {
+            activeKPI = kpi;
+
+            // Highlight active tile
+            document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active'));
+            const cardId = kpi === 'all' ? 'card-all' :
+                           kpi === 'high' ? 'card-high' :
+                           kpi === 'with-contacts' ? 'card-with-contacts' : 'card-network';
+            document.getElementById(cardId).classList.add('active');
+
+            // Sync dropdown filters and load
+            if (kpi === 'all') {
+                document.getElementById('priority-filter').value = '';
+                document.getElementById('contact-filter').value = '';
+                loadOpportunities('', '');
+            } else if (kpi === 'high') {
+                document.getElementById('priority-filter').value = 'HIGH';
+                document.getElementById('contact-filter').value = '';
+                loadOpportunities('HIGH', '');
+            } else if (kpi === 'with-contacts') {
+                document.getElementById('priority-filter').value = '';
+                document.getElementById('contact-filter').value = 'with';
+                loadOpportunities('', 'with');
+            } else if (kpi === 'network') {
+                document.getElementById('priority-filter').value = '';
+                document.getElementById('contact-filter').value = '';
+                // Show only opportunities where contacts have strong/warm relationships
+                loadOpportunities('', 'network');
+            }
+        }
+
         // Filters
         document.getElementById('priority-filter')?.addEventListener('change', (e) => {
+            // Clear KPI highlight when using dropdowns directly
+            document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active'));
             const contactFilter = document.getElementById('contact-filter').value;
             loadOpportunities(e.target.value, contactFilter);
         });
-        
+
         document.getElementById('contact-filter')?.addEventListener('change', (e) => {
+            document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active'));
             const priorityFilter = document.getElementById('priority-filter').value;
             loadOpportunities(priorityFilter, e.target.value);
         });
