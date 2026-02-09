@@ -249,10 +249,12 @@ async function loadNetwork() {
         const oppsData = await oppsRes.json();
         const opportunities = oppsData.opportunities || [];
         
-        // Load contacts
+        // Load contacts (exclude Contract Holders — those are vendors, not real contacts)
         const contactsRes = await fetch('/api/contacts');
         const contactsData = await contactsRes.json();
-        const contacts = contactsData.contacts || [];
+        const contacts = (contactsData.contacts || []).filter(c =>
+            c.role !== 'Contract Holder' && c.role !== 'Contracting Office'
+        );
         
         // Build nodes and links
         buildNetwork(opportunities, contacts);

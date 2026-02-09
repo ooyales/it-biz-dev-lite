@@ -253,7 +253,9 @@ async function loadContacts() {
         }
         
         const data = await res.json();
-        allContacts = data.contacts || [];
+        allContacts = (data.contacts || []).filter(c =>
+            c.role !== 'Contract Holder' && c.role !== 'Contracting Office'
+        );
         filteredContacts = [...allContacts];
         
         console.log(`Loaded ${allContacts.length} contacts`);
