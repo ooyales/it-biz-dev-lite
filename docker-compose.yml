@@ -1,0 +1,45 @@
+services:
+  neo4j:
+    image: neo4j:5-community
+    container_name: bizdev-neo4j
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD}
+      - NEO4J_PLUGINS=["apoc"]
+    volumes:
+      - neo4j-data:/data
+      - neo4j-logs:/logs
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:7474 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      start_period: 30s
+      retries: 5
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+    container_name: bizdev-app
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      - NEO4J_URI=bolt://neo4j:7687
+    volumes:
+      - bizdev-data:/app/data
+      - bizdev-logs:/app/logs
+      - ./knowledge_graph:/app/knowledge_graph
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  neo4j-data:
+  neo4j-logs:
+  bizdev-data:
+  bizdev-logs:
