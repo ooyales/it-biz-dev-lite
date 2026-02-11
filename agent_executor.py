@@ -14,23 +14,23 @@ import importlib.util
 project_root = Path(__file__).parent
 kg_path = project_root / 'knowledge_graph'
 
-# Add project root to path (so we can do: from knowledge_graph.graph.neo4j_client import ...)
+# Add project root to path
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
-# CRITICAL: Manually load graph.neo4j_client and add to sys.modules
-# This makes "from graph.neo4j_client import ..." work inside competitive_intel.py
-neo4j_client_path = kg_path / 'graph' / 'neo4j_client.py'
-if neo4j_client_path.exists():
-    spec = importlib.util.spec_from_file_location("graph.neo4j_client", neo4j_client_path)
+# Make "from graph.graph_client import ..." work inside agents
+graph_client_path = kg_path / 'graph' / 'graph_client.py'
+if graph_client_path.exists():
+    spec = importlib.util.spec_from_file_location("graph.graph_client", graph_client_path)
     if spec and spec.loader:
-        neo4j_module = importlib.util.module_from_spec(spec)
-        sys.modules['graph.neo4j_client'] = neo4j_module
-        sys.modules['graph'] = type(sys)('graph')  # Create fake graph module
+        graph_module = importlib.util.module_from_spec(spec)
+        sys.modules['graph.graph_client'] = graph_module
+        if 'graph' not in sys.modules:
+            sys.modules['graph'] = type(sys)('graph')
         try:
-            spec.loader.exec_module(neo4j_module)
+            spec.loader.exec_module(graph_module)
         except Exception as e:
-            print(f"Warning: Could not load neo4j_client: {e}")
+            print(f"Warning: Could not load graph_client: {e}")
 
 
 class AgentExecutor:
@@ -380,7 +380,7 @@ class AgentExecutor:
 
             return {
                 'status': 'success',
-                'note': 'Demo mode - real agent requires ANTHROPIC_API_KEY + Neo4j',
+                'note': 'Demo mode - real agent requires ANTHROPIC_API_KEY',
                 'summary': f"Research for {contact.get('name', 'this contact')} would analyze their public professional presence including blog posts, articles, conference talks, and industry contributions.",
                 'key_interests': ['Federal IT Modernization', 'Cloud Migration', 'Cybersecurity'],
                 'technical_focus': ['Zero Trust Architecture', 'DevSecOps', 'Cloud-Native Solutions'],
@@ -394,7 +394,7 @@ class AgentExecutor:
                 'researched_at': '2026-01-31',
                 'method': 'fallback',
                 'recommendations': [
-                    '💡 Real agent requires: ANTHROPIC_API_KEY + Neo4j',
+                    '💡 Real agent requires: ANTHROPIC_API_KEY',
                     '💡 Will search public web for professional writings and talks',
                     '💡 Claude synthesizes findings into actionable BD context'
                 ]

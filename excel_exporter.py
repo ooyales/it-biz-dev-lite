@@ -14,8 +14,6 @@ Features:
 """
 
 import sys
-sys.path.append('knowledge_graph')
-
 import os
 from datetime import datetime
 from pathlib import Path
@@ -32,7 +30,7 @@ from openpyxl.utils import get_column_letter
 from openpyxl.chart import BarChart, PieChart, Reference
 from openpyxl.worksheet.table import Table, TableStyleInfo
 
-from graph.neo4j_client import KnowledgeGraphClient
+from graph.graph_client import KnowledgeGraphClient
 import json
 
 
@@ -40,12 +38,7 @@ class BDIntelligenceExporter:
     """Export BD intelligence data to Excel"""
     
     def __init__(self):
-        # Connect to Neo4j
-        self.kg = KnowledgeGraphClient(
-            uri=os.getenv('NEO4J_URI', 'bolt://localhost:7687'),
-            user=os.getenv('NEO4J_USER', 'neo4j'),
-            password=os.getenv('NEO4J_PASSWORD')
-        )
+        self.kg = KnowledgeGraphClient()
         
         # Create workbook
         self.wb = Workbook()
@@ -165,46 +158,30 @@ class BDIntelligenceExporter:
     
     def export_contacts(self):
         """Export contacts with relationships"""
-        
+
         sheet = self.wb.create_sheet('Contacts')
-        
+
         headers = [
             'Name', 'Title', 'Organization', 'Email', 'Phone',
             'Role Type', 'Influence Level', 'Source', 'Extracted Date'
         ]
         self.add_header_row(sheet, headers)
-        
-        # Query Neo4j
-        with self.kg.driver.session(database="neo4j") as session:
-            query = """
-            MATCH (p:Person)
-            OPTIONAL MATCH (p)-[:WORKS_AT]->(o:Organization)
-            RETURN p.name as name,
-                   p.title as title,
-                   COALESCE(o.name, p.organization) as organization,
-                   p.email as email,
-                   p.phone as phone,
-                   p.role_type as role_type,
-                   p.influence_level as influence_level,
-                   p.source as source,
-                   p.extracted_at as extracted_at
-            ORDER BY p.name
-            """
-            result = session.run(query)
-            
-            row = 2
-            for record in result:
-                sheet.cell(row, 1).value = record['name']
-                sheet.cell(row, 2).value = record['title']
-                sheet.cell(row, 3).value = record['organization']
-                sheet.cell(row, 4).value = record['email']
-                sheet.cell(row, 5).value = record['phone']
-                sheet.cell(row, 6).value = record['role_type']
-                sheet.cell(row, 7).value = record['influence_level']
-                sheet.cell(row, 8).value = record['source']
-                sheet.cell(row, 9).value = record['extracted_at']
-                row += 1
-        
+
+        contacts = self.kg.get_all_contacts_with_orgs()
+
+        row = 2
+        for record in contacts:
+            sheet.cell(row, 1).value = record.get('name')
+            sheet.cell(row, 2).value = record.get('title')
+            sheet.cell(row, 3).value = record.get('organization')
+            sheet.cell(row, 4).value = record.get('email')
+            sheet.cell(row, 5).value = record.get('phone')
+            sheet.cell(row, 6).value = record.get('role_type')
+            sheet.cell(row, 7).value = record.get('influence_level')
+            sheet.cell(row, 8).value = record.get('source')
+            sheet.cell(row, 9).value = record.get('extracted_at')
+            row += 1
+
         # Table formatting
         if row > 2:
             tab = Table(displayName='ContactsTable', ref=f'A1:I{row-1}')
@@ -213,97 +190,71 @@ class BDIntelligenceExporter:
                 showRowStripes=True
             )
             sheet.add_table(tab)
-        
+
         sheet.freeze_panes = 'A2'
         print(f"✓ Exported {row-2} contacts")
     
     def export_organizations(self):
         """Export organizations"""
-        
+
         sheet = self.wb.create_sheet('Organizations')
-        
+
         headers = ['Organization', 'Type', 'Contact Count', 'Contract Count']
         self.add_header_row(sheet, headers)
-        
-        with self.kg.driver.session(database="neo4j") as session:
-            query = """
-            MATCH (o:Organization)
-            OPTIONAL MATCH (o)<-[:WORKS_AT]-(p:Person)
-            OPTIONAL MATCH (c:Contract)-[:AWARDED_TO]->(o)
-            WITH o, count(DISTINCT p) as people_count, count(DISTINCT c) as contract_count
-            RETURN o.name as name,
-                   o.type as type,
-                   people_count,
-                   contract_count
-            ORDER BY people_count DESC, contract_count DESC
-            """
-            result = session.run(query)
-            
-            row = 2
-            for record in result:
-                sheet.cell(row, 1).value = record['name']
-                sheet.cell(row, 2).value = record['type']
-                sheet.cell(row, 3).value = record['people_count']
-                sheet.cell(row, 4).value = record['contract_count']
-                row += 1
-        
+
+        orgs = self.kg.get_all_orgs_with_counts()
+
+        row = 2
+        for record in orgs:
+            sheet.cell(row, 1).value = record.get('name')
+            sheet.cell(row, 2).value = record.get('type')
+            sheet.cell(row, 3).value = record.get('people_count')
+            sheet.cell(row, 4).value = record.get('contract_count')
+            row += 1
+
         if row > 2:
             tab = Table(displayName='OrganizationsTable', ref=f'A1:D{row-1}')
             tab.tableStyleInfo = TableStyleInfo(name='TableStyleMedium2', showRowStripes=True)
             sheet.add_table(tab)
-        
+
         sheet.freeze_panes = 'A2'
         print(f"✓ Exported {row-2} organizations")
     
     def export_contracts(self):
         """Export FPDS contract data"""
-        
+
         sheet = self.wb.create_sheet('Contracts')
-        
+
         headers = [
             'Contract Number', 'Title', 'Agency', 'Contractor',
             'Award Date', 'Value', 'NAICS', 'Description'
         ]
         self.add_header_row(sheet, headers)
-        
-        with self.kg.driver.session(database="neo4j") as session:
-            query = """
-            MATCH (c:Contract)-[:AWARDED_TO]->(o:Organization)
-            RETURN c.contract_number as number,
-                   c.title as title,
-                   c.agency as agency,
-                   o.name as contractor,
-                   c.award_date as award_date,
-                   c.value as value,
-                   c.naics as naics,
-                   c.description as description
-            ORDER BY c.award_date DESC
-            LIMIT 1000
-            """
-            result = session.run(query)
-            
-            row = 2
-            for record in result:
-                sheet.cell(row, 1).value = record['number']
-                sheet.cell(row, 2).value = record['title']
-                sheet.cell(row, 3).value = record['agency']
-                sheet.cell(row, 4).value = record['contractor']
-                sheet.cell(row, 5).value = record['award_date']
-                
-                # Format currency
-                value_cell = sheet.cell(row, 6)
-                value_cell.value = record['value'] or 0
-                value_cell.number_format = '$#,##0'
-                
-                sheet.cell(row, 7).value = record['naics']
-                sheet.cell(row, 8).value = record['description']
-                row += 1
-        
+
+        contracts = self.kg.get_all_contracts_with_orgs()
+
+        row = 2
+        for record in contracts:
+            sheet.cell(row, 1).value = record.get('number')
+            sheet.cell(row, 2).value = record.get('title')
+            sheet.cell(row, 3).value = record.get('agency')
+            sheet.cell(row, 4).value = record.get('contractor')
+            sheet.cell(row, 5).value = record.get('award_date')
+
+            # Format currency
+            value_cell = sheet.cell(row, 6)
+            value_cell.value = record.get('value') or 0
+            value_cell.number_format = '$#,##0'
+
+            sheet.cell(row, 7).value = record.get('naics')
+            sheet.cell(row, 8).value = record.get('description')
+            row += 1
+
         if row > 2:
             tab = Table(displayName='ContractsTable', ref=f'A1:H{row-1}')
             tab.tableStyleInfo = TableStyleInfo(name='TableStyleMedium2', showRowStripes=True)
             sheet.add_table(tab)
-        
+
         sheet.freeze_panes = 'A2'
         print(f"✓ Exported {row-2} contracts")
     

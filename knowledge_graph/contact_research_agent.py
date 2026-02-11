@@ -14,15 +14,15 @@ Flow:
   2. Build targeted search queries
   3. Search the web for their public writings and appearances
   4. Feed results to Claude for synthesis
-  5. Store the research profile in Neo4j on the Person node
+  5. Store the research profile in SQLite via KnowledgeGraphClient
   6. Return structured results to the dashboard
 
 Design decisions:
   - Framed as "Professional Research" not monitoring
   - Only surfaces PUBLIC information
   - Summarizes themes/interests, not personal details
-  - Cached in Neo4j so we don't re-research every time
-  - Respects a staleness window (re-research after 7 days)
+  - Cached in SQLite so we don't re-research every time
+  - Respects a staleness window (re-research after 180 days)
 """
 
 import os
@@ -30,15 +30,13 @@ import sys
 import json
 import time
 import hashlib
-import sqlite3
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# SQLite path — contacts.db lives one level up from knowledge_graph/
-_SQLITE_DB = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data', 'contacts.db')
+from graph.graph_client import KnowledgeGraphClient
 
 
 # ---------------------------------------------------------------------------
@@ -259,29 +257,14 @@ def _fallback_summary(contact: Dict, findings: List[Dict]) -> Dict:
 class ContactResearchAgent:
     """
     Researches a contact's public professional presence and
-    stores the results in Neo4j.
+    stores the results in SQLite via KnowledgeGraphClient.
     """
 
     CACHE_TTL_DAYS = 180  # Re-research after this many days
 
     def __init__(self):
-        self.driver = None
-        try:
-            from neo4j import GraphDatabase
-            neo4j_password = os.getenv('NEO4J_PASSWORD')
-            if neo4j_password:
-                self.driver = GraphDatabase.driver(
-                    os.getenv('NEO4J_URI', 'bolt://localhost:7687'),
-                    auth=(os.getenv('NEO4J_USER', 'neo4j'), neo4j_password)
-                )
-                # Quick connectivity check
-                self.driver.verify_connectivity()
-                print("✓ ContactResearchAgent initialized (Neo4j + SQLite)")
-            else:
-                print("✓ ContactResearchAgent initialized (SQLite only — NEO4J_PASSWORD not set)")
-        except Exception as e:
-            self.driver = None
-            print(f"✓ ContactResearchAgent initialized (SQLite only — Neo4j unavailable: {e})")
+        self.kg = KnowledgeGraphClient()
+        print("✓ ContactResearchAgent initialized (SQLite via KnowledgeGraphClient)")
 
     # ------------------------------------------------------------------
     # Public interface
@@ -317,57 +300,27 @@ class ContactResearchAgent:
         print(f"   🤖 Launching AI research...")
         profile = _research_with_claude(contact)
 
-        # Cache in Neo4j
+        # Cache in SQLite
         self._cache_research(contact, profile)
 
         print(f"   ✓ Research complete (confidence: {profile.get('confidence', 'unknown')})")
         return profile
 
     # ------------------------------------------------------------------
-    # Neo4j cache layer
+    # Cache layer (SQLite via KnowledgeGraphClient)
     # ------------------------------------------------------------------
     def _get_cached_research(self, contact: Dict) -> Optional[Dict]:
-        """Check Neo4j first, then fall back to SQLite for cached research."""
+        """Check SQLite for cached research via KnowledgeGraphClient."""
         name = contact.get('name', '').strip()
 
         if not name:
             return None
 
         profile = None
-
-        # 1. Try Neo4j first (if available)
-        if self.driver:
-            try:
-                with self.driver.session(database="neo4j") as session:
-                    result = session.run(
-                        "MATCH (p:Person) WHERE p.name = $name RETURN p.research_profile as profile",
-                        name=name
-                    )
-                    row = result.single()
-                    if row and row['profile']:
-                        try:
-                            profile = json.loads(row['profile']) if isinstance(row['profile'], str) else row['profile']
-                        except (json.JSONDecodeError, TypeError):
-                            profile = None
-            except Exception:
-                pass
-
-        # 2. Fall back to SQLite if Neo4j had nothing
-        if not profile:
-            try:
-                if os.path.exists(_SQLITE_DB):
-                    db = sqlite3.connect(_SQLITE_DB)
-                    row = db.execute(
-                        'SELECT research_profile FROM contacts WHERE name = ?', (name,)
-                    ).fetchone()
-                    db.close()
-                    if row and row[0]:
-                        profile = json.loads(row[0])
-                        print(f"   💾 Loaded research from SQLite fallback")
-                        # Re-populate Neo4j cache from SQLite
-                        self._write_neo4j_cache(name, row[0])
-            except Exception:
-                pass
+        try:
+            profile = self.kg.get_research_profile(name)
+        except Exception:
+            pass
 
         if not profile:
             return None
@@ -382,66 +335,25 @@ class ContactResearchAgent:
 
         return profile
 
-    def _write_neo4j_cache(self, name: str, profile_json: str):
-        """Re-populate Neo4j cache from SQLite data."""
-        if not self.driver:
-            return
-        try:
-            with self.driver.session(database="neo4j") as session:
-                session.run("""
-                    MATCH (p:Person) WHERE p.name = $name
-                    SET p.research_profile = $profile,
-                        p.research_updated_at = datetime()
-                """, name=name, profile=profile_json)
-        except Exception:
-            pass
-
     def _cache_research(self, contact: Dict, profile: Dict):
-        """Store research profile in both Neo4j and SQLite (dual-write)."""
+        """Store research profile in SQLite via KnowledgeGraphClient."""
         name = contact.get('name', '').strip()
-        profile_json = json.dumps(profile)
 
         if not name:
             print(f"   ⚠️  No name to cache research for")
             return
 
-        # 1. Write to Neo4j (if available)
-        if self.driver:
-            try:
-                with self.driver.session(database="neo4j") as session:
-                    result = session.run("""
-                        MATCH (p:Person)
-                        WHERE p.name = $name
-                        SET p.research_profile = $profile,
-                            p.research_updated_at = datetime()
-                        RETURN count(p) as updated
-                    """, name=name, profile=profile_json)
-
-                    row = result.single()
-                    if row and row['updated'] > 0:
-                        print(f"   💾 Research cached in Neo4j")
-                    else:
-                        print(f"   ⚠️  No matching Person node in Neo4j for '{name}'")
-            except Exception as e:
-                print(f"   ⚠️  Neo4j cache write failed: {e}")
-
-        # 2. Write to SQLite (survives Neo4j rebuilds)
         try:
-            if os.path.exists(_SQLITE_DB):
-                db = sqlite3.connect(_SQLITE_DB)
-                db.execute(
-                    'UPDATE contacts SET research_profile = ? WHERE name = ?',
-                    (profile_json, name)
-                )
-                db.commit()
-                db.close()
+            if self.kg.set_research_profile(name, profile):
                 print(f"   💾 Research cached in SQLite")
+            else:
+                print(f"   ⚠️  No matching contact in SQLite for '{name}'")
         except Exception as e:
             print(f"   ⚠️  SQLite cache write failed: {e}")
 
     def close(self):
-        if self.driver:
-            self.driver.close()
+        if self.kg:
+            self.kg.close()
 
 
 # ---------------------------------------------------------------------------

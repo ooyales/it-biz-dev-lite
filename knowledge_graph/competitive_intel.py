@@ -15,7 +15,7 @@ Features:
 import sys
 # Remove the sys.path.append - we handle paths in agent_executor.py
 
-from knowledge_graph.graph.neo4j_client import KnowledgeGraphClient, generate_person_id, generate_org_id
+from knowledge_graph.graph.graph_client import KnowledgeGraphClient, generate_person_id, generate_org_id
 import requests
 from datetime import datetime, timedelta
 from typing import Dict, List, Tuple
@@ -63,21 +63,11 @@ class CompetitiveIntelAgent:
     
     def __init__(self):
         """Initialize competitive intelligence agent"""
-        
+
         print_info("Initializing Competitive Intelligence Agent...")
-        
-        # Load config
-        neo4j_password = os.getenv('NEO4J_PASSWORD')
-        
-        if not neo4j_password:
-            raise ValueError("Missing NEO4J_PASSWORD in environment")
-        
-        # Connect to knowledge graph
-        self.kg = KnowledgeGraphClient(
-            uri=os.getenv('NEO4J_URI', 'bolt://localhost:7687'),
-            user=os.getenv('NEO4J_USER', 'neo4j'),
-            password=neo4j_password
-        )
+
+        # Connect to knowledge graph (SQLite-backed)
+        self.kg = KnowledgeGraphClient()
         print_success("Connected to knowledge graph")
         
         # Configuration
@@ -125,24 +115,9 @@ class CompetitiveIntelAgent:
         - Win rate (if calculable)
         """
         
-        org_id = generate_org_id(company_name)
-        
         # Query graph for contracts awarded to this company
-        with self.kg.driver.session(database="neo4j") as session:
-            query = """
-            MATCH (c:Contract)-[:AWARDED_TO]->(o:Organization {id: $org_id})
-            RETURN c.contract_number as contract_number,
-                   c.title as title,
-                   c.value as value,
-                   c.award_date as award_date,
-                   c.agency as agency,
-                   c.naics as naics
-            ORDER BY c.award_date DESC
-            """
-            
-            result = session.run(query, org_id=org_id)
-            contracts = [dict(record) for record in result]
-        
+        contracts = self.kg.get_contracts_for_org(org_name=company_name)
+
         if not contracts:
             return {
                 'company': company_name,
@@ -175,32 +150,9 @@ class CompetitiveIntelAgent:
         """
         
         print_info(f"Identifying incumbents at {agency}...")
-        
-        with self.kg.driver.session(database="neo4j") as session:
-            query = """
-            MATCH (c:Contract)-[:AWARDED_TO]->(o:Organization)
-            WHERE c.agency CONTAINS $agency
-            """
-            
-            if naics_code:
-                query += " AND c.naics = $naics"
-            
-            query += """
-            RETURN o.name as company,
-                   count(c) as contract_count,
-                   sum(c.value) as total_value,
-                   max(c.award_date) as latest_award
-            ORDER BY total_value DESC
-            LIMIT 20
-            """
-            
-            params = {'agency': agency}
-            if naics_code:
-                params['naics'] = naics_code
-            
-            result = session.run(query, **params)
-            incumbents = [dict(record) for record in result]
-        
+
+        incumbents = self.kg.get_incumbents_at_agency(agency, naics=naics_code)
+
         return incumbents
     
     def find_teaming_partners(
@@ -220,39 +172,11 @@ class CompetitiveIntelAgent:
         """
         
         print_info("Identifying potential teaming partners...")
-        
-        with self.kg.driver.session(database="neo4j") as session:
-            query = """
-            MATCH (c:Contract)-[:AWARDED_TO]->(o:Organization)
-            WHERE 1=1
-            """
-            
-            params = {}
-            
-            if target_agency:
-                query += " AND c.agency CONTAINS $agency"
-                params['agency'] = target_agency
-            
-            if naics_code:
-                query += " AND c.naics = $naics"
-                params['naics'] = naics_code
-            
-            query += """
-            WITH o, count(c) as contract_count, sum(c.value) as total_value
-            WHERE contract_count >= $min_contracts
-            RETURN o.name as company,
-                   o.type as company_type,
-                   contract_count,
-                   total_value
-            ORDER BY contract_count DESC
-            LIMIT 50
-            """
-            
-            params['min_contracts'] = min_contracts
-            
-            result = session.run(query, **params)
-            partners = [dict(record) for record in result]
-        
+
+        partners = self.kg.get_teaming_partners(
+            agency=target_agency, naics=naics_code, min_contracts=min_contracts
+        )
+
         return partners
     
     def analyze_agency_spending(self, agency: str, years: int = 3) -> Dict:
@@ -268,19 +192,9 @@ class CompetitiveIntelAgent:
         """
         
         print_info(f"Analyzing spending at {agency}...")
-        
-        with self.kg.driver.session(database="neo4j") as session:
-            # Get all contracts at this agency
-            query = """
-            MATCH (c:Contract)
-            WHERE c.agency CONTAINS $agency
-            RETURN c.value as value,
-                   c.award_date as award_date,
-                   c.naics as naics
-            """
-            
-            result = session.run(query, agency=agency)
-            contracts = [dict(record) for record in result]
+
+        # Get all contracts at this agency
+        contracts = self.kg.get_contracts_by_agency(agency)
         
         if not contracts:
             return {

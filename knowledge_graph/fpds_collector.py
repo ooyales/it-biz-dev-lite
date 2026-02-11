@@ -13,7 +13,7 @@ FPDS data can be accessed via:
 import sys
 sys.path.append('..')
 
-from graph.neo4j_client import KnowledgeGraphClient, generate_org_id
+from graph.graph_client import KnowledgeGraphClient, generate_org_id
 import requests
 from datetime import datetime, timedelta
 from typing import Dict, List
@@ -76,16 +76,11 @@ class FPDSCollector:
     
     def __init__(self):
         """Initialize FPDS collector"""
-        
+
         print_info("Initializing FPDS Contract Collector...")
-        
-        # Connect to knowledge graph
-        neo4j_password = os.getenv('NEO4J_PASSWORD')
-        self.kg = KnowledgeGraphClient(
-            uri=os.getenv('NEO4J_URI', 'bolt://localhost:7687'),
-            user=os.getenv('NEO4J_USER', 'neo4j'),
-            password=neo4j_password
-        )
+
+        # Connect to knowledge graph (SQLite-based)
+        self.kg = KnowledgeGraphClient()
         print_success("Connected to knowledge graph")
         
         # USASpending.gov API (free, comprehensive)
@@ -161,10 +156,10 @@ class FPDSCollector:
             return []
     
     def store_contract_in_graph(self, contract: Dict) -> bool:
-        """Store contract data in knowledge graph.
+        """Store contract data in knowledge graph (SQLite-based).
 
-        Note: Existing Neo4j data uses 'name' as unique key for Organization,
-        Contractor, Contract, and Agency nodes. We MERGE by name to match.
+        The HAS_CONTRACT relationship between contractor and agency is
+        implicit via the contractor_name field in the contracts table.
         """
 
         try:
@@ -180,60 +175,35 @@ class FPDSCollector:
             # Build a unique contract name matching existing format: "RECIPIENT|AGENCY"
             contract_name = f"{recipient}|{agency}"
 
-            with self.kg.driver.session(database="neo4j") as session:
-                # Create/update Contract node (MERGE by name — matches constraint)
-                session.run("""
-                    MERGE (c:Contract {name: $name})
-                    SET c.contract_number = $contract_id,
-                        c.title = $description,
-                        c.value = $amount,
-                        c.award_date = $start_date,
-                        c.agency = $agency,
-                        c.naics = $naics,
-                        c.source = 'USASpending.gov',
-                        c.updated_at = datetime()
-                """,
-                    name=contract_name,
-                    contract_id=contract_id,
-                    description=description[:200] if description else 'Contract',
-                    amount=float(amount) if amount else 0,
-                    start_date=start_date,
-                    agency=agency,
-                    naics=naics
-                )
+            # Create/update contract record
+            self.kg.create_contract({
+                'name': contract_name,
+                'contract_number': contract_id,
+                'title': description[:200] if description else 'Contract',
+                'value': float(amount) if amount else 0,
+                'award_date': start_date,
+                'agency': agency,
+                'contractor_name': recipient,
+                'naics': naics,
+                'source': 'USASpending.gov',
+                'description': description[:200] if description else 'Contract',
+            })
 
-                # Create Contractor node (MERGE by name)
-                session.run("""
-                    MERGE (o:Contractor {name: $name})
-                    SET o.type = 'Contractor',
-                        o.source = COALESCE(o.source, 'USASpending.gov'),
-                        o.updated_at = datetime()
-                """, name=recipient)
+            # Create Contractor organization
+            self.kg.create_organization({
+                'id': generate_org_id(recipient),
+                'name': recipient,
+                'type': 'Contractor',
+                'source': 'USASpending.gov',
+            })
 
-                # Create Agency node (MERGE by name)
-                session.run("""
-                    MERGE (a:Agency {name: $name})
-                    SET a.type = 'Federal Agency',
-                        a.source = COALESCE(a.source, 'USASpending.gov'),
-                        a.updated_at = datetime()
-                """, name=agency)
-
-                # Create HAS_CONTRACT relationship (Contractor -> Agency via Contract)
-                session.run("""
-                    MATCH (ct:Contractor {name: $contractor})
-                    MATCH (a:Agency {name: $agency})
-                    MERGE (ct)-[r:HAS_CONTRACT]->(a)
-                    SET r.contract_name = $contract_name,
-                        r.value = $amount,
-                        r.award_date = $start_date,
-                        r.source = 'USASpending.gov'
-                """,
-                    contractor=recipient,
-                    agency=agency,
-                    contract_name=contract_name,
-                    amount=float(amount) if amount else 0,
-                    start_date=start_date
-                )
+            # Create Agency organization
+            self.kg.create_organization({
+                'id': generate_org_id(agency),
+                'name': agency,
+                'type': 'Federal Agency',
+                'source': 'USASpending.gov',
+            })
 
             return True
 

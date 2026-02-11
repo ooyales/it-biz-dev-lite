@@ -27,8 +27,8 @@ pandas>=2.0.0
 # For environment variable management
 python-dotenv>=1.0.0
 
-# For knowledge graph (Neo4j)
-neo4j>=5.0.0
+# For graph traversal (replaces Neo4j)
+networkx>=3.0
 
 # For progress bars (FPDS collection)
 tqdm>=4.66.0

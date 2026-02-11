@@ -14,7 +14,7 @@ Features:
 import sys
 sys.path.append('..')
 
-from graph.neo4j_client import KnowledgeGraphClient, generate_org_id, generate_person_id
+from graph.graph_client import KnowledgeGraphClient, generate_org_id, generate_person_id
 import requests
 from datetime import datetime, timedelta
 from typing import Dict, List, Tuple
@@ -62,23 +62,18 @@ class OpportunityScout:
     """
     
     def __init__(self):
-        """Initialize scout with connections to SAM.gov and Neo4j"""
+        """Initialize scout with connections to SAM.gov and SQLite knowledge graph"""
 
         print_info("Initializing Opportunity Scout Agent...")
 
         # Load config
         self.sam_api_key = os.getenv('SAM_API_KEY')
-        neo4j_password = os.getenv('NEO4J_PASSWORD')
 
-        if not self.sam_api_key or not neo4j_password:
-            raise ValueError("Missing SAM_API_KEY or NEO4J_PASSWORD in environment")
+        if not self.sam_api_key:
+            raise ValueError("Missing SAM_API_KEY in environment")
 
-        # Connect to knowledge graph
-        self.kg = KnowledgeGraphClient(
-            uri=os.getenv('NEO4J_URI', 'bolt://localhost:7687'),
-            user=os.getenv('NEO4J_USER', 'neo4j'),
-            password=neo4j_password
-        )
+        # Connect to knowledge graph (SQLite-based, no credentials needed)
+        self.kg = KnowledgeGraphClient()
         print_success("Connected to knowledge graph")
 
         # Load config.yaml for search parameters
@@ -232,40 +227,36 @@ class OpportunityScout:
 
     def check_contacts_at_agency(self, agency_name: str) -> Dict:
         """Check if we have contacts at this agency"""
-        
+
         # Import the agency mapper
         try:
             from agency_mapper import get_contacts_for_agency
             return get_contacts_for_agency(self.kg, agency_name)
         except ImportError:
-            # Fallback to old method if mapper not available
-            from graph.neo4j_client import generate_org_id
-            
-            # Try exact match and fuzzy match
-            org_id = generate_org_id(agency_name)
-            
-            # Query for contacts at this organization
-            with self.kg.driver.session(database="neo4j") as session:
-                query = """
-                MATCH (p:Person)-[:WORKS_AT]->(o:Organization)
-                WHERE o.id = $org_id OR o.name CONTAINS $agency_name
-                RETURN p.name as name, 
-                       p.title as title, 
-                       p.role_type as role_type,
-                       p.influence_level as influence_level,
-                       p.email as email,
-                       o.name as organization
-                """
-                
-                result = session.run(query, org_id=org_id, agency_name=agency_name[:20])
-                contacts = [dict(record) for record in result]
-            
+            # Fallback: query SQLite directly for contacts at this agency
+            from graph.graph_client import generate_org_id
+
+            conn = self.kg._conn()
+            rows = conn.execute("""
+                SELECT c.name, c.title, c.role as role_type,
+                       c.relationship_strength as influence_level,
+                       c.email,
+                       COALESCE(o.name, c.organization) as organization
+                FROM contacts c
+                LEFT JOIN graph_edges e ON e.from_id = c.graph_id AND e.rel_type = 'WORKS_AT'
+                LEFT JOIN organizations o ON o.id = e.to_id
+                WHERE o.name LIKE ? OR c.organization LIKE ? OR c.agency LIKE ?
+            """, (f"%{agency_name}%", f"%{agency_name}%", f"%{agency_name}%")).fetchall()
+            conn.close()
+
+            contacts = [dict(row) for row in rows]
+
             # Categorize contacts
             decision_makers = [c for c in contacts if c.get('role_type') == 'Decision Maker']
             technical_leads = [c for c in contacts if c.get('role_type') == 'Technical Lead']
             executives = [c for c in contacts if c.get('role_type') == 'Executive']
             influencers = [c for c in contacts if c.get('role_type') == 'Influencer']
-            
+
             return {
                 'total_contacts': len(contacts),
                 'decision_makers': decision_makers,
@@ -542,14 +533,14 @@ class OpportunityScout:
         return "\n".join(report_lines)
     
     # ==================================================================
-    # NEO4J SYNC + FPDS COLLECTION (called automatically after scoring)
+    # DB SYNC + FPDS COLLECTION (called automatically after scoring)
     # ==================================================================
 
     def _collect_fpds_intel(self, opportunities: List[Dict]) -> dict:
         """Collect FPDS contract data from USAspending.gov for agencies in scored opportunities.
 
         Uses the free USAspending.gov API (no key required, separate from SAM.gov).
-        Stores Contract + Organization + AWARDED_TO relationships directly in Neo4j.
+        Stores Contract + Organization + AWARDED_TO relationships in SQLite.
         """
         from fpds_collector import FPDSCollector
 
@@ -588,115 +579,109 @@ class OpportunityScout:
         collector.close()
         return stats
 
-    def _sync_opportunities_to_neo4j(self, opportunities: List[Dict], scores: List[Dict]) -> int:
-        """Sync scored opportunities to Neo4j as Opportunity nodes."""
+    def _sync_opportunities_to_db(self, opportunities: List[Dict], scores: List[Dict]) -> int:
+        """Sync scored opportunities to SQLite.
+
+        Opportunities are already saved as JSON files by run_daily_scout.
+        Here we create Organization entries for agencies and Person entries
+        for any POC contacts embedded in the opportunity data.
+        """
         synced = 0
 
-        with self.kg.driver.session(database="neo4j") as session:
-            for opp, score in zip(opportunities, scores):
-                notice_id = opp.get('noticeId', '')
-                if not notice_id:
-                    continue
+        for opp, score in zip(opportunities, scores):
+            notice_id = opp.get('noticeId', '')
+            if not notice_id:
+                continue
 
-                agency = opp.get('fullParentPathName', '') or opp.get('organizationName', '')
+            agency = opp.get('fullParentPathName', '') or opp.get('organizationName', '')
+            agency_clean = agency.split('.')[0].strip() if '.' in agency else agency
 
-                try:
-                    session.run("""
-                        MERGE (o:Opportunity {id: $notice_id})
-                        SET o.title = $title,
-                            o.agency = $agency,
-                            o.posted_date = $posted_date,
-                            o.deadline = $deadline,
-                            o.naics = $naics,
-                            o.set_aside = $set_aside,
-                            o.score = $score,
-                            o.priority = $priority,
-                            o.win_probability = $win_prob,
-                            o.recommendation = $recommendation,
-                            o.source = 'SAM.gov',
-                            o.updated_at = datetime()
-                    """,
-                        notice_id=notice_id,
-                        title=opp.get('title', ''),
-                        agency=agency,
-                        posted_date=opp.get('postedDate', ''),
-                        deadline=opp.get('responseDeadLine', ''),
-                        naics=opp.get('naicsCode', ''),
-                        set_aside=opp.get('typeOfSetAside', ''),
-                        score=score.get('total_score', 0),
-                        priority=score.get('priority', 'LOW'),
-                        win_prob=score.get('win_probability', ''),
-                        recommendation=score.get('recommendation', '')
-                    )
-                    synced += 1
-                except Exception as e:
-                    print_warning(f"Error syncing opportunity {notice_id}: {e}")
+            try:
+                # Ensure agency organization exists in the graph
+                if agency_clean:
+                    self.kg.create_organization({
+                        'name': agency_clean,
+                        'type': 'Federal Agency',
+                        'source': 'SAM.gov',
+                    })
 
-        return synced
-
-    def _sync_poc_contacts_to_neo4j(self, opportunities: List[Dict]) -> dict:
-        """Sync POC contacts from opportunities to Neo4j as Person nodes with WORKS_AT.
-
-        Note: Existing Neo4j data uses 'name' as unique key (not 'id'),
-        so we MERGE by name to match the existing constraints.
-        """
-        stats = {'people': 0, 'orgs': 0, 'relationships': 0}
-
-        with self.kg.driver.session(database="neo4j") as session:
-            for opp in opportunities:
-                agency = opp.get('fullParentPathName', '') or opp.get('organizationName', '')
-                agency_clean = agency.split('.')[0].strip() if '.' in agency else agency
-
-                if not agency_clean:
-                    continue
-
-                # Create/update Organization node (MERGE by name — matches constraint)
-                session.run("""
-                    MERGE (o:Organization {name: $name})
-                    SET o.type = COALESCE(o.type, 'Federal Agency'),
-                        o.source = COALESCE(o.source, 'SAM.gov'),
-                        o.updated_at = datetime()
-                """, name=agency_clean)
-                stats['orgs'] += 1
-
-                # Process each point of contact
+                # Create Person entries for any POC contacts on this opportunity
                 for poc in (opp.get('pointOfContact') or []):
                     full_name = (poc.get('fullName') or '').strip()
                     email = (poc.get('email') or '').strip()
-
                     if not full_name and not email:
                         continue
-
                     poc_type = poc.get('type', 'primary')
                     role = 'Contracting Officer' if poc_type == 'primary' else 'Point of Contact'
 
-                    # MERGE by name — matches existing Person uniqueness constraint
-                    session.run("""
-                        MERGE (p:Person {name: $name})
-                        SET p.email = COALESCE($email, p.email),
-                            p.phone = COALESCE($phone, p.phone),
-                            p.title = COALESCE($title, p.title),
-                            p.role_type = COALESCE($role, p.role_type),
-                            p.source = COALESCE(p.source, 'SAM.gov POC'),
-                            p.updated_at = datetime()
-                    """,
-                        name=full_name or email,
-                        email=email or None,
-                        phone=(poc.get('phone') or '').strip() or None,
-                        title=poc.get('title') or None,
-                        role=role
-                    )
-                    stats['people'] += 1
+                    pid = self.kg.create_person({
+                        'name': full_name or email,
+                        'email': email or None,
+                        'phone': (poc.get('phone') or '').strip() or None,
+                        'title': poc.get('title') or None,
+                        'role_type': role,
+                        'organization': agency_clean,
+                        'source': 'SAM.gov POC',
+                    })
 
-                    # Create WORKS_AT relationship
-                    session.run("""
-                        MATCH (p:Person {name: $person_name})
-                        MATCH (o:Organization {name: $org_name})
-                        MERGE (p)-[r:WORKS_AT]->(o)
-                        SET r.source = COALESCE(r.source, 'SAM.gov POC'),
-                            r.updated_at = datetime()
-                    """, person_name=full_name or email, org_name=agency_clean)
-                    stats['relationships'] += 1
+                    if agency_clean:
+                        org_id = generate_org_id(agency_clean)
+                        self.kg.create_works_at(pid, org_id, source='SAM.gov POC')
+
+                synced += 1
+            except Exception as e:
+                print_warning(f"Error syncing opportunity {notice_id}: {e}")
+
+        return synced
+
+    def _sync_poc_contacts_to_db(self, opportunities: List[Dict]) -> dict:
+        """Sync POC contacts from opportunities to SQLite as Person entries with WORKS_AT.
+
+        Uses graph_client's create_person, create_organization, and create_works_at.
+        """
+        stats = {'people': 0, 'orgs': 0, 'relationships': 0}
+
+        for opp in opportunities:
+            agency = opp.get('fullParentPathName', '') or opp.get('organizationName', '')
+            agency_clean = agency.split('.')[0].strip() if '.' in agency else agency
+
+            if not agency_clean:
+                continue
+
+            # Create/update Organization
+            org_id = self.kg.create_organization({
+                'name': agency_clean,
+                'type': 'Federal Agency',
+                'source': 'SAM.gov',
+            })
+            stats['orgs'] += 1
+
+            # Process each point of contact
+            for poc in (opp.get('pointOfContact') or []):
+                full_name = (poc.get('fullName') or '').strip()
+                email = (poc.get('email') or '').strip()
+
+                if not full_name and not email:
+                    continue
+
+                poc_type = poc.get('type', 'primary')
+                role = 'Contracting Officer' if poc_type == 'primary' else 'Point of Contact'
+
+                # Create/update Person
+                person_id = self.kg.create_person({
+                    'name': full_name or email,
+                    'email': email or None,
+                    'phone': (poc.get('phone') or '').strip() or None,
+                    'title': poc.get('title') or None,
+                    'role_type': role,
+                    'organization': agency_clean,
+                    'source': 'SAM.gov POC',
+                })
+                stats['people'] += 1
+
+                # Create WORKS_AT relationship
+                self.kg.create_works_at(person_id, org_id, source='SAM.gov POC')
+                stats['relationships'] += 1
 
         return stats
 
@@ -754,24 +739,24 @@ class OpportunityScout:
 
             print_success(f"Data saved to: {json_file}")
 
-        # ---- Sync everything to Neo4j ----
+        # ---- Sync everything to SQLite ----
 
-        # 1. Sync scored opportunities as Opportunity nodes
-        print_info("Syncing scored opportunities to Neo4j...")
-        opp_synced = self._sync_opportunities_to_neo4j(opportunities, scores)
-        print_success(f"Synced {opp_synced} opportunities to Neo4j")
+        # 1. Sync scored opportunities (create org/person entries)
+        print_info("Syncing scored opportunities to database...")
+        opp_synced = self._sync_opportunities_to_db(opportunities, scores)
+        print_success(f"Synced {opp_synced} opportunities to database")
 
-        # 2. Sync POC contacts as Person nodes with WORKS_AT relationships
-        print_info("Syncing POC contacts to Neo4j...")
-        contact_stats = self._sync_poc_contacts_to_neo4j(opportunities)
-        print_success(f"Neo4j contacts: {contact_stats['people']} people, {contact_stats['orgs']} orgs, {contact_stats['relationships']} relationships")
+        # 2. Sync POC contacts as Person entries with WORKS_AT relationships
+        print_info("Syncing POC contacts to database...")
+        contact_stats = self._sync_poc_contacts_to_db(opportunities)
+        print_success(f"DB contacts: {contact_stats['people']} people, {contact_stats['orgs']} orgs, {contact_stats['relationships']} relationships")
 
         # 3. Collect FPDS contract data from USAspending.gov (free API)
         print_info("Collecting FPDS contract data for competitive intelligence...")
         fpds_stats = {'contracts_fetched': 0, 'contracts_stored': 0, 'errors': 0}
         try:
             fpds_stats = self._collect_fpds_intel(opportunities)
-            print_success(f"FPDS: {fpds_stats['contracts_fetched']} fetched, {fpds_stats['contracts_stored']} stored in Neo4j")
+            print_success(f"FPDS: {fpds_stats['contracts_fetched']} fetched, {fpds_stats['contracts_stored']} stored in database")
         except Exception as e:
             print_warning(f"FPDS collection skipped: {e}")
 
@@ -784,7 +769,7 @@ class OpportunityScout:
         print(f"Total Opportunities: {len(opportunities)}")
         print(f"High Priority:       {high_priority}")
         print(f"Medium Priority:     {medium_priority}")
-        print(f"Neo4j Synced:        {opp_synced} opps, {contact_stats['people']} contacts, {fpds_stats['contracts_stored']} contracts")
+        print(f"DB Synced:           {opp_synced} opps, {contact_stats['people']} contacts, {fpds_stats['contracts_stored']} contracts")
         print("")
 
         if high_priority > 0:
@@ -798,8 +783,8 @@ class OpportunityScout:
             'high_priority': high_priority,
             'medium_priority': medium_priority,
             'report': report,
-            'neo4j_opportunities': opp_synced,
-            'neo4j_contacts': contact_stats,
+            'db_opportunities': opp_synced,
+            'db_contacts': contact_stats,
             'fpds_contracts': fpds_stats
         }
     

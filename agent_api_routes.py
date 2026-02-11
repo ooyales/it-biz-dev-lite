@@ -320,36 +320,18 @@ def get_bd_intelligence_summary():
                 }
         
         # Get intel summary (contracts in graph)
-        agent = CompetitiveIntelAgent()
-        
-        with agent.kg.driver.session(database="neo4j") as session:
-            query = """
-            MATCH (c:Contract)
-            RETURN count(c) as total_contracts,
-                   sum(c.value) as total_value,
-                   count(DISTINCT c.agency) as total_agencies
-            """
-            result = session.run(query)
-            record = result.single()
-            
-            intel_summary = {
-                'total_contracts': record['total_contracts'] if record else 0,
-                'total_value': record['total_value'] if record else 0,
-                'total_agencies': record['total_agencies'] if record else 0
-            }
-        
-        agent.close()
-        
+        from graph.graph_client import KnowledgeGraphClient
+        kg = KnowledgeGraphClient()
+
+        contract_count = kg.get_contract_count()
+        intel_summary = {
+            'total_contracts': contract_count,
+            'total_value': 0,
+            'total_agencies': 0
+        }
+
         # Get contact network stats
-        from graph.neo4j_client import KnowledgeGraphClient
-        kg = KnowledgeGraphClient(
-            uri=os.getenv('NEO4J_URI', 'bolt://localhost:7687'),
-            user=os.getenv('NEO4J_USER', 'neo4j'),
-            password=os.getenv('NEO4J_PASSWORD')
-        )
-        
         network_stats = kg.get_network_statistics()
-        kg.close()
         
         return jsonify({
             'scout': scout_summary,

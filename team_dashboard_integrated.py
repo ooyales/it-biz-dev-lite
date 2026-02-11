@@ -28,10 +28,6 @@ load_dotenv()  # This loads .env from current directory
 # Verify critical environment variables are loaded
 if os.getenv('ANTHROPIC_API_KEY'):
     print("✓ ANTHROPIC_API_KEY loaded")
-if os.getenv('NEO4J_URI'):
-    print(f"✓ NEO4J_URI loaded: {os.getenv('NEO4J_URI')}")
-if os.getenv('NEO4J_PASSWORD'):
-    print("✓ NEO4J_PASSWORD loaded")
 
 # Add knowledge_graph to path
 sys.path.append('knowledge_graph')
@@ -40,27 +36,15 @@ sys.path.append('knowledge_graph')
 try:
     from opportunity_scout import OpportunityScout
     from competitive_intel import CompetitiveIntelAgent
-    from graph.neo4j_client import KnowledgeGraphClient
+    from graph.graph_client import KnowledgeGraphClient
     AGENTS_AVAILABLE = True
 except ImportError as e:
     print(f"⚠️  Warning: Some agents not available: {e}")
     AGENTS_AVAILABLE = False
 
-# Check if Neo4j is available
-NEO4J_AVAILABLE = False
-try:
-    from neo4j import GraphDatabase
-    if os.getenv('NEO4J_PASSWORD'):
-        NEO4J_AVAILABLE = True
-        print("✓ Neo4j driver available")
-except ImportError:
-    print("⚠️  Warning: Neo4j driver not installed")
-
 app = Flask(__name__)
 CORS(app)
 
-# Competitive intelligence routes are defined inline below using USAspending.gov API
-# (Blueprint in competitive_intel_api.py was Neo4j-only and has been superseded)
 print("✓ Competitive Intelligence routes (USAspending-based) active")
 
 # Database path
@@ -179,7 +163,7 @@ def ensure_schema_updates():
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
-    # Add research_profile column if missing (dual-write: Neo4j + SQLite)
+    # Add research_profile column if missing
     try:
         db.execute('ALTER TABLE contacts ADD COLUMN research_profile TEXT')
         print("  ✓ Added research_profile column to contacts table")
@@ -402,10 +386,8 @@ def get_contacts():
     # Convert to list of dicts
     contacts_list = [dict(contact) for contact in contacts]
     
-    # Check which contacts have research profiles (Neo4j + SQLite fallback)
+    # Check which contacts have research profiles
     researched_names = set()
-
-    # 1. Check SQLite first (always available)
     try:
         db2 = get_db()
         sqlite_researched = db2.execute(
@@ -413,35 +395,8 @@ def get_contacts():
         ).fetchall()
         db2.close()
         researched_names = set(row['name'] for row in sqlite_researched)
-        if researched_names:
-            print(f"DEBUG: Found {len(researched_names)} contacts with research in SQLite")
     except Exception as e:
-        print(f"SQLite research lookup failed: {e}")
-
-    # 2. Also check Neo4j (may have additional entries)
-    try:
-        if NEO4J_AVAILABLE:
-            from neo4j import GraphDatabase
-            driver = GraphDatabase.driver(
-                os.getenv('NEO4J_URI', 'bolt://localhost:7687'),
-                auth=('neo4j', os.getenv('NEO4J_PASSWORD'))
-            )
-
-            with driver.session(database="neo4j") as session:
-                result = session.run("""
-                    MATCH (p:Person)
-                    WHERE p.research_profile IS NOT NULL
-                    RETURN p.name as name
-                """)
-                neo4j_names = set(record['name'] for record in result)
-                researched_names.update(neo4j_names)
-
-            driver.close()
-
-            if neo4j_names:
-                print(f"DEBUG: Found {len(neo4j_names)} contacts with research in Neo4j")
-    except Exception as e:
-        print(f"Neo4j research lookup failed: {e}")
+        print(f"Research lookup failed: {e}")
     
     # Mark contacts that have research
     for contact in contacts_list:
@@ -488,9 +443,8 @@ def get_contact(contact_id):
 
 @app.route('/api/contacts/<int:contact_id>/research', methods=['GET'])
 def get_contact_research(contact_id):
-    """Get research profile for a contact — checks Neo4j first, then SQLite fallback"""
+    """Get research profile for a contact"""
     try:
-        # Get contact name and SQLite research from contacts table
         db = get_db()
         contact = db.execute('SELECT name, research_profile FROM contacts WHERE id = ?', (contact_id,)).fetchone()
         db.close()
@@ -501,28 +455,7 @@ def get_contact_research(contact_id):
         name = contact['name']
         profile = None
 
-        # 1. Try Neo4j first
-        if NEO4J_AVAILABLE:
-            try:
-                from neo4j import GraphDatabase
-                driver = GraphDatabase.driver(
-                    os.getenv('NEO4J_URI', 'bolt://localhost:7687'),
-                    auth=('neo4j', os.getenv('NEO4J_PASSWORD'))
-                )
-                with driver.session(database="neo4j") as session:
-                    result = session.run(
-                        "MATCH (p:Person) WHERE p.name = $name RETURN p.research_profile as profile",
-                        name=name
-                    )
-                    row = result.single()
-                    if row and row['profile']:
-                        profile = json.loads(row['profile']) if isinstance(row['profile'], str) else row['profile']
-                driver.close()
-            except Exception:
-                pass
-
-        # 2. Fall back to SQLite
-        if not profile and contact['research_profile']:
+        if contact['research_profile']:
             try:
                 profile = json.loads(contact['research_profile'])
             except (json.JSONDecodeError, TypeError):
@@ -613,131 +546,19 @@ def delete_contact(contact_id):
 # ============================================================================
 
 @app.route('/api/contacts/sync', methods=['POST'])
-def sync_contacts_from_neo4j():
-    """Sync contacts from Neo4j to SQLite"""
-    if not AGENTS_AVAILABLE:
-        return jsonify({'error': 'Neo4j connection not available'}), 503
-    
-    try:
-        # Import the sync logic
-        sys.path.append('.')
-        
-        # Connect to Neo4j
-        kg = KnowledgeGraphClient(
-            uri=os.getenv('NEO4J_URI', 'bolt://localhost:7687'),
-            user=os.getenv('NEO4J_USER', 'neo4j'),
-            password=os.getenv('NEO4J_PASSWORD')
-        )
-        
-        # Get Neo4j contacts
-        with kg.driver.session(database="neo4j") as session:
-            query = """
-            MATCH (p:Person)
-            OPTIONAL MATCH (p)-[:WORKS_AT]->(o:Organization)
-            RETURN p.id as id,
-                   p.name as name,
-                   p.email as email,
-                   p.phone as phone,
-                   p.title as title,
-                   p.organization as organization,
-                   o.name as org_from_relationship,
-                   p.role_type as role_type,
-                   p.influence_level as influence_level,
-                   p.source as source
-            ORDER BY p.name
-            """
-            result = session.run(query)
-            neo4j_contacts = [dict(record) for record in result]
-        
-        kg.close()
-        
-        if not neo4j_contacts:
-            return jsonify({
-                'status': 'success',
-                'message': 'No contacts found in Neo4j',
-                'synced': 0,
-                'created': 0,
-                'updated': 0
-            })
-        
-        # Sync to SQLite
-        stats = {'created': 0, 'updated': 0, 'skipped': 0}
-        db = get_db()
-        
-        for contact in neo4j_contacts:
-            name = contact['name']
-            email = contact['email']
-            phone = contact['phone']
-            organization = (contact['org_from_relationship'] or 
-                          contact['organization'] or 
-                          'Unknown')
-            role = contact['title'] or contact['role_type'] or 'Contact'
-            
-            # Build notes
-            notes_parts = []
-            if contact['source']:
-                notes_parts.append(f"Source: {contact['source']}")
-            if contact['role_type']:
-                notes_parts.append(f"Role: {contact['role_type']}")
-            if contact['influence_level']:
-                notes_parts.append(f"Influence: {contact['influence_level']}")
-            notes = "\n".join(notes_parts) if notes_parts else "Imported from Neo4j"
-            
-            # Map influence to relationship strength
-            strength_map = {
-                'Very High': 'Strong',
-                'High': 'Strong',
-                'Medium': 'Warm',
-                'Low': 'New',
-                None: 'New'
-            }
-            relationship_strength = strength_map.get(contact['influence_level'], 'New')
-            
-            # Check if exists
-            existing = None
-            if email:
-                existing = db.execute('SELECT id FROM contacts WHERE email = ?', (email,)).fetchone()
-            if not existing and name:
-                existing = db.execute('SELECT id FROM contacts WHERE name = ?', (name,)).fetchone()
-            
-            if existing:
-                # Update
-                db.execute('''
-                    UPDATE contacts 
-                    SET phone = COALESCE(?, phone),
-                        organization = ?,
-                        role = ?,
-                        notes = ?,
-                        relationship_strength = ?,
-                        updated_at = CURRENT_TIMESTAMP
-                    WHERE id = ?
-                ''', (phone, organization, role, notes, relationship_strength, existing['id']))
-                stats['updated'] += 1
-            else:
-                # Insert
-                db.execute('''
-                    INSERT INTO contacts (name, email, phone, organization, role, notes, relationship_strength)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                ''', (name, email, phone, organization, role, notes, relationship_strength))
-                stats['created'] += 1
-        
-        db.commit()
-        db.close()
-        
-        return jsonify({
-            'status': 'success',
-            'message': f"Synced {len(neo4j_contacts)} contacts from Neo4j",
-            'synced': len(neo4j_contacts),
-            'created': stats['created'],
-            'updated': stats['updated'],
-            'skipped': stats['skipped']
-        })
-        
-    except Exception as e:
-        return jsonify({
-            'status': 'error',
-            'error': str(e)
-        }), 500
+def sync_contacts():
+    """Contact sync endpoint (legacy — all data is now in SQLite)"""
+    db = get_db()
+    count = db.execute("SELECT COUNT(*) FROM contacts").fetchone()[0]
+    db.close()
+    return jsonify({
+        'status': 'success',
+        'message': f'All {count} contacts already in SQLite',
+        'synced': count,
+        'created': 0,
+        'updated': 0,
+        'skipped': 0
+    })
 
 
 # ============================================================================
@@ -1181,7 +1002,7 @@ def research_organization():
         except Exception:
             pass
 
-        # Run AI research via Claude (no Neo4j needed)
+        # Run AI research via Claude
         sys.path.insert(0, 'knowledge_graph')
         from organization_research_agent import _research_org_with_claude
         t0 = time.time()
@@ -1978,7 +1799,7 @@ def get_scout_summary():
 @app.route('/api/scout/run', methods=['POST'])
 def run_scout():
     """Trigger scout to run — fetches SAM.gov opportunities, scores them,
-    collects FPDS contract data, and syncs everything to Neo4j."""
+    and collects FPDS contract data."""
     if not AGENTS_AVAILABLE:
         return jsonify({'error': 'Scout not available'}), 503
 
@@ -2003,7 +1824,7 @@ def run_scout():
             print(f"POC SQLite sync warning: {e}")
 
         fpds = results.get('fpds_contracts', {})
-        neo4j_contacts = results.get('neo4j_contacts', {})
+        db_contacts = results.get('db_contacts', results.get('neo4j_contacts', {}))
 
         from agent_logger import get_logger
         get_logger().log_agent_activity(1, 'Opportunity Scout',
@@ -2027,8 +1848,8 @@ def run_scout():
             'medium_priority': results.get('medium_priority', 0),
             'fpds_contracts_fetched': fpds.get('contracts_fetched', 0),
             'fpds_contracts_stored': fpds.get('contracts_stored', 0),
-            'neo4j_opportunities_synced': results.get('neo4j_opportunities', 0),
-            'neo4j_contacts_synced': neo4j_contacts.get('people', 0),
+            'opportunities_synced': results.get('db_opportunities', results.get('neo4j_opportunities', 0)),
+            'contacts_synced': db_contacts.get('people', 0),
             'sqlite_contacts_created': poc_stats.get('created', 0),
             'timestamp': datetime.now().isoformat()
         })
@@ -2301,55 +2122,36 @@ def dashboard_overview():
         }
         
         # Knowledge graph stats
-        if AGENTS_AVAILABLE:
-            try:
-                kg = KnowledgeGraphClient(
-                    uri=os.getenv('NEO4J_URI', 'bolt://localhost:7687'),
-                    user=os.getenv('NEO4J_USER', 'neo4j'),
-                    password=os.getenv('NEO4J_PASSWORD')
-                )
-                graph_stats = kg.get_network_statistics()
-                kg.close()
-                
-                overview['contacts']['graph_people'] = graph_stats.get('total_people', 0)
-                overview['contacts']['decision_makers'] = graph_stats.get('decision_makers', 0)
-            except:
-                pass
-        
+        try:
+            kg = KnowledgeGraphClient()
+            graph_stats = kg.get_network_statistics()
+            overview['contacts']['graph_people'] = graph_stats.get('total_people', 0)
+            overview['contacts']['decision_makers'] = graph_stats.get('decision_makers', 0)
+        except Exception:
+            pass
+
         # Scout stats
         scout_files = sorted(Path('knowledge_graph').glob('scout_data_*.json'), reverse=True)
         if scout_files:
             with open(scout_files[0]) as f:
                 scout_data = json.load(f)
                 scores = scout_data.get('scores', [])
-                
+
                 overview['opportunities'] = {
                     'total': len(scores),
                     'high_priority': sum(1 for s in scores if s['priority'] == 'HIGH'),
                     'with_contacts': sum(1 for s in scores if s['contacts']['total_contacts'] > 0),
                     'last_run': scout_data.get('timestamp')
                 }
-        
+
         # Intel stats
-        if AGENTS_AVAILABLE:
-            try:
-                kg = KnowledgeGraphClient(
-                    uri=os.getenv('NEO4J_URI', 'bolt://localhost:7687'),
-                    user=os.getenv('NEO4J_USER', 'neo4j'),
-                    password=os.getenv('NEO4J_PASSWORD')
-                )
-                
-                with kg.driver.session(database="neo4j") as session:
-                    result = session.run("MATCH (c:Contract) RETURN count(c) as count")
-                    contract_count = result.single()['count'] if result.single() else 0
-                
-                kg.close()
-                
-                overview['intel'] = {
-                    'contracts_tracked': contract_count
-                }
-            except:
-                pass
+        try:
+            kg = KnowledgeGraphClient()
+            overview['intel'] = {
+                'contracts_tracked': kg.get_contract_count()
+            }
+        except Exception:
+            pass
         
         return jsonify(overview)
         
