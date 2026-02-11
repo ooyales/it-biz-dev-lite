@@ -11,6 +11,61 @@ from typing import List, Dict, Any, Optional
 import json
 
 
+# SAM.gov abbreviations → USAspending.gov toptier agency names
+AGENCY_NAME_MAP = {
+    'DEPT OF DEFENSE': 'Department of Defense',
+    'DEPT OF THE ARMY': 'Department of Defense',
+    'DEPT OF THE NAVY': 'Department of Defense',
+    'DEPT OF THE AIR FORCE': 'Department of Defense',
+    'GENERAL SERVICES ADMINISTRATION': 'General Services Administration',
+    'DEPT OF VETERANS AFFAIRS': 'Department of Veterans Affairs',
+    'DEPT OF HOMELAND SECURITY': 'Department of Homeland Security',
+    'DEPT OF HEALTH AND HUMAN SERVICES': 'Department of Health and Human Services',
+    'DEPT OF ENERGY': 'Department of Energy',
+    'DEPT OF JUSTICE': 'Department of Justice',
+    'DEPT OF COMMERCE': 'Department of Commerce',
+    'DEPT OF THE INTERIOR': 'Department of the Interior',
+    'DEPT OF AGRICULTURE': 'Department of Agriculture',
+    'DEPT OF LABOR': 'Department of Labor',
+    'DEPT OF EDUCATION': 'Department of Education',
+    'DEPT OF TRANSPORTATION': 'Department of Transportation',
+    'DEPT OF THE TREASURY': 'Department of the Treasury',
+    'DEPT OF STATE': 'Department of State',
+    'DEPT OF HOUSING AND URBAN DEVELOPMENT': 'Department of Housing and Urban Development',
+    'ENVIRONMENTAL PROTECTION AGENCY': 'Environmental Protection Agency',
+    'NATIONAL AERONAUTICS AND SPACE ADMINISTRATION': 'National Aeronautics and Space Administration',
+    'SMALL BUSINESS ADMINISTRATION': 'Small Business Administration',
+    'SOCIAL SECURITY ADMINISTRATION': 'Social Security Administration',
+    'OFFICE OF PERSONNEL MANAGEMENT': 'Office of Personnel Management',
+    'NUCLEAR REGULATORY COMMISSION': 'Nuclear Regulatory Commission',
+    'NATIONAL SCIENCE FOUNDATION': 'National Science Foundation',
+}
+
+
+def normalize_agency_name(raw_name: str) -> str:
+    """Normalize a SAM.gov agency path to a USAspending.gov toptier agency name.
+
+    Input examples:
+        'DEPT OF DEFENSE.DEPT OF THE AIR FORCE.AIR EDUCATION AND TRAINING COMMAND.FA3010  81 CONS CC'
+        'GENERAL SERVICES ADMINISTRATION.FEDERAL ACQUISITION SERVICE.GSA/FAS CENTER FOR ...'
+    """
+    if not raw_name:
+        return ''
+    # Take the first segment (toptier) from dot-delimited path
+    toptier = raw_name.split('.')[0].strip()
+    # Try direct lookup
+    if toptier in AGENCY_NAME_MAP:
+        return AGENCY_NAME_MAP[toptier]
+    # Try second segment (e.g. 'DEPT OF THE AIR FORCE' under DEPT OF DEFENSE)
+    segments = raw_name.split('.')
+    if len(segments) >= 2:
+        subtier = segments[1].strip()
+        if subtier in AGENCY_NAME_MAP:
+            return AGENCY_NAME_MAP[subtier]
+    # Fallback: title-case the toptier
+    return toptier.title()
+
+
 class USAspendingIntelligence:
     """Query USAspending.gov for market and teaming intelligence"""
     
@@ -44,7 +99,9 @@ class USAspendingIntelligence:
                         }
                     ]
                 },
-                "fields": ["Award ID", "Recipient Name", "Award Amount", "Award Type"],
+                "fields": ["Award ID", "Recipient Name", "Award Amount", "Award Type",
+                            "Awarding Agency", "Awarding Sub Agency", "Description",
+                            "Start Date", "NAICS Code"],
                 "limit": 100,
                 "page": 1
             }
@@ -83,6 +140,85 @@ class USAspendingIntelligence:
             self.logger.error(f"Error getting contractor profile: {e}")
             return {'error': str(e)}
     
+    def get_incumbents_at_agency(self, agency_name: str, naics_code: str = None,
+                                 limit: int = 10) -> List[Dict[str, Any]]:
+        """
+        Get top contractors (incumbents) at an agency, optionally filtered by NAICS.
+
+        Uses the spending_by_category/recipient endpoint which returns recipients
+        ranked by total award amount.
+        """
+        try:
+            url = f"{self.base_url}/search/spending_by_award/"
+            normalized = normalize_agency_name(agency_name)
+
+            filters = {
+                "award_type_codes": ["A", "B", "C", "D"],
+                "time_period": [
+                    {
+                        "start_date": (datetime.now() - timedelta(days=1095)).strftime('%Y-%m-%d'),
+                        "end_date": datetime.now().strftime('%Y-%m-%d')
+                    }
+                ]
+            }
+
+            if normalized:
+                filters["agencies"] = [
+                    {"type": "awarding", "tier": "toptier", "name": normalized}
+                ]
+
+            if naics_code:
+                filters["naics_codes"] = {"require": [str(naics_code)]}
+
+            payload = {
+                "filters": filters,
+                "fields": ["Award ID", "Recipient Name", "Award Amount",
+                           "Awarding Agency", "Award Type"],
+                "limit": 100,
+                "page": 1
+            }
+
+            print(f"  → USAspending query: agency='{normalized}', naics='{naics_code}'")
+            response = requests.post(url, json=payload, timeout=30)
+            response.raise_for_status()
+            data = response.json()
+
+            results = data.get('results', [])
+            print(f"  → Got {len(results)} award records")
+
+            if not results:
+                return []
+
+            # Aggregate by recipient name
+            contractors = {}
+            for r in results:
+                name = r.get('Recipient Name', 'Unknown')
+                amount = float(r.get('Award Amount', 0) or 0)
+                if name not in contractors:
+                    contractors[name] = {'total_value': 0, 'award_count': 0}
+                contractors[name]['total_value'] += amount
+                contractors[name]['award_count'] += 1
+
+            # Sort by total value descending
+            ranked = sorted(contractors.items(), key=lambda x: x[1]['total_value'], reverse=True)
+
+            incumbents = []
+            for name, stats in ranked[:limit]:
+                tv = stats['total_value']
+                incumbents.append({
+                    'company': name,
+                    'contract_value': f"${tv/1_000_000:.1f}M" if tv >= 1_000_000 else f"${tv:,.0f}",
+                    'contract_value_raw': tv,
+                    'awards': stats['award_count'],
+                    'past_performance': 'Active (USAspending.gov)'
+                })
+
+            return incumbents
+
+        except Exception as e:
+            self.logger.error(f"Error getting incumbents at agency: {e}")
+            return []
+
     def find_teaming_partners(self,
                              naics_code: str,
                              capability_keywords: List[str] = None,
@@ -105,24 +241,26 @@ class USAspendingIntelligence:
         try:
             url = f"{self.base_url}/search/spending_by_award/"
             
+            filters = {
+                "naics_codes": {"require": [str(naics_code)]},
+                "award_type_codes": ["A", "B", "C", "D"],
+                "time_period": [
+                    {
+                        "start_date": (datetime.now() - timedelta(days=1095)).strftime('%Y-%m-%d'),
+                        "end_date": datetime.now().strftime('%Y-%m-%d')
+                    }
+                ]
+            }
+
+            if small_business_only:
+                filters["recipient_type_names"] = ["small_business"]
+
             payload = {
-                "filters": {
-                    "naics_codes": [naics_code],
-                    "award_type_codes": ["A", "B", "C", "D"],
-                    "time_period": [
-                        {
-                            "start_date": (datetime.now() - timedelta(days=1095)).strftime('%Y-%m-%d'),
-                            "end_date": datetime.now().strftime('%Y-%m-%d')
-                        }
-                    ]
-                },
+                "filters": filters,
                 "fields": ["Recipient Name", "Award Amount", "Award Type"],
-                "limit": 200,  # Get a good sample
+                "limit": 100,
                 "page": 1
             }
-            
-            if small_business_only:
-                payload["filters"]["recipient_type_names"] = ["small_business"]
             
             response = requests.post(url, json=payload, timeout=30)
             response.raise_for_status()
@@ -240,58 +378,69 @@ class USAspendingIntelligence:
             url = f"{self.base_url}/search/spending_over_time/"
             
             filters = {
-                "naics_codes": [naics_code],
-                "award_type_codes": ["A", "B", "C", "D"]
+                "naics_codes": {"require": [str(naics_code)]},
+                "award_type_codes": ["A", "B", "C", "D"],
+                "time_period": [
+                    {
+                        "start_date": (datetime.now() - timedelta(days=365 * years)).strftime('%Y-%m-%d'),
+                        "end_date": datetime.now().strftime('%Y-%m-%d')
+                    }
+                ]
             }
-            
+
             if agency_name:
                 filters["agencies"] = [{"type": "awarding", "tier": "toptier", "name": agency_name}]
-            
+
             payload = {
                 "filters": filters,
                 "group": "fiscal_year",
                 "order": "desc"
             }
-            
+
             response = requests.post(url, json=payload, timeout=30)
             response.raise_for_status()
             data = response.json()
-            
+
             results = data.get('results', [])
-            
+
             if not results:
                 return {'message': 'No trend data available'}
-            
-            # Calculate year-over-year trends
-            years_data = {}
+
+            # Calculate year-over-year trends — exclude current partial fiscal year
+            current_fy = datetime.now().year if datetime.now().month >= 10 else datetime.now().year
+            all_years_data = {}
             for result in results:
                 year = result.get('time_period', {}).get('fiscal_year')
                 amount = float(result.get('aggregated_amount', 0))
-                years_data[year] = amount
-            
+                all_years_data[year] = amount
+
+            # Use only complete fiscal years for trend (exclude current FY)
+            complete_years = {y: a for y, a in all_years_data.items() if y != str(current_fy) and y != current_fy}
+            years_data = complete_years if len(complete_years) >= 2 else all_years_data
+
             # Calculate trend
             sorted_years = sorted(years_data.keys())
             if len(sorted_years) >= 2:
                 oldest_year_amount = years_data[sorted_years[0]]
                 newest_year_amount = years_data[sorted_years[-1]]
-                
+
                 if oldest_year_amount > 0:
                     growth_rate = ((newest_year_amount - oldest_year_amount) / oldest_year_amount) * 100
                 else:
                     growth_rate = 0
-                
+
                 trend_direction = 'increasing' if growth_rate > 10 else 'decreasing' if growth_rate < -10 else 'stable'
             else:
                 growth_rate = 0
                 trend_direction = 'insufficient_data'
-            
+
             return {
                 'naics_code': naics_code,
                 'agency': agency_name or 'All Agencies',
                 'years_analyzed': len(sorted_years),
-                'yearly_spending': years_data,
-                'total_spending': sum(years_data.values()),
-                'average_annual_spending': sum(years_data.values()) / len(years_data) if years_data else 0,
+                'yearly_spending': {str(k): v for k, v in sorted(all_years_data.items())},
+                'total_spending': sum(complete_years.values()) if complete_years else sum(all_years_data.values()),
+                'average_annual_spending': sum(complete_years.values()) / len(complete_years) if complete_years else (sum(all_years_data.values()) / len(all_years_data) if all_years_data else 0),
                 'trend_direction': trend_direction,
                 'growth_rate_percent': growth_rate
             }
@@ -321,7 +470,7 @@ class USAspendingIntelligence:
                 
                 payload = {
                     "filters": {
-                        "naics_codes": [naics],
+                        "naics_codes": {"require": [str(naics)]},
                         "award_type_codes": ["A", "B", "C", "D"],
                         "time_period": [
                             {
@@ -330,7 +479,7 @@ class USAspendingIntelligence:
                             }
                         ]
                     },
-                    "limit": 200
+                    "limit": 100
                 }
                 
                 response = requests.post(url, json=payload, timeout=30)

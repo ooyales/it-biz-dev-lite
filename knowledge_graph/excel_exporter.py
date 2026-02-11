@@ -175,7 +175,7 @@ class BDIntelligenceExporter:
         self.add_header_row(sheet, headers)
         
         # Query Neo4j
-        with self.kg.driver.session(database="contactsgraphdb") as session:
+        with self.kg.driver.session(database="neo4j") as session:
             query = """
             MATCH (p:Person)
             OPTIONAL MATCH (p)-[:WORKS_AT]->(o:Organization)
@@ -225,7 +225,7 @@ class BDIntelligenceExporter:
         headers = ['Organization', 'Type', 'Contact Count', 'Contract Count']
         self.add_header_row(sheet, headers)
         
-        with self.kg.driver.session(database="contactsgraphdb") as session:
+        with self.kg.driver.session(database="neo4j") as session:
             query = """
             MATCH (o:Organization)
             OPTIONAL MATCH (o)<-[:WORKS_AT]-(p:Person)
@@ -266,7 +266,7 @@ class BDIntelligenceExporter:
         ]
         self.add_header_row(sheet, headers)
         
-        with self.kg.driver.session(database="contactsgraphdb") as session:
+        with self.kg.driver.session(database="neo4j") as session:
             query = """
             MATCH (c:Contract)-[:AWARDED_TO]->(o:Organization)
             RETURN c.contract_number as number,

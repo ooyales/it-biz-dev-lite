@@ -429,13 +429,19 @@ function showOpportunityDetail(noticeId) {
                                     </div>
                                     <div class="text-end">
                                         ${poc.email ? `<a href="mailto:${poc.email}" class="btn btn-sm btn-outline-info me-1" title="Email"><i class="fas fa-envelope"></i></a>` : ''}
-                                        ${poc.phone ? `<a href="tel:${poc.phone}" class="btn btn-sm btn-outline-info" title="Call"><i class="fas fa-phone"></i></a>` : ''}
+                                        ${poc.phone ? `<a href="tel:${poc.phone}" class="btn btn-sm btn-outline-info me-1" title="Call"><i class="fas fa-phone"></i></a>` : ''}
+                                        <button class="btn btn-sm btn-outline-success"
+                                            onclick="event.stopPropagation(); researchPOC('${(poc.fullName || '').replace(/'/g, "\\'")}', '${(poc.title || '').replace(/'/g, "\\'")}', '${(opp.agency || '').replace(/'/g, "\\'")}', '${(poc.email || '').replace(/'/g, "\\'")}')"
+                                            title="Research POC">
+                                            <i class="fas fa-brain"></i>
+                                        </button>
                                     </div>
                                 </div>
                                 ${poc.email ? `<small class="text-muted">${poc.email}</small>` : ''}
                             </div>
                         `).join('')}
                     </div>
+                    <div id="poc-research-results" class="mt-2"></div>
                 ` : ''}
 
                 ${(opp.resource_links && opp.resource_links.length > 0) ? `
@@ -494,6 +500,71 @@ function showOpportunityDetail(noticeId) {
             </div>
         </div>
     `;
+}
+
+function researchPOC(name, title, organization, email) {
+    const resultsDiv = document.getElementById('poc-research-results');
+    if (!resultsDiv) return;
+
+    // Show loading spinner
+    resultsDiv.innerHTML = `
+        <div class="card bg-dark border-success mt-2">
+            <div class="card-body py-3">
+                <div class="d-flex align-items-center">
+                    <div class="spinner-border spinner-border-sm text-success me-2" role="status"></div>
+                    <strong class="text-success">Researching ${name}...</strong>
+                </div>
+                <small class="text-muted">Analyzing public professional presence via AI agent</small>
+            </div>
+        </div>
+    `;
+
+    fetch('/api/contacts/ensure-and-research', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ name, title, organization, email })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) {
+            resultsDiv.innerHTML = `
+                <div class="alert alert-danger mt-2 py-2">
+                    <i class="fas fa-exclamation-triangle me-1"></i>${data.error}
+                </div>`;
+            return;
+        }
+
+        const cached = data.cached ? '<span class="badge bg-info ms-2">Cached</span>' : '<span class="badge bg-success ms-2">Fresh</span>';
+        const summary = data.summary || 'No summary available.';
+        const interests = (data.key_interests || []).map(i => `<li>${i}</li>`).join('');
+        const techFocus = (data.technical_focus || []).map(t => `<li>${t}</li>`).join('');
+        const talkingPts = (data.talking_points || []).map(tp => `<li>${tp}</li>`).join('');
+        const confidence = data.confidence || 'unknown';
+
+        resultsDiv.innerHTML = `
+            <div class="card bg-dark border-success mt-2">
+                <div class="card-header py-2 d-flex justify-content-between align-items-center" style="border-color: var(--border-color);">
+                    <span><i class="fas fa-brain text-success me-2"></i><strong>${name}</strong> — Research Profile ${cached}</span>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('poc-research-results').innerHTML=''" title="Close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="card-body py-2 small">
+                    <p>${summary}</p>
+                    ${interests ? `<h6 class="text-success mb-1">Key Interests</h6><ul class="mb-2">${interests}</ul>` : ''}
+                    ${techFocus ? `<h6 class="text-info mb-1">Technical Focus</h6><ul class="mb-2">${techFocus}</ul>` : ''}
+                    ${talkingPts ? `<h6 class="text-warning mb-1">Talking Points</h6><ul class="mb-2">${talkingPts}</ul>` : ''}
+                    <div class="text-muted mt-1">Confidence: <em>${confidence}</em> | Researched: ${data.researched_at || 'just now'}</div>
+                </div>
+            </div>
+        `;
+    })
+    .catch(err => {
+        resultsDiv.innerHTML = `
+            <div class="alert alert-danger mt-2 py-2">
+                <i class="fas fa-exclamation-triangle me-1"></i>Research failed: ${err.message}
+            </div>`;
+    });
 }
 
 function runAgent(agentNum, noticeId) {
@@ -600,59 +671,125 @@ function runAgent(agentNum, noticeId) {
                 </div>
             ` : ''}
             
-            ${data.matches ? `
+            ${data.capability_score !== undefined ? `
                 <div class="mb-3">
-                    <strong>Capability Matches:</strong>
+                    <strong><i class="fas fa-bullseye me-1"></i>Capability Score: ${data.capability_score}/100</strong>
+                    ${data.technical_win_probability ? `<span class="badge bg-info ms-2">Win Prob: ${data.technical_win_probability}</span>` : ''}
+                    <div class="progress mt-2" style="height: 20px;">
+                        <div class="progress-bar ${data.capability_score >= 70 ? 'bg-success' : data.capability_score >= 40 ? 'bg-warning' : 'bg-danger'}"
+                             style="width: ${data.capability_score}%">${data.capability_score}%</div>
+                    </div>
+                </div>
+                ${data.requirements_summary ? `
+                    <div class="mb-2">
+                        <small class="text-muted">Requirements: ${data.requirements_summary.matched}/${data.requirements_summary.total} matched, ${data.requirements_summary.unmatched} gaps</small>
+                    </div>
+                ` : ''}
+            ` : ''}
+
+            ${data.matches && data.matches.length > 0 ? `
+                <div class="mb-3">
+                    <strong><i class="fas fa-users me-1"></i>Staff Matches (${data.matches.length}):</strong>
                     <ul class="list-group">
-                        ${data.matches.slice(0, 5).map(m => `
-                            <li class="list-group-item">
-                                <strong>${m.name}</strong> - ${m.score}% match
-                                <br><small class="text-muted">${m.matching_skills.join(', ')}</small>
+                        ${data.matches.slice(0, 6).map(m => `
+                            <li class="list-group-item d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>${m.name}</strong>${m.title ? ` — ${m.title}` : ''}
+                                    <br><small class="text-muted">${Array.isArray(m.matching_skills) ? m.matching_skills.join(', ') : m.matching_skills}</small>
+                                </div>
+                                <div class="text-end">
+                                    ${m.clearance ? `<span class="badge bg-secondary">${m.clearance}</span>` : ''}
+                                    ${m.years_experience ? `<br><small class="text-muted">${m.years_experience} yrs</small>` : ''}
+                                </div>
                             </li>
                         `).join('')}
                     </ul>
                 </div>
             ` : ''}
-            
-            ${data.incumbents ? `
+
+            ${data.pricing ? `
                 <div class="mb-3">
-                    <strong>Incumbents Found:</strong>
+                    <strong><i class="fas fa-dollar-sign me-1"></i>Pricing Summary:</strong>
+                    <div class="card bg-dark">
+                        <div class="card-body">
+                            <p class="mb-1"><strong>Total Contract Value:</strong> <span class="text-success">${data.pricing.total_value}</span></p>
+                            <p class="mb-1"><strong>Labor Cost:</strong> ${data.pricing.labor_cost}</p>
+                            <p class="mb-1"><strong>ODC Cost:</strong> ${data.pricing.odc_cost}</p>
+                            <p class="mb-1"><strong>Monthly Burn Rate:</strong> ${data.pricing.monthly_burn}</p>
+                            <p class="mb-0"><strong>Duration:</strong> ${data.pricing.duration_months} months</p>
+                        </div>
+                    </div>
+                    ${data.pricing.labor_categories ? `
+                        <details class="mt-2">
+                            <summary class="text-muted" style="cursor:pointer">Labor Breakdown (${data.pricing.labor_categories.length} categories)</summary>
+                            <ul class="list-group mt-1">
+                                ${data.pricing.labor_categories.map(cat => `
+                                    <li class="list-group-item d-flex justify-content-between py-1">
+                                        <span>${cat.category} (${cat.fte} FTE)</span>
+                                        <span>${cat.annual_cost}</span>
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </details>
+                    ` : ''}
+                </div>
+            ` : ''}
+            
+            ${data.incumbents && data.incumbents.length > 0 ? `
+                <div class="mb-3">
+                    <strong><i class="fas fa-building me-1"></i>Incumbents Found (${data.incumbents.length}):</strong>
                     <ul class="list-group">
-                        ${data.incumbents.slice(0, 5).map(inc => `
-                            <li class="list-group-item">
-                                <strong>${inc.company}</strong>
-                                <br><small class="text-muted">Past Performance: ${inc.past_performance || 'Unknown'}</small>
-                                ${inc.contract_value ? `<br><small class="text-muted">Contract Value: ${inc.contract_value}</small>` : ''}
+                        ${data.incumbents.slice(0, 8).map((inc, idx) => `
+                            <li class="list-group-item d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>${idx + 1}. ${inc.company}</strong>
+                                    ${inc.awards ? `<br><small class="text-muted">${inc.awards} award${inc.awards > 1 ? 's' : ''} (3yr)</small>` : ''}
+                                </div>
+                                <div class="text-end">
+                                    ${inc.contract_value ? `<span class="badge bg-primary">${inc.contract_value}</span>` : ''}
+                                </div>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            ` : data.incumbents ? `
+                <div class="mb-3">
+                    <div class="alert alert-info py-2 mb-0">
+                        <i class="fas fa-info-circle me-1"></i>No incumbent data found for this agency/NAICS combination
+                    </div>
+                </div>
+            ` : ''}
+
+            ${data.teaming_partners && data.teaming_partners.length > 0 ? `
+                <div class="mb-3">
+                    <strong><i class="fas fa-handshake me-1"></i>Teaming Partner Recommendations (${data.teaming_partners.length}):</strong>
+                    <ul class="list-group">
+                        ${data.teaming_partners.slice(0, 5).map(partner => `
+                            <li class="list-group-item d-flex justify-content-between align-items-start">
+                                <div>
+                                    <strong>${partner.company}</strong>
+                                    <br><small class="text-muted">${partner.capabilities ? partner.capabilities.join(', ') : 'N/A'}${partner.award_count ? ` | ${partner.award_count} awards` : ''}</small>
+                                    ${partner.certifications && partner.certifications.length ? `<br><small class="badge bg-info">${partner.certifications.join(', ')}</small>` : ''}
+                                </div>
+                                <div class="text-end">
+                                    ${partner.total_value ? `<span class="badge bg-success">${partner.total_value}</span>` : ''}
+                                    ${partner.relevance_score ? `<br><small class="text-muted">${partner.relevance_score}% match</small>` : ''}
+                                </div>
                             </li>
                         `).join('')}
                     </ul>
                 </div>
             ` : ''}
-            
-            ${data.teaming_partners ? `
+
+            ${data.market_analysis && Object.keys(data.market_analysis).length > 0 ? `
                 <div class="mb-3">
-                    <strong>Teaming Partner Recommendations:</strong>
-                    <ul class="list-group">
-                        ${data.teaming_partners.slice(0, 3).map(partner => `
-                            <li class="list-group-item">
-                                <strong>${partner.company}</strong>
-                                ${partner.relevance_score ? `<span class="badge bg-success float-end">${partner.relevance_score}% Match</span>` : ''}
-                                <br><small class="text-muted">Capabilities: ${partner.capabilities ? partner.capabilities.join(', ') : 'N/A'}</small>
-                                ${partner.certifications ? `<br><small class="badge bg-info">${partner.certifications.join(', ')}</small>` : ''}
-                            </li>
-                        `).join('')}
-                    </ul>
-                </div>
-            ` : ''}
-            
-            ${data.market_analysis ? `
-                <div class="mb-3">
-                    <strong>Market Analysis:</strong>
+                    <strong><i class="fas fa-chart-line me-1"></i>Market Analysis:</strong>
                     <div class="card bg-dark">
                         <div class="card-body">
                             ${data.market_analysis.competition_level ? `<p class="mb-1"><strong>Competition:</strong> ${data.market_analysis.competition_level}</p>` : ''}
                             ${data.market_analysis.avg_contract_value ? `<p class="mb-1"><strong>Avg Contract Value:</strong> ${data.market_analysis.avg_contract_value}</p>` : ''}
-                            ${data.market_analysis.num_competitors ? `<p class="mb-1"><strong>Competitors:</strong> ${data.market_analysis.num_competitors}</p>` : ''}
+                            ${data.market_analysis.num_competitors ? `<p class="mb-1"><strong>Competitors Found:</strong> ${data.market_analysis.num_competitors}</p>` : ''}
+                            ${data.market_analysis.total_3yr_spending ? `<p class="mb-1"><strong>Total 3yr Spending:</strong> ${data.market_analysis.total_3yr_spending}</p>` : ''}
                             ${data.market_analysis.market_trend ? `<p class="mb-0"><strong>Trend:</strong> ${data.market_analysis.market_trend}</p>` : ''}
                         </div>
                     </div>

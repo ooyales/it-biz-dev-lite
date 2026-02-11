@@ -40,91 +40,119 @@ class AgentExecutor:
         self.kg_path = kg_path
         
     def run_competitive_intel(self, agency: str, naics: str):
-        """Run Agent 2: Competitive Intelligence"""
+        """Run Agent 2: Competitive Intelligence via USAspending.gov API"""
         try:
-            print(f"🔍 Attempting to import CompetitiveIntelAgent...")
-            from knowledge_graph.competitive_intel import CompetitiveIntelAgent
-            print(f"✓ Import successful!")
-            
-            print(f"🔍 Creating CompetitiveIntelAgent instance...")
-            intel = CompetitiveIntelAgent()
-            print(f"✓ Instance created!")
-            
-            print(f"🔍 Running analysis for agency='{agency}', naics='{naics}'")
-            
-            # Call the correct methods
+            from usaspending_intel import USAspendingIntelligence, normalize_agency_name
+
+            print(f"🔍 Running Competitive Intel via USAspending.gov API")
+            print(f"   Agency (raw): {agency}")
+            print(f"   NAICS: {naics}")
+
+            usa = USAspendingIntelligence()
+            normalized_agency = normalize_agency_name(agency)
+            print(f"   Agency (normalized): {normalized_agency}")
+
+            # 1. Get incumbents (top contractors at this agency+NAICS)
             incumbents = []
-            teaming_partners = []
-            market_analysis = {}
-            
-            if agency:
-                print(f"→ Identifying incumbents for {agency}...")
-                incumbents = intel.identify_incumbents(agency, naics)
-                
-                print(f"→ Analyzing agency spending...")
-                market_analysis = intel.analyze_agency_spending(agency, years=2)
-            
+            if agency or naics:
+                print(f"→ Identifying incumbents...")
+                incumbents = usa.get_incumbents_at_agency(agency, naics, limit=10)
+                print(f"  ✓ Found {len(incumbents)} incumbents")
+
+            # 2. Get teaming partners (smaller companies in same NAICS)
+            teaming_partners_raw = []
             if naics:
                 print(f"→ Finding teaming partners for NAICS {naics}...")
-                teaming_partners = intel.find_teaming_partners(naics)
-            
-            results = {
-                'incumbents': incumbents,
-                'teaming_partners': teaming_partners,
-                'market_analysis': market_analysis
-            }
-            
-            print(f"✓ Real agent completed successfully!")
-            print(f"   Found {len(incumbents)} incumbents")
-            print(f"   Found {len(teaming_partners)} teaming partners")
-            return {'status': 'success', **results}
-            
-        except Exception as e:
-            print(f"⚠️ Competitive intel error (using fallback data):")
-            print(f"   Error type: {type(e).__name__}")
-            print(f"   Error message: {str(e)}")
-            import traceback
-            print("   Full traceback:")
-            traceback.print_exc()
-            
-            # Return mock data as fallback
+                teaming_partners_raw = usa.find_teaming_partners(
+                    naics_code=str(naics),
+                    small_business_only=False,
+                    min_revenue=500_000,
+                    max_revenue=30_000_000
+                )
+                print(f"  ✓ Found {len(teaming_partners_raw)} teaming candidates")
+
+            # Format teaming partners to match frontend expectations
+            teaming_partners = []
+            for p in teaming_partners_raw[:5]:
+                tv = p.get('total_value', 0)
+                teaming_partners.append({
+                    'company': p['name'],
+                    'capabilities': [f'NAICS {naics}'],
+                    'certifications': [],
+                    'relevance_score': min(99, max(50, int(70 + (p.get('award_count', 0) * 2)))),
+                    'total_value': f"${tv/1_000_000:.1f}M" if tv >= 1_000_000 else f"${tv:,.0f}",
+                    'award_count': p.get('award_count', 0)
+                })
+
+            # 3. Get market trends
+            market_analysis = {}
+            if naics:
+                print(f"→ Analyzing market trends...")
+                trends = usa.get_market_trends(str(naics), normalized_agency, years=3)
+                if 'error' not in trends and 'message' not in trends:
+                    total = trends.get('total_spending', 0)
+                    avg_annual = trends.get('average_annual_spending', 0)
+                    num_competitors = len(incumbents)
+                    trend_dir = trends.get('trend_direction', 'stable')
+                    growth = trends.get('growth_rate_percent', 0)
+
+                    trend_label = 'Growing' if trend_dir == 'increasing' else \
+                                  'Declining' if trend_dir == 'decreasing' else 'Stable'
+
+                    competition = 'High' if num_competitors >= 8 else \
+                                  'Moderate' if num_competitors >= 4 else 'Low'
+
+                    market_analysis = {
+                        'competition_level': competition,
+                        'avg_contract_value': f"${avg_annual/max(num_competitors,1)/1_000_000:.1f}M" if avg_annual >= 1_000_000 else f"${avg_annual/max(num_competitors,1):,.0f}",
+                        'num_competitors': num_competitors,
+                        'market_trend': f"{trend_label} ({growth:+.0f}%)",
+                        'total_3yr_spending': f"${total/1_000_000:.1f}M" if total >= 1_000_000 else f"${total:,.0f}",
+                        'yearly_spending': trends.get('yearly_spending', {})
+                    }
+                    print(f"  ✓ Market: {competition} competition, {trend_label} trend")
+
+            # 4. Generate recommendations
+            recommendations = []
+            if incumbents:
+                top = incumbents[0]['company']
+                recommendations.append(f"Top incumbent: {top} — study their past performance for differentiation")
+            if len(incumbents) >= 5:
+                recommendations.append("Competitive field is crowded — consider teaming or niche differentiation")
+            if teaming_partners:
+                recommendations.append(f"Potential teaming partner: {teaming_partners[0]['company']} ({teaming_partners[0]['total_value']} in NAICS {naics})")
+            if market_analysis.get('market_trend', '').startswith('Growing'):
+                recommendations.append("Market is growing — good time to invest in capture effort")
+            elif market_analysis.get('market_trend', '').startswith('Declining'):
+                recommendations.append("Market is declining — ensure strong differentiation and pricing")
+            if not recommendations:
+                recommendations.append("Limited data available — consider broadening NAICS search")
+
+            recommendations.append(f"Source: USAspending.gov (3-year contract data for {normalized_agency})")
+
+            print(f"✓ Competitive intel completed successfully!")
             return {
                 'status': 'success',
-                'note': 'Using demo data - real agent unavailable',
-                'error_detail': f'{type(e).__name__}: {str(e)}',
-                'incumbents': [
-                    {
-                        'company': 'Demo Incumbent Inc.',
-                        'past_performance': 'Excellent',
-                        'contract_value': '$2.5M',
-                        'awards': 3
-                    },
-                    {
-                        'company': 'Example Solutions LLC',
-                        'past_performance': 'Good',
-                        'contract_value': '$1.8M',
-                        'awards': 2
-                    }
-                ],
-                'teaming_partners': [
-                    {
-                        'company': 'Demo Small Business Partner',
-                        'capabilities': ['Cloud Computing', 'Cybersecurity'],
-                        'certifications': ['8(a)', 'SDVOSB'],
-                        'relevance_score': 85
-                    }
-                ],
-                'market_analysis': {
-                    'competition_level': 'High',
-                    'avg_contract_value': '$2.1M',
-                    'num_competitors': 15,
-                    'market_trend': 'Growing'
-                },
+                'incumbents': incumbents,
+                'teaming_partners': teaming_partners,
+                'market_analysis': market_analysis,
+                'recommendations': recommendations
+            }
+
+        except Exception as e:
+            print(f"⚠️ Competitive intel error: {e}")
+            import traceback
+            traceback.print_exc()
+            return {
+                'status': 'error',
+                'error': f'Competitive intel failed: {str(e)}',
+                'incumbents': [],
+                'teaming_partners': [],
+                'market_analysis': {},
                 'recommendations': [
-                    '💡 Real agent requires: Neo4j connection + FPDS access',
-                    f'💡 Error detail: {type(e).__name__}: {str(e)}',
-                    '💡 Consider teaming with 8(a) small business',
-                    '💡 Highlight past performance in proposal'
+                    f'Error: {str(e)}',
+                    'USAspending.gov API may be temporarily unavailable',
+                    'Check your internet connection and try again'
                 ]
             }
     
@@ -132,63 +160,91 @@ class AgentExecutor:
         """Run Agent 3: Capability Matching"""
         try:
             from knowledge_graph.capability_matcher import CapabilityMatcher
-            
+
             matcher = CapabilityMatcher()
-            results = matcher.analyze_opportunity(opportunity_data)
-            
-            return {'status': 'success', **results}
-            
-        except Exception as e:
-            print(f"⚠️ Capability match error (using fallback): {e}")
+            analysis = matcher.analyze_opportunity(opportunity_data)
+
+            # Format staff_assignments into 'matches' for the frontend
+            matches = []
+            for staff_name, assigned_reqs in analysis.get('staff_assignments', {}).items():
+                # Look up the staff member for details
+                staff = next((s for s in matcher.staff if s.name == staff_name), None)
+                matches.append({
+                    'name': staff_name,
+                    'score': min(100, len(assigned_reqs) * 20),
+                    'matching_skills': assigned_reqs,
+                    'clearance': staff.clearance if staff else 'N/A',
+                    'years_experience': staff.experience_years if staff else 0,
+                    'title': staff.title if staff else ''
+                })
+            matches.sort(key=lambda x: x['score'], reverse=True)
+
+            # Format gaps into recommendations
+            recommendations = []
+            for gap in analysis.get('capability_gaps', []):
+                sev = gap.get('severity', 'Medium')
+                recommendations.append(f"[{sev}] {gap['requirement']} — {gap['recommendation']}")
+            recommendations.append(analysis.get('recommendation', ''))
+
+            req_info = analysis.get('requirements', {})
             return {
                 'status': 'success',
-                'note': 'Using demo data - real agent unavailable',
-                'matches': [
-                    {
-                        'name': 'Demo Staff Member',
-                        'score': 95,
-                        'matching_skills': ['Cloud', 'Security', 'Python'],
-                        'clearance': 'Top Secret',
-                        'years_experience': 8
-                    }
-                ],
-                'recommendations': [
-                    '💡 Real agent requires: Staff database + requirements analysis',
-                    '💡 Consider hiring additional cloud expertise'
-                ]
+                'matches': matches,
+                'capability_score': analysis.get('capability_score', 0),
+                'technical_win_probability': analysis.get('technical_win_probability', 'N/A'),
+                'requirements_summary': {
+                    'total': req_info.get('total', 0),
+                    'matched': req_info.get('matched', 0),
+                    'unmatched': req_info.get('unmatched', 0),
+                    'details': req_info.get('details', [])
+                },
+                'recommendations': recommendations
+            }
+
+        except Exception as e:
+            print(f"⚠️ Capability match error: {e}")
+            import traceback
+            traceback.print_exc()
+            return {
+                'status': 'error',
+                'error': f'Capability match failed: {str(e)}',
+                'matches': [],
+                'recommendations': [f'Error: {str(e)}']
             }
     
     def run_rfi_generator(self, notice_id: str, opportunity_data: dict):
         """Run Agent 4: RFI Generator"""
         try:
             from knowledge_graph.rfi_generator import RFIResponseGenerator
-            
+
             generator = RFIResponseGenerator()
-            
-            # Generate RFI
-            output_file = generator.generate_response(
-                opportunity_title=opportunity_data.get('title', 'Opportunity'),
-                agency=opportunity_data.get('agency', ''),
-                requirements=opportunity_data.get('description', ''),
-                notice_id=notice_id
-            )
-            
+
+            # Build opportunity dict the generator expects
+            opp = {
+                'title': opportunity_data.get('title', 'Opportunity'),
+                'agency': opportunity_data.get('fullParentPathName', '') or opportunity_data.get('agency', ''),
+                'notice_id': notice_id,
+                'description': opportunity_data.get('description', ''),
+            }
+
+            output_file = generator.generate_rfi_response(opp)
+
             return {
                 'status': 'success',
                 'file_path': str(output_file),
                 'message': 'RFI response generated successfully'
             }
-            
+
         except Exception as e:
-            print(f"⚠️ RFI generator error (using demo message): {e}")
+            print(f"⚠️ RFI generator error: {e}")
+            import traceback
+            traceback.print_exc()
             return {
-                'status': 'success',
-                'note': 'Demo mode - real agent requires Claude API key',
-                'message': 'RFI generation requires:\n• ANTHROPIC_API_KEY environment variable\n• Claude AI API access\n\nReal agent would generate a professional .docx RFI response.',
+                'status': 'error',
+                'error': f'RFI generation failed: {str(e)}',
                 'recommendations': [
-                    '💡 Set ANTHROPIC_API_KEY in your environment',
-                    '💡 Real agent uses Claude AI to write professional RFI',
-                    '💡 Output would be saved as RFI_[title].docx'
+                    f'Error: {str(e)}',
+                    'Ensure ANTHROPIC_API_KEY is set and python-docx is installed'
                 ]
             }
     
@@ -196,32 +252,35 @@ class AgentExecutor:
         """Run Agent 5: Proposal Writer"""
         try:
             from knowledge_graph.proposal_assistant import ProposalAssistant
-            
+
             assistant = ProposalAssistant()
-            
-            # Generate proposal
-            output_file = assistant.generate_proposal(
-                opportunity_title=opportunity_data.get('title', 'Opportunity'),
-                agency=opportunity_data.get('agency', ''),
-                requirements=opportunity_data.get('description', ''),
-                notice_id=notice_id
-            )
-            
+
+            # Build opportunity dict the assistant expects
+            opp = {
+                'title': opportunity_data.get('title', 'Opportunity'),
+                'agency': opportunity_data.get('fullParentPathName', '') or opportunity_data.get('agency', ''),
+                'notice_id': notice_id,
+                'description': opportunity_data.get('description', ''),
+            }
+
+            output_file = assistant.generate_proposal(opp)
+
             return {
                 'status': 'success',
                 'file_path': str(output_file),
                 'message': 'Proposal generated successfully'
             }
-            
+
         except Exception as e:
-            print(f"⚠️ Proposal writer error (using demo message): {e}")
+            print(f"⚠️ Proposal writer error: {e}")
+            import traceback
+            traceback.print_exc()
             return {
-                'status': 'success',
-                'note': 'Demo mode - real agent requires Claude API key',
-                'message': 'Proposal generation requires Claude API.\n\nReal agent would create:\n• Technical Approach\n• Management Plan\n• Staffing Plan\n• Past Performance\n\nOutput: Proposal_[title].docx',
+                'status': 'error',
+                'error': f'Proposal generation failed: {str(e)}',
                 'recommendations': [
-                    '💡 Configure ANTHROPIC_API_KEY',
-                    '💡 Real agent uses Claude AI for professional proposals'
+                    f'Error: {str(e)}',
+                    'Ensure ANTHROPIC_API_KEY is set and python-docx is installed'
                 ]
             }
     
@@ -229,31 +288,75 @@ class AgentExecutor:
         """Run Agent 6: Pricing Generator"""
         try:
             from knowledge_graph.pricing_generator import PricingModel
-            
+
             pricer = PricingModel()
-            
-            # Generate pricing
-            output_file = pricer.generate_pricing(
-                opportunity_title=opportunity_data.get('title', 'Opportunity'),
-                requirements=opportunity_data.get('description', ''),
-                notice_id=notice_id
-            )
-            
+
+            # Build opportunity dict
+            opp = {
+                'title': opportunity_data.get('title', 'Opportunity'),
+                'agency': opportunity_data.get('fullParentPathName', '') or opportunity_data.get('agency', ''),
+            }
+
+            # Default staffing plan (reasonable for a mid-size IT contract)
+            staffing = {
+                'Program Manager': 1.0,
+                'Senior Software Engineer': 2.0,
+                'Software Engineer': 3.0,
+                'Cloud Architect': 1.0,
+                'DevOps Engineer': 1.0,
+                'Cybersecurity Analyst': 1.0,
+                'Business Analyst': 1.0,
+            }
+
+            odc = {
+                'Travel': 30000,
+                'Software Licenses': 50000,
+                'Training': 15000,
+            }
+
+            igce = pricer.generate_igce(opp, staffing, duration_months=12, odc=odc)
+            output_file = pricer.generate_pricing_excel(igce)
+
+            # Return structured data for the frontend
+            labor_summary = []
+            for cat in igce['labor']['labor_categories']:
+                labor_summary.append({
+                    'category': cat['name'],
+                    'fte': cat['fte'],
+                    'rate': f"${cat['rate']:,.2f}/hr",
+                    'annual_cost': f"${cat['cost']:,.0f}",
+                    'clearance': cat.get('clearance', 'None')
+                })
+
             return {
                 'status': 'success',
                 'file_path': str(output_file),
-                'message': 'Pricing model generated successfully'
-            }
-            
-        except Exception as e:
-            print(f"⚠️ Pricing generator error (using demo message): {e}")
-            return {
-                'status': 'success',
-                'note': 'Demo mode - real agent requires configuration',
-                'message': 'Pricing generation would create:\n• Labor Categories & Rates\n• BOE (Basis of Estimate)\n• IGCE calculations\n• Cost breakdown\n\nOutput: Pricing_[title].xlsx',
+                'message': f"Pricing model generated: ${igce['total_value']:,.0f} total",
+                'pricing': {
+                    'total_value': f"${igce['total_value']:,.0f}",
+                    'labor_cost': f"${igce['labor']['total_cost']:,.0f}",
+                    'odc_cost': f"${igce['odc_total']:,.0f}",
+                    'monthly_burn': f"${igce['monthly_burn']:,.0f}",
+                    'duration_months': igce['duration_months'],
+                    'labor_categories': labor_summary
+                },
                 'recommendations': [
-                    '💡 Configure labor rates and ODC costs',
-                    '💡 Real agent generates Excel workbook with pricing model'
+                    f"Total contract value: ${igce['total_value']:,.0f} ({igce['duration_months']} months)",
+                    f"Monthly burn rate: ${igce['monthly_burn']:,.0f}",
+                    f"Download the Excel workbook for detailed labor rates and IGCE"
+                ]
+            }
+
+        except Exception as e:
+            print(f"⚠️ Pricing generator error: {e}")
+            import traceback
+            traceback.print_exc()
+            return {
+                'status': 'error',
+                'error': f'Pricing generation failed: {str(e)}',
+                'recommendations': [
+                    f'Error: {str(e)}',
+                    'Ensure openpyxl is installed: pip install openpyxl'
                 ]
             }
 

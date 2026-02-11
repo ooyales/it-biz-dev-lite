@@ -42,6 +42,32 @@ def print_info(text):
     print(f"{Colors.CYAN}→ {text}{Colors.END}")
 
 
+AGENCY_NORMALIZE = {
+    'DEPT OF DEFENSE': 'Department of Defense',
+    'STATE, DEPARTMENT OF': 'Department of State',
+    'ENERGY, DEPARTMENT OF': 'Department of Energy',
+    'HEALTH AND HUMAN SERVICES, DEPARTMENT OF': 'Department of Health and Human Services',
+    'HOMELAND SECURITY, DEPARTMENT OF': 'Department of Homeland Security',
+    'JUSTICE, DEPARTMENT OF': 'Department of Justice',
+    'TRANSPORTATION, DEPARTMENT OF': 'Department of Transportation',
+    'TREASURY, DEPARTMENT OF THE': 'Department of the Treasury',
+    'LABOR, DEPARTMENT OF': 'Department of Labor',
+    'COMMERCE, DEPARTMENT OF': 'Department of Commerce',
+    'AGRICULTURE, DEPARTMENT OF': 'Department of Agriculture',
+    'VETERANS AFFAIRS, DEPARTMENT OF': 'Department of Veterans Affairs',
+    'NATIONAL AERONAUTICS AND SPACE ADMINISTRATION': 'NASA',
+    'NATIONAL SCIENCE FOUNDATION': 'National Science Foundation',
+    'GENERAL SERVICES ADMINISTRATION': 'General Services Administration',
+}
+
+
+def normalize_agency(name: str) -> str:
+    """Normalize agency name to canonical form."""
+    if not name:
+        return name
+    return AGENCY_NORMALIZE.get(name.strip(), name.strip())
+
+
 class FPDSCollector:
     """
     Collects federal contract award data from USASpending.gov API
@@ -119,9 +145,15 @@ class FPDSCollector:
             
             data = response.json()
             results = data.get('results', [])
-            
+
+            # USAspending API returns null for NAICS Code even though we filtered by it.
+            # Tag each result with the NAICS we searched for.
+            for r in results:
+                if not r.get('NAICS Code'):
+                    r['NAICS Code'] = naics_code.strip()
+
             print_success(f"  Found {len(results)} contracts")
-            
+
             return results
             
         except Exception as e:
@@ -129,34 +161,39 @@ class FPDSCollector:
             return []
     
     def store_contract_in_graph(self, contract: Dict) -> bool:
-        """Store contract data in knowledge graph"""
-        
+        """Store contract data in knowledge graph.
+
+        Note: Existing Neo4j data uses 'name' as unique key for Organization,
+        Contractor, Contract, and Agency nodes. We MERGE by name to match.
+        """
+
         try:
             # Extract contract details
             contract_id = contract.get('Award ID', 'unknown')
             recipient = contract.get('Recipient Name', 'Unknown')
             amount = contract.get('Award Amount', 0)
-            agency = contract.get('Awarding Agency', 'Unknown')
+            agency = normalize_agency(contract.get('Awarding Agency', 'Unknown'))
             start_date = contract.get('Start Date', '')
             naics = contract.get('NAICS Code', '')
             description = contract.get('Description', '')
-            
-            # Create contract node
-            with self.kg.driver.session(database="contactsgraphdb") as session:
-                query = """
-                MERGE (c:Contract {id: $contract_id})
-                SET c.contract_number = $contract_id,
-                    c.title = $description,
-                    c.value = $amount,
-                    c.award_date = $start_date,
-                    c.agency = $agency,
-                    c.naics = $naics,
-                    c.source = 'USASpending.gov',
-                    c.updated_at = datetime()
-                RETURN c
-                """
-                
-                session.run(query,
+
+            # Build a unique contract name matching existing format: "RECIPIENT|AGENCY"
+            contract_name = f"{recipient}|{agency}"
+
+            with self.kg.driver.session(database="neo4j") as session:
+                # Create/update Contract node (MERGE by name — matches constraint)
+                session.run("""
+                    MERGE (c:Contract {name: $name})
+                    SET c.contract_number = $contract_id,
+                        c.title = $description,
+                        c.value = $amount,
+                        c.award_date = $start_date,
+                        c.agency = $agency,
+                        c.naics = $naics,
+                        c.source = 'USASpending.gov',
+                        c.updated_at = datetime()
+                """,
+                    name=contract_name,
                     contract_id=contract_id,
                     description=description[:200] if description else 'Contract',
                     amount=float(amount) if amount else 0,
@@ -164,36 +201,42 @@ class FPDSCollector:
                     agency=agency,
                     naics=naics
                 )
-            
-            # Create organization node for recipient
-            org_id = generate_org_id(recipient)
-            
-            org_data = {
-                'id': org_id,
-                'name': recipient,
-                'type': 'Contractor',
-                'source': 'FPDS'
-            }
-            
-            self.kg.create_organization(org_data)
-            
-            # Create AWARDED_TO relationship
-            with self.kg.driver.session(database="contactsgraphdb") as session:
-                query = """
-                MATCH (c:Contract {id: $contract_id})
-                MATCH (o:Organization {id: $org_id})
-                MERGE (c)-[r:AWARDED_TO]->(o)
-                SET r.date = $award_date
-                """
-                
-                session.run(query,
-                    contract_id=contract_id,
-                    org_id=org_id,
-                    award_date=start_date
+
+                # Create Contractor node (MERGE by name)
+                session.run("""
+                    MERGE (o:Contractor {name: $name})
+                    SET o.type = 'Contractor',
+                        o.source = COALESCE(o.source, 'USASpending.gov'),
+                        o.updated_at = datetime()
+                """, name=recipient)
+
+                # Create Agency node (MERGE by name)
+                session.run("""
+                    MERGE (a:Agency {name: $name})
+                    SET a.type = 'Federal Agency',
+                        a.source = COALESCE(a.source, 'USASpending.gov'),
+                        a.updated_at = datetime()
+                """, name=agency)
+
+                # Create HAS_CONTRACT relationship (Contractor -> Agency via Contract)
+                session.run("""
+                    MATCH (ct:Contractor {name: $contractor})
+                    MATCH (a:Agency {name: $agency})
+                    MERGE (ct)-[r:HAS_CONTRACT]->(a)
+                    SET r.contract_name = $contract_name,
+                        r.value = $amount,
+                        r.award_date = $start_date,
+                        r.source = 'USASpending.gov'
+                """,
+                    contractor=recipient,
+                    agency=agency,
+                    contract_name=contract_name,
+                    amount=float(amount) if amount else 0,
+                    start_date=start_date
                 )
-            
+
             return True
-            
+
         except Exception as e:
             print(f"{Colors.YELLOW}⚠️  Error storing contract: {e}{Colors.END}")
             return False

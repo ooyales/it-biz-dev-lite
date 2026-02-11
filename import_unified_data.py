@@ -91,7 +91,7 @@ def import_to_neo4j(contracts: List[Dict], opportunities: List[Dict]):
         
         driver = GraphDatabase.driver(NEO4J_URI, auth=('neo4j', NEO4J_PASSWORD))
         
-        with driver.session(database="contactsgraphdb") as session:
+        with driver.session(database="neo4j") as session:
             # Import contracts
             contract_count = 0
             for contract in contracts:

@@ -25,7 +25,7 @@ class KnowledgeGraphClient:
             user: Username (default: "neo4j")
             password: Database password
         """
-        self.driver = GraphDatabase.driver(uri, auth=(user, password), database="contactsgraphdb")
+        self.driver = GraphDatabase.driver(uri, auth=(user, password), database="neo4j")
         logger.info(f"Connected to Neo4j at {uri}")
     
     def close(self):
@@ -144,7 +144,7 @@ class KnowledgeGraphClient:
     
     def search_people(self, name_query: str) -> List[Dict]:
         """Search people by name (fuzzy)"""
-        with self.driver.session(database="contactsgraphdb") as session:
+        with self.driver.session(database="neo4j") as session:
             cypher_query = """
             MATCH (p:Person)
             WHERE toLower(p.name) CONTAINS toLower($search_term)
@@ -215,7 +215,7 @@ class KnowledgeGraphClient:
         # Add metadata
         properties['created_at'] = datetime.now().isoformat()
         
-        with self.driver.session(database="contactsgraphdb") as session:
+        with self.driver.session(database="neo4j") as session:
             # Dynamic relationship type requires string manipulation
             query = f"""
             MATCH (from {{id: $from_id}})

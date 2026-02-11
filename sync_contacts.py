@@ -93,7 +93,7 @@ class ContactSyncer:
         """Fetch all contacts from Neo4j"""
         print_info("Fetching contacts from Neo4j...")
         
-        with self.kg.driver.session(database="contactsgraphdb") as session:
+        with self.kg.driver.session(database="neo4j") as session:
             query = """
             MATCH (p:Person)
             OPTIONAL MATCH (p)-[:WORKS_AT]->(o:Organization)

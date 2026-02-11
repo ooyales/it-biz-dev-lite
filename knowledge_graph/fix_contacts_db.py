@@ -86,7 +86,7 @@ try:
     )
     
     # Get contacts from Neo4j
-    with kg.driver.session(database="contactsgraphdb") as session:
+    with kg.driver.session(database="neo4j") as session:
         query = """
         MATCH (p:Person)
         OPTIONAL MATCH (p)-[:WORKS_AT]->(o:Organization)

@@ -49,7 +49,7 @@ class ContactExtractor:
         """
         
         contacts = []
-        with self.driver.session(database="contactsgraphdb") as session:
+        with self.driver.session(database="neo4j") as session:
             result = session.run(query)
             for record in result:
                 vendor = record['vendor']
@@ -83,7 +83,7 @@ class ContactExtractor:
         """
         
         contacts = []
-        with self.driver.session(database="contactsgraphdb") as session:
+        with self.driver.session(database="neo4j") as session:
             result = session.run(query)
             for record in result:
                 agency = record['agency']

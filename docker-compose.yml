@@ -33,6 +33,7 @@ services:
       - bizdev-data:/app/data
       - bizdev-logs:/app/logs
       - ./knowledge_graph:/app/knowledge_graph
+      - ./config.yaml:/app/config.yaml:ro
     depends_on:
       neo4j:
         condition: service_healthy

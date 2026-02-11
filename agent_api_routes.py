@@ -322,7 +322,7 @@ def get_bd_intelligence_summary():
         # Get intel summary (contracts in graph)
         agent = CompetitiveIntelAgent()
         
-        with agent.kg.driver.session(database="contactsgraphdb") as session:
+        with agent.kg.driver.session(database="neo4j") as session:
             query = """
             MATCH (c:Contract)
             RETURN count(c) as total_contracts,

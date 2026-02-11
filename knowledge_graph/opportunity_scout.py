@@ -14,11 +14,12 @@ Features:
 import sys
 sys.path.append('..')
 
-from graph.neo4j_client import KnowledgeGraphClient, generate_org_id
+from graph.neo4j_client import KnowledgeGraphClient, generate_org_id, generate_person_id
 import requests
 from datetime import datetime, timedelta
 from typing import Dict, List, Tuple
 import os
+import time
 from pathlib import Path
 import json
 
@@ -62,16 +63,16 @@ class OpportunityScout:
     
     def __init__(self):
         """Initialize scout with connections to SAM.gov and Neo4j"""
-        
+
         print_info("Initializing Opportunity Scout Agent...")
-        
+
         # Load config
         self.sam_api_key = os.getenv('SAM_API_KEY')
         neo4j_password = os.getenv('NEO4J_PASSWORD')
-        
+
         if not self.sam_api_key or not neo4j_password:
             raise ValueError("Missing SAM_API_KEY or NEO4J_PASSWORD in environment")
-        
+
         # Connect to knowledge graph
         self.kg = KnowledgeGraphClient(
             uri=os.getenv('NEO4J_URI', 'bolt://localhost:7687'),
@@ -79,51 +80,156 @@ class OpportunityScout:
             password=neo4j_password
         )
         print_success("Connected to knowledge graph")
-        
+
+        # Load config.yaml for search parameters
+        self.config = {}
+        for config_path in ['config.yaml', '/app/config.yaml']:
+            if os.path.exists(config_path):
+                import yaml
+                with open(config_path) as f:
+                    self.config = yaml.safe_load(f) or {}
+                print_success(f"Loaded config from {config_path}")
+                break
+
+        search_config = self.config.get('sam_gov', {}).get('search', {})
+
         # Configuration
         self.naics_codes = os.getenv('NAICS_CODES', '541512,541511,541519').split(',')
+        self.keywords = search_config.get('keywords', [])
+        self.opportunity_types = search_config.get('opportunity_types', [])
         self.company_size = 'small'  # small, medium, large
-        self.min_contract_value = 100000  # $100K minimum
-        self.max_contract_value = 25000000  # $25M maximum for small business
-        
+        value_range = search_config.get('value_range', {})
+        self.min_contract_value = value_range.get('min', 100000)
+        self.max_contract_value = value_range.get('max', 25000000)
+
+        if self.keywords:
+            print_info(f"IT keywords: {', '.join(self.keywords)}")
+        if self.opportunity_types:
+            print_info(f"Opportunity types: {', '.join(self.opportunity_types)}")
+
         print_success("Opportunity Scout ready")
     
     def fetch_opportunities(self, days_back: int = 7) -> List[Dict]:
-        """Fetch recent opportunities from SAM.gov"""
-        
+        """Fetch recent opportunities from SAM.gov using NAICS + keyword filters"""
+
         print_info(f"Fetching opportunities from last {days_back} days...")
-        
+
         from_date = (datetime.now() - timedelta(days=days_back)).strftime('%m/%d/%Y')
         to_date = datetime.now().strftime('%m/%d/%Y')
-        
+
         url = "https://api.sam.gov/opportunities/v2/search"
+        seen_ids = set()
         opportunities = []
-        
+
+        # Map config opportunity types to SAM.gov ptype codes
+        ptype_map = {
+            'Solicitation': 'o',
+            'Presolicitation': 'p',
+            'Sources Sought': 'r',
+            'Special Notice': 's',
+        }
+        ptype = ','.join(ptype_map[t] for t in self.opportunity_types if t in ptype_map) if self.opportunity_types else None
+
+        # Search by each NAICS + keyword combination for targeted results
+        search_terms = self.keywords if self.keywords else [None]
+
         for naics in self.naics_codes:
-            try:
-                params = {
-                    'api_key': self.sam_api_key,
-                    'postedFrom': from_date,
-                    'postedTo': to_date,
-                    'naicsCode': naics.strip(),
-                    'limit': 100
-                }
-                
-                response = requests.get(url, params=params, timeout=30)
-                response.raise_for_status()
-                
-                data = response.json()
-                opps = data.get('opportunitiesData', [])
-                opportunities.extend(opps)
-                
-                print_info(f"  NAICS {naics}: {len(opps)} opportunities")
-                
-            except Exception as e:
-                print_warning(f"Error fetching NAICS {naics}: {e}")
-        
-        print_success(f"Fetched {len(opportunities)} total opportunities")
-        return opportunities
-    
+            for keyword in search_terms:
+                try:
+                    params = {
+                        'api_key': self.sam_api_key,
+                        'postedFrom': from_date,
+                        'postedTo': to_date,
+                        'naicsCode': naics.strip(),
+                        'limit': 100
+                    }
+                    if keyword:
+                        params['keyword'] = keyword
+                    if ptype:
+                        params['ptype'] = ptype
+
+                    response = requests.get(url, params=params, timeout=30)
+                    response.raise_for_status()
+
+                    data = response.json()
+                    opps = data.get('opportunitiesData', [])
+
+                    # Deduplicate by noticeId
+                    new_count = 0
+                    for opp in opps:
+                        nid = opp.get('noticeId', '')
+                        if nid not in seen_ids:
+                            seen_ids.add(nid)
+                            opportunities.append(opp)
+                            new_count += 1
+
+                    label = f"NAICS {naics.strip()}"
+                    if keyword:
+                        label += f" + '{keyword}'"
+                    print_info(f"  {label}: {len(opps)} found, {new_count} new")
+
+                except Exception as e:
+                    print_warning(f"Error fetching NAICS {naics}" +
+                                  (f" + '{keyword}'" if keyword else "") +
+                                  f": {e}")
+
+        print_success(f"Fetched {len(opportunities)} unique opportunities")
+
+        # Local IT relevance filter
+        filtered = self._filter_it_relevant(opportunities)
+        print_success(f"After IT relevance filter: {len(filtered)} of {len(opportunities)} kept")
+        return filtered
+
+    def _filter_it_relevant(self, opportunities: List[Dict]) -> List[Dict]:
+        """Filter opportunities to only IT-relevant ones using NAICS codes and keyword matching"""
+
+        # IT-related NAICS codes (strict — no general electronics/construction)
+        it_naics = {
+            '541512', '541511', '541519', '541513', '541514',  # Computer systems / IT consulting
+            '541611', '541618',  # Management consulting
+            '518210', '518110',  # Data processing / hosting
+            '511210', '513210',  # Software publishers
+            '517110', '517111', '517112', '517210', '517911', '517919',  # Telecom
+            '334111', '334118', '334210',  # Computer hardware (not 334290 - general electronic)
+            '334610', '334614',  # Software / media manufacturing
+            '423430',  # Computer equipment wholesale
+            '811211', '811212', '811213',  # Computer repair / maintenance
+        }
+
+        # IT keywords for title/description matching
+        it_keywords = [
+            'software', 'cyber', 'cloud', 'saas', 'paas', 'iaas', 'devops', 'devsecops',
+            'it services', 'it support', 'information technology', 'data center',
+            'help desk', 'service desk', 'network', 'firewall', 'server',
+            'database', 'sql', 'oracle', 'sap', 'erp', 'crm',
+            'web development', 'web application', 'mobile app',
+            'artificial intelligence', ' ai ', 'machine learning', 'analytics',
+            'power bi', 'power automate', 'powerapps', 'sharepoint', 'office 365', 'm365',
+            'azure', 'aws', 'amazon web services', 'gcp',
+            'agile', 'scrum', 'digital transformation', 'modernization',
+            'systems integration', 'enterprise architecture',
+            'zero trust', 'siem', 'endpoint', 'vulnerability',
+            'managed services', 'staff augmentation', 'development',
+            'telecommunications', 'voip', 'unified communications',
+            'iptv', 'fiber optic', 'wan', ' lan ',
+        ]
+
+        filtered = []
+        for opp in opportunities:
+            naics = opp.get('naicsCode', '')
+            if naics in it_naics:
+                filtered.append(opp)
+                continue
+
+            title = (opp.get('title', '') or '').lower()
+            desc = (opp.get('description', '') or '').lower()
+            text = f" {title} {desc} "
+
+            if any(kw in text for kw in it_keywords):
+                filtered.append(opp)
+
+        return filtered
+
     def check_contacts_at_agency(self, agency_name: str) -> Dict:
         """Check if we have contacts at this agency"""
         
@@ -139,7 +245,7 @@ class OpportunityScout:
             org_id = generate_org_id(agency_name)
             
             # Query for contacts at this organization
-            with self.kg.driver.session(database="contactsgraphdb") as session:
+            with self.kg.driver.session(database="neo4j") as session:
                 query = """
                 MATCH (p:Person)-[:WORKS_AT]->(o:Organization)
                 WHERE o.id = $org_id OR o.name CONTAINS $agency_name
@@ -195,13 +301,23 @@ class OpportunityScout:
             'reasoning': []
         }
         
-        # Extract opportunity details
-        agency = opp.get('organizationName', '')
+        # Extract opportunity details — parse dotted agency path for matching
+        full_agency = opp.get('fullParentPathName', '') or opp.get('organizationName', '')
+        agency_parts = [p.strip() for p in full_agency.split('.') if p.strip()]
         notice_id = opp.get('noticeId', '')
         title = opp.get('title', '')
-        
+
         # 1. Relationship Score (0-40 points)
-        contacts = self.check_contacts_at_agency(agency)
+        # Try each level of the agency hierarchy for contact matching
+        contacts = {'total_contacts': 0, 'decision_makers': [], 'technical_leads': [],
+                     'executives': [], 'influencers': [], 'all_contacts': []}
+        for agency_part in agency_parts:
+            contacts = self.check_contacts_at_agency(agency_part)
+            if contacts['total_contacts'] > 0:
+                break
+        # Also try the full string for keyword matching if no match yet
+        if contacts['total_contacts'] == 0 and full_agency:
+            contacts = self.check_contacts_at_agency(full_agency)
         
         if contacts['decision_makers']:
             score_breakdown['relationship_score'] += 25
@@ -425,70 +541,267 @@ class OpportunityScout:
         
         return "\n".join(report_lines)
     
-    def run_daily_scout(self, days_back: int = 7, save_report: bool = True) -> str:
-        """Run the daily scouting operation"""
-        
+    # ==================================================================
+    # NEO4J SYNC + FPDS COLLECTION (called automatically after scoring)
+    # ==================================================================
+
+    def _collect_fpds_intel(self, opportunities: List[Dict]) -> dict:
+        """Collect FPDS contract data from USAspending.gov for agencies in scored opportunities.
+
+        Uses the free USAspending.gov API (no key required, separate from SAM.gov).
+        Stores Contract + Organization + AWARDED_TO relationships directly in Neo4j.
+        """
+        from fpds_collector import FPDSCollector
+
+        # Extract unique NAICS codes from the opportunities we just scored
+        naics_codes = set()
+        for opp in opportunities:
+            naics = (opp.get('naicsCode') or '').strip()
+            if naics:
+                naics_codes.add(naics)
+
+        if not naics_codes:
+            print_warning("No NAICS codes found in opportunities — skipping FPDS collection")
+            return {'contracts_fetched': 0, 'contracts_stored': 0, 'errors': 0}
+
+        print_info(f"Collecting FPDS data for {len(naics_codes)} NAICS codes: {', '.join(sorted(naics_codes))}")
+
+        collector = FPDSCollector()
+        stats = {'contracts_fetched': 0, 'contracts_stored': 0, 'errors': 0}
+
+        for naics in sorted(naics_codes):
+            try:
+                contracts = collector.fetch_contracts_by_naics(naics, months_back=12, limit=50)
+                stats['contracts_fetched'] += len(contracts)
+
+                for contract in contracts:
+                    if collector.store_contract_in_graph(contract):
+                        stats['contracts_stored'] += 1
+                    else:
+                        stats['errors'] += 1
+
+                time.sleep(1)  # Be polite to USAspending.gov
+            except Exception as e:
+                print_warning(f"FPDS collection error for NAICS {naics}: {e}")
+                stats['errors'] += 1
+
+        collector.close()
+        return stats
+
+    def _sync_opportunities_to_neo4j(self, opportunities: List[Dict], scores: List[Dict]) -> int:
+        """Sync scored opportunities to Neo4j as Opportunity nodes."""
+        synced = 0
+
+        with self.kg.driver.session(database="neo4j") as session:
+            for opp, score in zip(opportunities, scores):
+                notice_id = opp.get('noticeId', '')
+                if not notice_id:
+                    continue
+
+                agency = opp.get('fullParentPathName', '') or opp.get('organizationName', '')
+
+                try:
+                    session.run("""
+                        MERGE (o:Opportunity {id: $notice_id})
+                        SET o.title = $title,
+                            o.agency = $agency,
+                            o.posted_date = $posted_date,
+                            o.deadline = $deadline,
+                            o.naics = $naics,
+                            o.set_aside = $set_aside,
+                            o.score = $score,
+                            o.priority = $priority,
+                            o.win_probability = $win_prob,
+                            o.recommendation = $recommendation,
+                            o.source = 'SAM.gov',
+                            o.updated_at = datetime()
+                    """,
+                        notice_id=notice_id,
+                        title=opp.get('title', ''),
+                        agency=agency,
+                        posted_date=opp.get('postedDate', ''),
+                        deadline=opp.get('responseDeadLine', ''),
+                        naics=opp.get('naicsCode', ''),
+                        set_aside=opp.get('typeOfSetAside', ''),
+                        score=score.get('total_score', 0),
+                        priority=score.get('priority', 'LOW'),
+                        win_prob=score.get('win_probability', ''),
+                        recommendation=score.get('recommendation', '')
+                    )
+                    synced += 1
+                except Exception as e:
+                    print_warning(f"Error syncing opportunity {notice_id}: {e}")
+
+        return synced
+
+    def _sync_poc_contacts_to_neo4j(self, opportunities: List[Dict]) -> dict:
+        """Sync POC contacts from opportunities to Neo4j as Person nodes with WORKS_AT.
+
+        Note: Existing Neo4j data uses 'name' as unique key (not 'id'),
+        so we MERGE by name to match the existing constraints.
+        """
+        stats = {'people': 0, 'orgs': 0, 'relationships': 0}
+
+        with self.kg.driver.session(database="neo4j") as session:
+            for opp in opportunities:
+                agency = opp.get('fullParentPathName', '') or opp.get('organizationName', '')
+                agency_clean = agency.split('.')[0].strip() if '.' in agency else agency
+
+                if not agency_clean:
+                    continue
+
+                # Create/update Organization node (MERGE by name — matches constraint)
+                session.run("""
+                    MERGE (o:Organization {name: $name})
+                    SET o.type = COALESCE(o.type, 'Federal Agency'),
+                        o.source = COALESCE(o.source, 'SAM.gov'),
+                        o.updated_at = datetime()
+                """, name=agency_clean)
+                stats['orgs'] += 1
+
+                # Process each point of contact
+                for poc in (opp.get('pointOfContact') or []):
+                    full_name = (poc.get('fullName') or '').strip()
+                    email = (poc.get('email') or '').strip()
+
+                    if not full_name and not email:
+                        continue
+
+                    poc_type = poc.get('type', 'primary')
+                    role = 'Contracting Officer' if poc_type == 'primary' else 'Point of Contact'
+
+                    # MERGE by name — matches existing Person uniqueness constraint
+                    session.run("""
+                        MERGE (p:Person {name: $name})
+                        SET p.email = COALESCE($email, p.email),
+                            p.phone = COALESCE($phone, p.phone),
+                            p.title = COALESCE($title, p.title),
+                            p.role_type = COALESCE($role, p.role_type),
+                            p.source = COALESCE(p.source, 'SAM.gov POC'),
+                            p.updated_at = datetime()
+                    """,
+                        name=full_name or email,
+                        email=email or None,
+                        phone=(poc.get('phone') or '').strip() or None,
+                        title=poc.get('title') or None,
+                        role=role
+                    )
+                    stats['people'] += 1
+
+                    # Create WORKS_AT relationship
+                    session.run("""
+                        MATCH (p:Person {name: $person_name})
+                        MATCH (o:Organization {name: $org_name})
+                        MERGE (p)-[r:WORKS_AT]->(o)
+                        SET r.source = COALESCE(r.source, 'SAM.gov POC'),
+                            r.updated_at = datetime()
+                    """, person_name=full_name or email, org_name=agency_clean)
+                    stats['relationships'] += 1
+
+        return stats
+
+    def run_daily_scout(self, days_back: int = 7, save_report: bool = True) -> dict:
+        """Run the daily scouting operation.
+
+        Returns:
+            dict with keys: total, scored, high_priority, medium_priority, report
+        """
+
         print_header("OPPORTUNITY SCOUT - DAILY RUN")
-        
+
         # Fetch opportunities
         opportunities = self.fetch_opportunities(days_back=days_back)
-        
+
         if not opportunities:
             print_warning("No opportunities found")
-            return ""
-        
+            return {'total': 0, 'scored': 0, 'high_priority': 0, 'medium_priority': 0, 'report': ''}
+
         # Score each opportunity
         print_info(f"Scoring {len(opportunities)} opportunities...")
         scores = []
-        
+
         for opp in opportunities:
             score = self.score_opportunity(opp)
             scores.append(score)
-        
+
         print_success(f"Scored {len(opportunities)} opportunities")
-        
+
         # Generate report
         print_info("Generating intelligence report...")
         report = self.generate_daily_report(opportunities, scores)
-        
-        # Save report
+
+        # Save report to knowledge_graph/ so the dashboard can find them
         if save_report:
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            report_file = f"scout_report_{timestamp}.txt"
-            
+            save_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)))
+            os.makedirs(save_dir, exist_ok=True)
+
+            report_file = os.path.join(save_dir, f"scout_report_{timestamp}.txt")
+
             with open(report_file, 'w') as f:
                 f.write(report)
-            
+
             print_success(f"Report saved to: {report_file}")
-            
+
             # Also save JSON data
-            json_file = f"scout_data_{timestamp}.json"
+            json_file = os.path.join(save_dir, f"scout_data_{timestamp}.json")
             with open(json_file, 'w') as f:
                 json.dump({
                     'timestamp': timestamp,
                     'opportunities': opportunities,
                     'scores': scores
                 }, f, indent=2)
-            
+
             print_success(f"Data saved to: {json_file}")
-        
+
+        # ---- Sync everything to Neo4j ----
+
+        # 1. Sync scored opportunities as Opportunity nodes
+        print_info("Syncing scored opportunities to Neo4j...")
+        opp_synced = self._sync_opportunities_to_neo4j(opportunities, scores)
+        print_success(f"Synced {opp_synced} opportunities to Neo4j")
+
+        # 2. Sync POC contacts as Person nodes with WORKS_AT relationships
+        print_info("Syncing POC contacts to Neo4j...")
+        contact_stats = self._sync_poc_contacts_to_neo4j(opportunities)
+        print_success(f"Neo4j contacts: {contact_stats['people']} people, {contact_stats['orgs']} orgs, {contact_stats['relationships']} relationships")
+
+        # 3. Collect FPDS contract data from USAspending.gov (free API)
+        print_info("Collecting FPDS contract data for competitive intelligence...")
+        fpds_stats = {'contracts_fetched': 0, 'contracts_stored': 0, 'errors': 0}
+        try:
+            fpds_stats = self._collect_fpds_intel(opportunities)
+            print_success(f"FPDS: {fpds_stats['contracts_fetched']} fetched, {fpds_stats['contracts_stored']} stored in Neo4j")
+        except Exception as e:
+            print_warning(f"FPDS collection skipped: {e}")
+
         # Print summary
         high_priority = sum(1 for s in scores if s['priority'] == 'HIGH')
         medium_priority = sum(1 for s in scores if s['priority'] == 'MEDIUM')
-        
+
         print("")
         print_header("SCOUT SUMMARY")
         print(f"Total Opportunities: {len(opportunities)}")
         print(f"High Priority:       {high_priority}")
         print(f"Medium Priority:     {medium_priority}")
+        print(f"Neo4j Synced:        {opp_synced} opps, {contact_stats['people']} contacts, {fpds_stats['contracts_stored']} contracts")
         print("")
-        
+
         if high_priority > 0:
             print(f"{Colors.GREEN}{Colors.BOLD}✓ {high_priority} high-priority opportunities identified!{Colors.END}")
         else:
             print(f"{Colors.YELLOW}⚠️  No high-priority opportunities this cycle{Colors.END}")
-        
-        return report
+
+        return {
+            'total': len(opportunities),
+            'scored': len(scores),
+            'high_priority': high_priority,
+            'medium_priority': medium_priority,
+            'report': report,
+            'neo4j_opportunities': opp_synced,
+            'neo4j_contacts': contact_stats,
+            'fpds_contracts': fpds_stats
+        }
     
     def close(self):
         """Close connections"""

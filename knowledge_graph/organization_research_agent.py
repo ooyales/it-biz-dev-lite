@@ -233,7 +233,7 @@ class OrganizationResearchAgent:
         if not name:
             return None
 
-        with self.driver.session(database="contactsgraphdb") as session:
+        with self.driver.session(database="neo4j") as session:
             result = session.run(
                 "MATCH (o:Organization) WHERE o.name = $name RETURN o.research_profile as profile",
                 name=name
@@ -270,7 +270,7 @@ class OrganizationResearchAgent:
             print(f"   ⚠️  No name to cache research for")
             return
 
-        with self.driver.session(database="contactsgraphdb") as session:
+        with self.driver.session(database="neo4j") as session:
             # First check if the org exists
             check_result = session.run("""
                 MATCH (o:Organization)

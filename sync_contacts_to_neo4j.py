@@ -31,7 +31,7 @@ def sync_contacts(db_path: str = 'data/contacts.db', limit: int = None):
     
     # Get existing Person names from Neo4j
     print("📊 Checking existing Person nodes in Neo4j...")
-    with driver.session(database="contactsgraphdb") as session:
+    with driver.session(database="neo4j") as session:
         result = session.run("MATCH (p:Person) RETURN p.name as name")
         existing_names = set(record['name'] for record in result if record['name'])
     
@@ -75,7 +75,7 @@ def sync_contacts(db_path: str = 'data/contacts.db', limit: int = None):
     created = 0
     errors = 0
     
-    with driver.session(database="contactsgraphdb") as session:
+    with driver.session(database="neo4j") as session:
         for i, contact in enumerate(to_create, 1):
             try:
                 name = contact.get('name', '').strip()

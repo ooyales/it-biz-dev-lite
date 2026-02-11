@@ -46,14 +46,52 @@ AGENCY_MAPPINGS = {
     # Agriculture
     'AGRICULTURE, DEPARTMENT OF': ['USDA'],
     'DEPARTMENT OF AGRICULTURE': ['USDA'],
-    
+
+    # Justice
+    'JUSTICE, DEPARTMENT OF': ['DOJ', 'Department of Justice', 'FBI'],
+    'DEPARTMENT OF JUSTICE': ['DOJ', 'Department of Justice', 'FBI'],
+    'FEDERAL BUREAU OF INVESTIGATION': ['FBI'],
+    'FEDERAL PRISON SYSTEM / BUREAU OF PRISONS': ['Bureau of Prisons', 'BOP'],
+
+    # Veterans Affairs
+    'VETERANS AFFAIRS, DEPARTMENT OF': ['VA', 'Department of Veterans Affairs'],
+    'DEPARTMENT OF VETERANS AFFAIRS': ['VA', 'Department of Veterans Affairs'],
+
+    # Health and Human Services
+    'HEALTH AND HUMAN SERVICES, DEPARTMENT OF': ['HHS', 'Department of Health and Human Services'],
+
+    # State Department
+    'STATE, DEPARTMENT OF': ['DOS', 'Department of State', 'State Department'],
+
+    # Transportation
+    'TRANSPORTATION, DEPARTMENT OF': ['DOT', 'Department of Transportation', 'FAA'],
+    'FEDERAL AVIATION ADMINISTRATION': ['FAA'],
+
+    # Energy
+    'ENERGY, DEPARTMENT OF': ['DOE', 'Department of Energy'],
+
+    # Commerce
+    'COMMERCE, DEPARTMENT OF': ['DOC', 'Department of Commerce', 'NOAA'],
+    'NATIONAL OCEANIC AND ATMOSPHERIC ADMINISTRATION': ['NOAA'],
+
+    # Homeland Security sub-agencies
+    'HOMELAND SECURITY, DEPARTMENT OF': ['Department of Homeland Security', 'DHS', 'TSA', 'USCG'],
+    'TRANSPORTATION SECURITY ADMINISTRATION': ['TSA'],
+
     # Social Security
     'SSA': ['SSA'],
     'SOCIAL SECURITY ADMINISTRATION': ['SSA'],
-    
+
     # National Park Service
     'NPS': ['NPS'],
     'NATIONAL PARK SERVICE': ['NPS'],
+
+    # Other agencies in scout data
+    'FEDERAL COMMUNICATIONS COMMISSION': ['FCC'],
+    'FEDERAL DEPOSIT INSURANCE CORPORATION': ['FDIC'],
+    'LIBRARY OF CONGRESS': ['Library of Congress'],
+    'DEFENSE INFORMATION SYSTEMS AGENCY (DISA)': ['DISA', 'Defense Information Systems Agency'],
+    'NATIONAL GEOSPATIAL-INTELLIGENCE AGENCY (NGA)': ['NGA'],
 }
 
 # Keywords for fuzzy matching
@@ -72,6 +110,25 @@ KEYWORD_MAPPINGS = {
     'WILDLIFE': ['U.S. Fish and Wildlife Service'],
     'SOCIAL SECURITY': ['SSA'],
     'PARK': ['NPS'],
+    'JUSTICE': ['DOJ', 'Department of Justice', 'FBI'],
+    'VETERANS': ['VA', 'Department of Veterans Affairs'],
+    'HEALTH AND HUMAN': ['HHS', 'Department of Health and Human Services'],
+    'STATE': ['DOS', 'Department of State', 'State Department'],
+    'TRANSPORTATION': ['DOT', 'Department of Transportation', 'FAA'],
+    'ENERGY': ['DOE', 'Department of Energy'],
+    'COMMERCE': ['DOC', 'Department of Commerce', 'NOAA'],
+    'DISA': ['DISA', 'Defense Information Systems Agency'],
+    'NGA': ['NGA'],
+    'FBI': ['FBI'],
+    'TSA': ['TSA'],
+    'NOAA': ['NOAA'],
+    'FAA': ['FAA'],
+    'FCC': ['FCC'],
+    'FDIC': ['FDIC'],
+    'PRISON': ['Bureau of Prisons', 'BOP'],
+    'NAVAIR': ['NAVY', 'US NAVY', 'NAVAIR'],
+    'NAVSEA': ['NAVY', 'US NAVY', 'NAVSEA'],
+    'SPAWAR': ['NAVY', 'US NAVY', 'SPAWAR', 'NIWC'],
 }
 
 
@@ -128,7 +185,7 @@ def get_contacts_for_agency(kg_client, agency_name: str) -> dict:
         }
     
     # Query for contacts at any of these organizations
-    with kg_client.driver.session(database="contactsgraphdb") as session:
+    with kg_client.driver.session(database="neo4j") as session:
         query = """
         MATCH (p:Person)-[:WORKS_AT]->(o:Organization)
         WHERE o.name IN $org_names

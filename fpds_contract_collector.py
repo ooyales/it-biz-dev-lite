@@ -425,7 +425,7 @@ class FPDSCollector:
 
         print(f"\n📥 Importing {len(contracts)} contracts to Neo4j...")
 
-        with self.driver.session(database="contactsgraphdb") as session:
+        with self.driver.session(database="neo4j") as session:
             for idx in [
                 "CREATE INDEX contract_id IF NOT EXISTS FOR (c:Contract) ON (c.contract_id)",
                 "CREATE INDEX contract_agency IF NOT EXISTS FOR (c:Contract) ON (c.agency)",
@@ -475,7 +475,7 @@ class FPDSCollector:
     # Stats
     # ------------------------------------------------------------------
     def get_statistics(self) -> Dict:
-        with self.driver.session(database="contactsgraphdb") as session:
+        with self.driver.session(database="neo4j") as session:
             stats = {}
 
             row = session.run("MATCH (c:Contract) RETURN count(c) as total").single()

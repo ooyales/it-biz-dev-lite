@@ -17,6 +17,7 @@ import sqlite3
 import os
 import sys
 import json
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -58,13 +59,9 @@ except ImportError:
 app = Flask(__name__)
 CORS(app)
 
-# Register competitive intelligence API routes
-try:
-    from competitive_intel_api import comp_intel_bp
-    app.register_blueprint(comp_intel_bp)
-    print("✓ Competitive Intelligence API routes registered")
-except ImportError as e:
-    print(f"⚠️  Competitive Intel API not available: {e}")
+# Competitive intelligence routes are defined inline below using USAspending.gov API
+# (Blueprint in competitive_intel_api.py was Neo4j-only and has been superseded)
+print("✓ Competitive Intelligence routes (USAspending-based) active")
 
 # Database path
 DATABASE = 'data/contacts.db'
@@ -168,6 +165,26 @@ def ensure_schema_updates():
             UNIQUE(opportunity_id, url)
         )
     ''')
+    db.execute('''
+        CREATE TABLE IF NOT EXISTS opportunity_stage (
+            opportunity_id TEXT PRIMARY KEY,
+            stage TEXT NOT NULL DEFAULT 'new',
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    db.execute('''
+        CREATE TABLE IF NOT EXISTS organization_research (
+            org_name TEXT PRIMARY KEY,
+            research_profile TEXT,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    # Add research_profile column if missing (dual-write: Neo4j + SQLite)
+    try:
+        db.execute('ALTER TABLE contacts ADD COLUMN research_profile TEXT')
+        print("  ✓ Added research_profile column to contacts table")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
     db.commit()
     db.close()
 
@@ -385,8 +402,23 @@ def get_contacts():
     # Convert to list of dicts
     contacts_list = [dict(contact) for contact in contacts]
     
-    # Check which contacts have research profiles in Neo4j (optional enhancement)
+    # Check which contacts have research profiles (Neo4j + SQLite fallback)
     researched_names = set()
+
+    # 1. Check SQLite first (always available)
+    try:
+        db2 = get_db()
+        sqlite_researched = db2.execute(
+            "SELECT name FROM contacts WHERE research_profile IS NOT NULL AND research_profile != ''"
+        ).fetchall()
+        db2.close()
+        researched_names = set(row['name'] for row in sqlite_researched)
+        if researched_names:
+            print(f"DEBUG: Found {len(researched_names)} contacts with research in SQLite")
+    except Exception as e:
+        print(f"SQLite research lookup failed: {e}")
+
+    # 2. Also check Neo4j (may have additional entries)
     try:
         if NEO4J_AVAILABLE:
             from neo4j import GraphDatabase
@@ -394,26 +426,22 @@ def get_contacts():
                 os.getenv('NEO4J_URI', 'bolt://localhost:7687'),
                 auth=('neo4j', os.getenv('NEO4J_PASSWORD'))
             )
-            
-            with driver.session(database="contactsgraphdb") as session:
+
+            with driver.session(database="neo4j") as session:
                 result = session.run("""
                     MATCH (p:Person)
                     WHERE p.research_profile IS NOT NULL
                     RETURN p.name as name
                 """)
-                researched_names = set(record['name'] for record in result)
-            
+                neo4j_names = set(record['name'] for record in result)
+                researched_names.update(neo4j_names)
+
             driver.close()
-            
-            # Debug: print what we found
-            if researched_names:
-                print(f"DEBUG: Found {len(researched_names)} contacts with research: {list(researched_names)[:5]}")
-            else:
-                print("DEBUG: No contacts with research found in Neo4j")
+
+            if neo4j_names:
+                print(f"DEBUG: Found {len(neo4j_names)} contacts with research in Neo4j")
     except Exception as e:
-        # Neo4j lookup failed, continue without research indicators
         print(f"Neo4j research lookup failed: {e}")
-        researched_names = set()
     
     # Mark contacts that have research
     for contact in contacts_list:
@@ -460,47 +488,52 @@ def get_contact(contact_id):
 
 @app.route('/api/contacts/<int:contact_id>/research', methods=['GET'])
 def get_contact_research(contact_id):
-    """Get research profile for a contact from Neo4j"""
+    """Get research profile for a contact — checks Neo4j first, then SQLite fallback"""
     try:
-        # Get contact name from SQLite
+        # Get contact name and SQLite research from contacts table
         db = get_db()
-        contact = db.execute('SELECT name FROM contacts WHERE id = ?', (contact_id,)).fetchone()
+        contact = db.execute('SELECT name, research_profile FROM contacts WHERE id = ?', (contact_id,)).fetchone()
         db.close()
-        
+
         if not contact:
             return jsonify({'error': 'Contact not found'}), 404
-        
+
         name = contact['name']
-        
-        # Get research from Neo4j
-        if not NEO4J_AVAILABLE:
-            return jsonify({'contact_id': contact_id, 'name': name, 'research_profile': None})
-        
-        from neo4j import GraphDatabase
-        driver = GraphDatabase.driver(
-            os.getenv('NEO4J_URI', 'bolt://localhost:7687'),
-            auth=('neo4j', os.getenv('NEO4J_PASSWORD'))
-        )
-        
-        with driver.session(database="contactsgraphdb") as session:
-            result = session.run(
-                "MATCH (p:Person) WHERE p.name = $name RETURN p.research_profile as profile",
-                name=name
-            )
-            row = result.single()
-            
-            if row and row['profile']:
-                profile = json.loads(row['profile']) if isinstance(row['profile'], str) else row['profile']
+        profile = None
+
+        # 1. Try Neo4j first
+        if NEO4J_AVAILABLE:
+            try:
+                from neo4j import GraphDatabase
+                driver = GraphDatabase.driver(
+                    os.getenv('NEO4J_URI', 'bolt://localhost:7687'),
+                    auth=('neo4j', os.getenv('NEO4J_PASSWORD'))
+                )
+                with driver.session(database="neo4j") as session:
+                    result = session.run(
+                        "MATCH (p:Person) WHERE p.name = $name RETURN p.research_profile as profile",
+                        name=name
+                    )
+                    row = result.single()
+                    if row and row['profile']:
+                        profile = json.loads(row['profile']) if isinstance(row['profile'], str) else row['profile']
                 driver.close()
-                return jsonify({
-                    'contact_id': contact_id,
-                    'name': name,
-                    'research_profile': profile
-                })
-        
-        driver.close()
-        return jsonify({'contact_id': contact_id, 'name': name, 'research_profile': None})
-        
+            except Exception:
+                pass
+
+        # 2. Fall back to SQLite
+        if not profile and contact['research_profile']:
+            try:
+                profile = json.loads(contact['research_profile'])
+            except (json.JSONDecodeError, TypeError):
+                pass
+
+        return jsonify({
+            'contact_id': contact_id,
+            'name': name,
+            'research_profile': profile
+        })
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -597,7 +630,7 @@ def sync_contacts_from_neo4j():
         )
         
         # Get Neo4j contacts
-        with kg.driver.session(database="contactsgraphdb") as session:
+        with kg.driver.session(database="neo4j") as session:
             query = """
             MATCH (p:Person)
             OPTIONAL MATCH (p)-[:WORKS_AT]->(o:Organization)
@@ -711,34 +744,62 @@ def sync_contacts_from_neo4j():
 # AGENT INTEGRATION ROUTES
 # ============================================================================
 
+def _load_opportunity(notice_id: str) -> dict:
+    """Load an opportunity from the most recent scout data file by notice_id."""
+    if not notice_id:
+        return None
+    scout_files = list(Path('knowledge_graph').glob('scout_data_*.json'))
+    if not scout_files:
+        scout_files = list(Path('.').glob('scout_data_*.json'))
+    if not scout_files:
+        return None
+    with open(sorted(scout_files, reverse=True)[0]) as f:
+        scout_data = json.load(f)
+    for opp in scout_data.get('opportunities', []):
+        opp_id = opp.get('notice_id') or opp.get('noticeId')
+        if opp_id == notice_id:
+            return opp
+    return None
+
+
 @app.route('/api/agents/capability/analyze', methods=['POST'])
 def analyze_capability():
     """Agent 3: Capability Matching"""
     if not AGENTS_AVAILABLE:
         return jsonify({'error': 'Agents not available'}), 503
-    
+
+    t0 = time.time()
     try:
         data = request.json
         notice_id = data.get('notice_id', '')
-        requirements = data.get('requirements', '')
-        
-        # Build opportunity data
+
+        # Load full opportunity data from scout file
+        opp = _load_opportunity(notice_id)
+        if not opp:
+            opp = {'title': 'Opportunity', 'description': data.get('requirements', '')}
+
         opportunity_data = {
-            'notice_id': notice_id,
-            'requirements': requirements
+            'title': opp.get('title', ''),
+            'description': opp.get('description', '') or data.get('requirements', ''),
+            'agency': opp.get('fullParentPathName', '') or opp.get('agency', ''),
         }
-        
-        # Use AgentExecutor wrapper
+
         from agent_executor import AgentExecutor
         executor = AgentExecutor()
-        
         results = executor.run_capability_match(opportunity_data)
-        
+
+        from agent_logger import get_logger
+        get_logger().log_agent_activity(3, 'Capability Matching', f'Analyze: {opp.get("title", notice_id)[:80]}',
+            'success' if results.get('status') == 'success' else 'error', time.time() - t0,
+            input_data={'notice_id': notice_id}, output_data={'capability_score': results.get('capability_score')})
+
         return jsonify(results)
-        
+
     except Exception as e:
         import traceback
         traceback.print_exc()
+        from agent_logger import get_logger
+        get_logger().log_agent_activity(3, 'Capability Matching', 'Analyze opportunity', 'error', time.time() - t0, error_message=str(e))
         return jsonify({'error': str(e), 'status': 'error'}), 500
 
 
@@ -747,51 +808,36 @@ def generate_rfi():
     """Agent 4: RFI Response Generator"""
     if not AGENTS_AVAILABLE:
         return jsonify({'error': 'Agents not available'}), 503
-    
+
+    t0 = time.time()
     try:
         data = request.json
         notice_id = data.get('notice_id', '')
-        
+
         if not notice_id:
             return jsonify({'error': 'notice_id required'}), 400
-        
-        # Load opportunity data
-        scout_files = list(Path('knowledge_graph').glob('scout_data_*.json'))
-        if not scout_files:
-            scout_files = list(Path('.').glob('scout_data_*.json'))
-        
-        if scout_files:
-            with open(sorted(scout_files, reverse=True)[0]) as f:
-                scout_data = json.load(f)
-            
-            # Find opportunity
-            opp = None
-            for opportunity in scout_data.get('opportunities', []):
-                opp_id = opportunity.get('notice_id') or opportunity.get('noticeId')
-                if opp_id == notice_id:
-                    opp = opportunity
-                    break
-        else:
-            opp = None
-        
+
+        opp = _load_opportunity(notice_id)
         if not opp:
             opp = {'title': 'Opportunity', 'agency': '', 'description': ''}
-        
-        # Use AgentExecutor wrapper
+
         from agent_executor import AgentExecutor
         executor = AgentExecutor()
-        
         results = executor.run_rfi_generator(notice_id, opp)
-        
+
+        from agent_logger import get_logger
+        get_logger().log_agent_activity(4, 'RFI Generator', f'Generate RFI: {opp.get("title", notice_id)[:80]}',
+            'success' if results.get('status') == 'success' else 'error', time.time() - t0,
+            input_data={'notice_id': notice_id}, output_data={'file_path': results.get('file_path')})
+
         return jsonify(results)
-        
+
     except Exception as e:
         import traceback
         traceback.print_exc()
+        from agent_logger import get_logger
+        get_logger().log_agent_activity(4, 'RFI Generator', 'Generate RFI', 'error', time.time() - t0, error_message=str(e))
         return jsonify({'error': str(e), 'status': 'error'}), 500
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/api/agents/proposal/generate', methods=['POST'])
@@ -799,46 +845,35 @@ def generate_proposal():
     """Agent 5: Proposal Writing Assistant"""
     if not AGENTS_AVAILABLE:
         return jsonify({'error': 'Agents not available'}), 503
-    
+
+    t0 = time.time()
     try:
         data = request.json
         notice_id = data.get('notice_id', '')
-        
+
         if not notice_id:
             return jsonify({'error': 'notice_id required'}), 400
-        
-        # Load opportunity data
-        scout_files = list(Path('knowledge_graph').glob('scout_data_*.json'))
-        if not scout_files:
-            scout_files = list(Path('.').glob('scout_data_*.json'))
-        
-        if scout_files:
-            with open(sorted(scout_files, reverse=True)[0]) as f:
-                scout_data = json.load(f)
-            
-            opp = None
-            for opportunity in scout_data.get('opportunities', []):
-                opp_id = opportunity.get('notice_id') or opportunity.get('noticeId')
-                if opp_id == notice_id:
-                    opp = opportunity
-                    break
-        else:
-            opp = None
-        
+
+        opp = _load_opportunity(notice_id)
         if not opp:
             opp = {'title': 'Opportunity', 'agency': '', 'description': ''}
-        
-        # Use AgentExecutor wrapper
+
         from agent_executor import AgentExecutor
         executor = AgentExecutor()
-        
         results = executor.run_proposal_writer(notice_id, opp)
-        
+
+        from agent_logger import get_logger
+        get_logger().log_agent_activity(5, 'Proposal Writer', f'Generate proposal: {opp.get("title", notice_id)[:80]}',
+            'success' if results.get('status') == 'success' else 'error', time.time() - t0,
+            input_data={'notice_id': notice_id}, output_data={'file_path': results.get('file_path')})
+
         return jsonify(results)
-        
+
     except Exception as e:
         import traceback
         traceback.print_exc()
+        from agent_logger import get_logger
+        get_logger().log_agent_activity(5, 'Proposal Writer', 'Generate proposal', 'error', time.time() - t0, error_message=str(e))
         return jsonify({'error': str(e), 'status': 'error'}), 500
 
 
@@ -847,46 +882,35 @@ def generate_pricing():
     """Agent 6: Pricing & Budget Generator"""
     if not AGENTS_AVAILABLE:
         return jsonify({'error': 'Agents not available'}), 503
-    
+
+    t0 = time.time()
     try:
         data = request.json
         notice_id = data.get('notice_id', '')
-        
+
         if not notice_id:
             return jsonify({'error': 'notice_id required'}), 400
-        
-        # Load opportunity data
-        scout_files = list(Path('knowledge_graph').glob('scout_data_*.json'))
-        if not scout_files:
-            scout_files = list(Path('.').glob('scout_data_*.json'))
-        
-        if scout_files:
-            with open(sorted(scout_files, reverse=True)[0]) as f:
-                scout_data = json.load(f)
-            
-            opp = None
-            for opportunity in scout_data.get('opportunities', []):
-                opp_id = opportunity.get('notice_id') or opportunity.get('noticeId')
-                if opp_id == notice_id:
-                    opp = opportunity
-                    break
-        else:
-            opp = None
-        
+
+        opp = _load_opportunity(notice_id)
         if not opp:
             opp = {'title': 'Opportunity', 'description': ''}
-        
-        # Use AgentExecutor wrapper
+
         from agent_executor import AgentExecutor
         executor = AgentExecutor()
-        
         results = executor.run_pricing_generator(notice_id, opp)
-        
+
+        from agent_logger import get_logger
+        get_logger().log_agent_activity(6, 'Pricing Generator', f'Generate pricing: {opp.get("title", notice_id)[:80]}',
+            'success' if results.get('status') == 'success' else 'error', time.time() - t0,
+            input_data={'notice_id': notice_id}, output_data={'total_value': results.get('pricing', {}).get('total_value')})
+
         return jsonify(results)
-        
+
     except Exception as e:
         import traceback
         traceback.print_exc()
+        from agent_logger import get_logger
+        get_logger().log_agent_activity(6, 'Pricing Generator', 'Generate pricing', 'error', time.time() - t0, error_message=str(e))
         return jsonify({'error': str(e), 'status': 'error'}), 500
 
 
@@ -896,131 +920,89 @@ def generate_pricing():
 
 @app.route('/api/competitive/stats', methods=['GET'])
 def get_competitive_stats():
-    """Get overall competitive intelligence statistics from Neo4j"""
+    """Get overall competitive intelligence statistics via USAspending.gov"""
     try:
-        if not NEO4J_AVAILABLE:
-            return jsonify({'error': 'Neo4j not available'}), 503
-        
-        from neo4j import GraphDatabase
-        driver = GraphDatabase.driver(
-            os.getenv('NEO4J_URI', 'bolt://localhost:7687'),
-            auth=('neo4j', os.getenv('NEO4J_PASSWORD'))
-        )
-        
-        with driver.session(database="contactsgraphdb") as session:
-            # Get contract stats
-            result = session.run("""
-                MATCH (c:Contract)
-                OPTIONAL MATCH (c)-[:AWARDED_TO]->(org:Organization)
-                WITH c, org
-                RETURN 
-                    count(DISTINCT c) as contract_count,
-                    count(DISTINCT org) as contractor_count,
-                    count(DISTINCT c.agency) as agency_count,
-                    sum(toFloat(c.value)) as total_value
-            """)
-            row = result.single()
-            
-            stats = {
-                'contract_count': row['contract_count'] if row else 0,
-                'contractor_count': row['contractor_count'] if row else 0,
-                'agency_count': row['agency_count'] if row else 0,
-                'total_value': row['total_value'] if row and row['total_value'] else 0
-            }
-        
-        driver.close()
-        return jsonify(stats)
-        
+        from usaspending_intel import USAspendingIntelligence
+        usa = USAspendingIntelligence()
+
+        # Get top contractors across all agencies to derive stats
+        incumbents = usa.get_incumbents_at_agency('', '', limit=50)
+        total_value = sum(i.get('contract_value_raw', 0) for i in incumbents)
+
+        return jsonify({
+            'contract_count': sum(i.get('awards', 0) for i in incumbents),
+            'contractor_count': len(incumbents),
+            'agency_count': len(set(i.get('agency', '') for i in incumbents if i.get('agency'))),
+            'total_value': total_value
+        })
+
     except Exception as e:
         print(f"Error getting competitive stats: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'contract_count': 0, 'contractor_count': 0, 'agency_count': 0, 'total_value': 0})
 
 
 @app.route('/api/competitive/incumbents', methods=['GET'])
 def get_competitive_incumbents():
-    """Get top contractors ranked by contract value"""
+    """Get top contractors ranked by contract value via USAspending.gov"""
     try:
-        if not NEO4J_AVAILABLE:
-            return jsonify({'error': 'Neo4j not available'}), 503
-        
-        from neo4j import GraphDatabase
-        driver = GraphDatabase.driver(
-            os.getenv('NEO4J_URI', 'bolt://localhost:7687'),
-            auth=('neo4j', os.getenv('NEO4J_PASSWORD'))
-        )
-        
-        with driver.session(database="contactsgraphdb") as session:
-            result = session.run("""
-                MATCH (c:Contract)-[:AWARDED_TO]->(org:Organization)
-                WITH org.name as contractor, 
-                     count(c) as contract_count,
-                     sum(toFloat(c.value)) as total_value,
-                     collect(DISTINCT c.agency)[0..3] as agencies,
-                     collect(DISTINCT c.naics)[0..3] as naics_codes
-                WHERE contractor IS NOT NULL
-                RETURN contractor, contract_count, total_value, 
-                       total_value / contract_count as avg_value,
-                       agencies[0] as top_agency,
-                       naics_codes
-                ORDER BY total_value DESC
-                LIMIT 50
-            """)
-            
-            incumbents = []
-            for record in result:
-                incumbents.append({
-                    'contractor': record['contractor'],
-                    'contract_count': record['contract_count'],
-                    'total_value': record['total_value'] or 0,
-                    'avg_value': record['avg_value'] or 0,
-                    'top_agency': record['top_agency'],
-                    'naics_codes': record['naics_codes'] or []
-                })
-        
-        driver.close()
+        from usaspending_intel import USAspendingIntelligence, normalize_agency_name
+        usa = USAspendingIntelligence()
+
+        agency = request.args.get('agency', '')
+        naics = request.args.get('naics', '')
+        if agency:
+            agency = normalize_agency_name(agency)
+
+        raw = usa.get_incumbents_at_agency(agency, naics, limit=50)
+
+        incumbents = []
+        for r in raw:
+            tv = r.get('contract_value_raw', 0)
+            awards = r.get('awards', 0)
+            incumbents.append({
+                'contractor': r['company'],
+                'contract_count': awards,
+                'total_value': tv,
+                'avg_value': tv / awards if awards else 0,
+                'top_agency': agency or 'All',
+                'naics_codes': [naics] if naics else []
+            })
+
         return jsonify({'incumbents': incumbents})
-        
+
     except Exception as e:
         print(f"Error getting incumbents: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': str(e), 'incumbents': []}), 500
 
 
 @app.route('/api/competitive/filter-options', methods=['GET'])
 def get_competitive_filter_options():
-    """Get available filter options for competitive intel"""
+    """Get available filter options from scout data"""
     try:
-        if not NEO4J_AVAILABLE:
-            return jsonify({'agencies': [], 'naics': []})
-        
-        from neo4j import GraphDatabase
-        driver = GraphDatabase.driver(
-            os.getenv('NEO4J_URI', 'bolt://localhost:7687'),
-            auth=('neo4j', os.getenv('NEO4J_PASSWORD'))
-        )
-        
-        with driver.session(database="contactsgraphdb") as session:
-            # Get unique agencies
-            result = session.run("""
-                MATCH (c:Contract)
-                WHERE c.agency IS NOT NULL AND c.agency <> ''
-                RETURN DISTINCT c.agency as agency
-                ORDER BY agency
-                LIMIT 100
-            """)
-            agencies = [record['agency'] for record in result]
-            
-            # Get unique NAICS
-            result = session.run("""
-                MATCH (c:Contract)
-                WHERE c.naics IS NOT NULL AND c.naics <> ''
-                RETURN DISTINCT c.naics as naics
-                ORDER BY naics
-            """)
-            naics = [record['naics'] for record in result]
-        
-        driver.close()
-        return jsonify({'agencies': agencies, 'naics': naics})
-        
+        from usaspending_intel import normalize_agency_name
+        scout_files = sorted(Path('knowledge_graph').glob('scout_data_*.json'), reverse=True)
+        if not scout_files:
+            scout_files = sorted(Path('.').glob('scout_data_*.json'), reverse=True)
+
+        agencies = set()
+        naics = set()
+
+        if scout_files:
+            with open(scout_files[0]) as f:
+                data = json.load(f)
+            for opp in data.get('opportunities', []):
+                raw_agency = opp.get('fullParentPathName', '')
+                if raw_agency:
+                    agencies.add(normalize_agency_name(raw_agency))
+                nc = opp.get('naicsCode', '')
+                if nc:
+                    naics.add(str(nc))
+
+        return jsonify({
+            'agencies': sorted(agencies),
+            'naics': sorted(naics)
+        })
+
     except Exception as e:
         print(f"Error getting filter options: {e}")
         return jsonify({'agencies': [], 'naics': []})
@@ -1028,171 +1010,128 @@ def get_competitive_filter_options():
 
 @app.route('/api/competitive/teaming-partners', methods=['GET'])
 def get_teaming_partners():
-    """Get potential teaming partners based on complementary capabilities"""
+    """Get potential teaming partners via USAspending.gov"""
     try:
-        if not NEO4J_AVAILABLE:
-            return jsonify({'error': 'Neo4j not available'}), 503
-        
-        from neo4j import GraphDatabase
-        driver = GraphDatabase.driver(
-            os.getenv('NEO4J_URI', 'bolt://localhost:7687'),
-            auth=('neo4j', os.getenv('NEO4J_PASSWORD'))
-        )
-        
-        with driver.session(database="contactsgraphdb") as session:
-            # Partners by shared NAICS - contractors working in same space
-            result = session.run("""
-                MATCH (c:Contract)-[:AWARDED_TO]->(org:Organization)
-                WHERE c.naics IS NOT NULL AND org.name IS NOT NULL
-                WITH c.naics as naics, org.name as contractor, 
-                     count(c) as contract_count,
-                     sum(toFloat(c.value)) as total_value
-                ORDER BY naics, total_value DESC
-                WITH naics, collect({
-                    contractor: contractor, 
-                    contract_count: contract_count, 
-                    total_value: total_value
-                })[0..10] as top_contractors
-                RETURN naics, top_contractors
-                ORDER BY size(top_contractors) DESC
-                LIMIT 10
-            """)
-            
-            by_naics = []
-            for record in result:
-                by_naics.append({
-                    'naics': record['naics'],
-                    'contractors': record['top_contractors']
-                })
-            
-            # Partners by shared agencies - contractors with same customers
-            result = session.run("""
-                MATCH (c:Contract)-[:AWARDED_TO]->(org:Organization)
-                WHERE c.agency IS NOT NULL AND c.agency <> '' AND org.name IS NOT NULL
-                WITH c.agency as agency, org.name as contractor,
-                     count(c) as contract_count,
-                     sum(toFloat(c.value)) as total_value
-                ORDER BY agency, total_value DESC
-                WITH agency, collect({
-                    contractor: contractor,
-                    contract_count: contract_count,
-                    total_value: total_value
-                })[0..10] as top_contractors
-                WHERE size(top_contractors) >= 2
-                RETURN agency, top_contractors
-                ORDER BY size(top_contractors) DESC
-                LIMIT 10
-            """)
-            
-            by_agency = []
-            for record in result:
-                by_agency.append({
-                    'agency': record['agency'],
-                    'contractors': record['top_contractors']
-                })
-            
-            # Recommended partners - mid-size contractors with diverse experience
-            result = session.run("""
-                MATCH (c:Contract)-[:AWARDED_TO]->(org:Organization)
-                WITH org.name as contractor,
-                     count(c) as contract_count,
-                     sum(toFloat(c.value)) as total_value,
-                     count(DISTINCT c.agency) as agency_diversity,
-                     count(DISTINCT c.naics) as naics_diversity,
-                     collect(DISTINCT c.agency)[0..3] as top_agencies,
-                     collect(DISTINCT c.naics)[0..3] as naics_codes
-                WHERE contractor IS NOT NULL 
-                  AND contract_count >= 2 
-                  AND contract_count <= 50
-                RETURN contractor, contract_count, total_value, 
-                       agency_diversity, naics_diversity,
-                       top_agencies, naics_codes,
-                       (agency_diversity * 2 + naics_diversity + contract_count) as partner_score
-                ORDER BY partner_score DESC
-                LIMIT 20
-            """)
-            
-            recommended = []
-            for record in result:
-                recommended.append({
-                    'contractor': record['contractor'],
-                    'contract_count': record['contract_count'],
-                    'total_value': record['total_value'] or 0,
-                    'agency_diversity': record['agency_diversity'],
-                    'naics_diversity': record['naics_diversity'],
-                    'top_agencies': record['top_agencies'] or [],
-                    'naics_codes': record['naics_codes'] or [],
-                    'partner_score': record['partner_score']
-                })
-        
-        driver.close()
+        from usaspending_intel import USAspendingIntelligence, normalize_agency_name
+        usa = USAspendingIntelligence()
+
+        # Collect unique NAICS from scout data for partner search
+        naics_codes = set()
+        agencies_in_data = set()
+        scout_files = sorted(Path('knowledge_graph').glob('scout_data_*.json'), reverse=True)
+        if not scout_files:
+            scout_files = sorted(Path('.').glob('scout_data_*.json'), reverse=True)
+        if scout_files:
+            with open(scout_files[0]) as f:
+                data = json.load(f)
+            for opp in data.get('opportunities', []):
+                nc = opp.get('naicsCode', '')
+                if nc:
+                    naics_codes.add(str(nc))
+                raw_agency = opp.get('fullParentPathName', '')
+                if raw_agency:
+                    agencies_in_data.add(normalize_agency_name(raw_agency))
+
+        # Get partners for top NAICS codes
+        by_naics = []
+        for nc in sorted(naics_codes)[:5]:
+            partners = usa.find_teaming_partners(naics_code=nc, small_business_only=False, min_revenue=500_000, max_revenue=50_000_000)
+            if partners:
+                contractors = [{'contractor': p['name'], 'contract_count': p.get('award_count', 0),
+                                'total_value': p.get('total_value', 0)} for p in partners[:10]]
+                by_naics.append({'naics': nc, 'contractors': contractors})
+
+        # Get incumbents per agency as "by_agency"
+        by_agency = []
+        for agency in sorted(agencies_in_data)[:5]:
+            incumbents = usa.get_incumbents_at_agency(agency, '', limit=10)
+            if incumbents:
+                contractors = [{'contractor': i['company'], 'contract_count': i.get('awards', 0),
+                                'total_value': i.get('contract_value_raw', 0)} for i in incumbents]
+                by_agency.append({'agency': agency, 'contractors': contractors})
+
+        # Recommended = small-to-mid companies across all NAICS
+        recommended = []
+        seen = set()
+        for nc in sorted(naics_codes)[:3]:
+            partners = usa.find_teaming_partners(naics_code=nc, small_business_only=False, min_revenue=1_000_000, max_revenue=20_000_000)
+            for p in partners[:10]:
+                if p['name'] not in seen:
+                    seen.add(p['name'])
+                    recommended.append({
+                        'contractor': p['name'],
+                        'contract_count': p.get('award_count', 0),
+                        'total_value': p.get('total_value', 0),
+                        'agency_diversity': 1,
+                        'naics_diversity': 1,
+                        'top_agencies': [],
+                        'naics_codes': [nc],
+                        'partner_score': p.get('award_count', 0) * 2
+                    })
+        recommended.sort(key=lambda x: x['partner_score'], reverse=True)
+
         return jsonify({
             'by_naics': by_naics,
             'by_agency': by_agency,
-            'recommended': recommended
+            'recommended': recommended[:20]
         })
-        
+
     except Exception as e:
         print(f"Error getting teaming partners: {e}")
         import traceback
         traceback.print_exc()
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'by_naics': [], 'by_agency': [], 'recommended': []})
 
 
 @app.route('/api/competitive/organization/<path:org_name>/research', methods=['GET'])
 def get_organization_research(org_name):
-    """Get research profile for an organization from Neo4j"""
+    """Get cached research profile for an organization from SQLite + USAspending context"""
     try:
-        if not NEO4J_AVAILABLE:
-            return jsonify({'error': 'Neo4j not available'}), 503
-        
-        from neo4j import GraphDatabase
-        driver = GraphDatabase.driver(
-            os.getenv('NEO4J_URI', 'bolt://localhost:7687'),
-            auth=('neo4j', os.getenv('NEO4J_PASSWORD'))
-        )
-        
-        with driver.session(database="contactsgraphdb") as session:
-            # Get organization info and research profile
-            result = session.run("""
-                MATCH (o:Organization)
-                WHERE o.name = $name
-                OPTIONAL MATCH (c:Contract)-[:AWARDED_TO]->(o)
-                WITH o, count(c) as contract_count, sum(toFloat(c.value)) as total_value,
-                     collect(DISTINCT c.naics)[0..5] as naics_codes,
-                     collect(DISTINCT c.agency)[0..5] as top_agencies
-                RETURN o.name as name, o.research_profile as profile,
-                       contract_count, total_value, naics_codes, top_agencies
-            """, name=org_name)
-            
-            row = result.single()
-            
-            if not row:
-                driver.close()
-                return jsonify({
-                    'name': org_name,
-                    'research_profile': None,
-                    'contract_count': 0,
-                    'total_value': 0
-                })
-            
-            profile = None
-            if row['profile']:
-                try:
-                    profile = json.loads(row['profile']) if isinstance(row['profile'], str) else row['profile']
-                except:
-                    profile = None
-            
-            driver.close()
-            return jsonify({
-                'name': row['name'],
-                'research_profile': profile,
-                'contract_count': row['contract_count'],
-                'total_value': row['total_value'] or 0,
-                'naics_codes': row['naics_codes'] or [],
-                'top_agencies': row['top_agencies'] or []
-            })
-        
+        # Check SQLite cache for existing research
+        db = get_db()
+        row = db.execute(
+            'SELECT research_profile, updated_at FROM organization_research WHERE org_name = ?',
+            (org_name,)
+        ).fetchone()
+        db.close()
+
+        profile = None
+        if row and row['research_profile']:
+            try:
+                profile = json.loads(row['research_profile'])
+                # Strip any <cite> tags from cached data
+                import re
+                def _strip_cite(val):
+                    if isinstance(val, str):
+                        return re.sub(r'</?cite[^>]*>', '', val)
+                    if isinstance(val, list):
+                        return [_strip_cite(v) for v in val]
+                    if isinstance(val, dict):
+                        return {k: _strip_cite(v) for k, v in val.items()}
+                    return val
+                profile = _strip_cite(profile)
+            except (json.JSONDecodeError, TypeError):
+                profile = None
+
+        # Get contract context from USAspending
+        contract_count = 0
+        total_value = 0
+        try:
+            from usaspending_intel import USAspendingIntelligence
+            usa = USAspendingIntelligence()
+            results = usa.get_contractor_profile(org_name)
+            contract_count = results.get('contract_count_3yr', 0)
+            total_value = results.get('total_contract_value_3yr', 0)
+        except Exception:
+            pass
+
+        return jsonify({
+            'name': org_name,
+            'research_profile': profile,
+            'contract_count': contract_count,
+            'total_value': total_value
+        })
+
     except Exception as e:
         print(f"Error getting organization research: {e}")
         return jsonify({'error': str(e)}), 500
@@ -1200,60 +1139,100 @@ def get_organization_research(org_name):
 
 @app.route('/api/competitive/organization/research', methods=['POST'])
 def research_organization():
-    """Run AI research on an organization"""
+    """Run AI research on an organization (USAspending context + Claude web search)"""
     try:
         data = request.get_json()
         org_name = data.get('name', '')
-        
+        force_refresh = data.get('force_refresh', False)
+
         if not org_name:
             return jsonify({'error': 'Organization name required'}), 400
-        
-        # Import the organization research agent
+
+        # Check SQLite cache first (unless force refresh)
+        if not force_refresh:
+            db = get_db()
+            row = db.execute(
+                'SELECT research_profile, updated_at FROM organization_research WHERE org_name = ?',
+                (org_name,)
+            ).fetchone()
+            db.close()
+            if row and row['research_profile']:
+                try:
+                    cached = json.loads(row['research_profile'])
+                    from datetime import datetime, timedelta
+                    researched_at = cached.get('researched_at', '')
+                    if researched_at:
+                        rdate = datetime.fromisoformat(researched_at)
+                        if datetime.now() - rdate < timedelta(days=14):
+                            cached['method'] = 'cached'
+                            return jsonify({'status': 'success', 'name': org_name, 'research_profile': cached})
+                except Exception:
+                    pass
+
+        # Build org context from USAspending
+        org_info = {'name': org_name}
+        try:
+            from usaspending_intel import USAspendingIntelligence
+            usa = USAspendingIntelligence()
+            details = usa.get_contractor_profile(org_name)
+            org_info['contract_count'] = details.get('contract_count_3yr', 0)
+            org_info['total_value'] = details.get('total_contract_value_3yr', 0)
+            org_info['top_agencies'] = [a['name'] for a in details.get('top_agencies', [])]
+        except Exception:
+            pass
+
+        # Run AI research via Claude (no Neo4j needed)
         sys.path.insert(0, 'knowledge_graph')
-        from organization_research_agent import OrganizationResearchAgent
-        
-        # Get org details from Neo4j first
-        if NEO4J_AVAILABLE:
-            from neo4j import GraphDatabase
-            driver = GraphDatabase.driver(
-                os.getenv('NEO4J_URI', 'bolt://localhost:7687'),
-                auth=('neo4j', os.getenv('NEO4J_PASSWORD'))
+        from organization_research_agent import _research_org_with_claude
+        t0 = time.time()
+        profile = _research_org_with_claude(org_info)
+
+        # Strip <cite> tags from Claude web_search responses
+        import re
+        def _strip_cite(val):
+            if isinstance(val, str):
+                return re.sub(r'</?cite[^>]*>', '', val)
+            if isinstance(val, list):
+                return [_strip_cite(v) for v in val]
+            if isinstance(val, dict):
+                return {k: _strip_cite(v) for k, v in val.items()}
+            return val
+        profile = _strip_cite(profile)
+
+        # Cache in SQLite
+        try:
+            db = get_db()
+            db.execute(
+                '''INSERT INTO organization_research (org_name, research_profile, updated_at)
+                   VALUES (?, ?, CURRENT_TIMESTAMP)
+                   ON CONFLICT(org_name) DO UPDATE SET
+                       research_profile = excluded.research_profile,
+                       updated_at = CURRENT_TIMESTAMP''',
+                (org_name, json.dumps(profile))
             )
-            
-            with driver.session(database="contactsgraphdb") as session:
-                result = session.run("""
-                    MATCH (o:Organization)
-                    WHERE o.name = $name
-                    OPTIONAL MATCH (c:Contract)-[:AWARDED_TO]->(o)
-                    WITH o, count(c) as contract_count, sum(toFloat(c.value)) as total_value,
-                         collect(DISTINCT c.naics)[0..5] as naics_codes,
-                         collect(DISTINCT c.agency)[0..5] as top_agencies
-                    RETURN contract_count, total_value, naics_codes, top_agencies
-                """, name=org_name)
-                
-                row = result.single()
-                org_info = {
-                    'name': org_name,
-                    'contract_count': row['contract_count'] if row else 0,
-                    'total_value': row['total_value'] if row else 0,
-                    'naics_codes': row['naics_codes'] if row else [],
-                    'top_agencies': row['top_agencies'] if row else []
-                }
-            driver.close()
-        else:
-            org_info = {'name': org_name}
-        
-        # Research the organization
-        agent = OrganizationResearchAgent()
-        profile = agent.research_organization(org_info, force_refresh=data.get('force_refresh', False))
-        agent.close()
-        
+            db.commit()
+            db.close()
+        except Exception as cache_err:
+            print(f"  Warning: failed to cache org research: {cache_err}")
+
+        # Log agent activity
+        try:
+            from agent_logger import get_logger
+            get_logger().log_agent_activity(
+                2, 'Competitive Intel', f'Org research: {org_name[:60]}',
+                'success', time.time() - t0,
+                input_data={'org_name': org_name},
+                output_data={'confidence': profile.get('confidence', 'unknown')}
+            )
+        except Exception:
+            pass
+
         return jsonify({
             'status': 'success',
             'name': org_name,
             'research_profile': profile
         })
-        
+
     except Exception as e:
         print(f"Error researching organization: {e}")
         import traceback
@@ -1263,194 +1242,239 @@ def research_organization():
 
 @app.route('/api/competitive/market-trends', methods=['GET'])
 def get_market_trends():
-    """Get market trend data for charts"""
+    """Get market trend data via USAspending.gov"""
     try:
-        if not NEO4J_AVAILABLE:
-            return jsonify({'error': 'Neo4j not available'}), 503
-        
-        from neo4j import GraphDatabase
-        driver = GraphDatabase.driver(
-            os.getenv('NEO4J_URI', 'bolt://localhost:7687'),
-            auth=('neo4j', os.getenv('NEO4J_PASSWORD'))
-        )
-        
-        with driver.session(database="contactsgraphdb") as session:
-            # Contract awards over time (by month)
-            result = session.run("""
-                MATCH (c:Contract)
-                WHERE c.date_signed IS NOT NULL
-                WITH c, 
-                     substring(c.date_signed, 0, 7) as month
-                RETURN month, 
-                       count(c) as contract_count,
-                       sum(toFloat(c.value)) as total_value
-                ORDER BY month
-            """)
-            
-            timeline = []
-            for record in result:
-                if record['month']:
-                    timeline.append({
-                        'month': record['month'],
-                        'contract_count': record['contract_count'],
-                        'total_value': record['total_value'] or 0
-                    })
-            
-            # Market share by top contractors
-            result = session.run("""
-                MATCH (c:Contract)-[:AWARDED_TO]->(org:Organization)
-                WITH org.name as contractor, sum(toFloat(c.value)) as total_value
-                WHERE contractor IS NOT NULL AND total_value > 0
-                RETURN contractor, total_value
-                ORDER BY total_value DESC
-                LIMIT 10
-            """)
-            
-            market_share = []
-            for record in result:
-                market_share.append({
-                    'contractor': record['contractor'],
-                    'total_value': record['total_value'] or 0
+        from usaspending_intel import USAspendingIntelligence, normalize_agency_name
+        usa = USAspendingIntelligence()
+
+        # Collect NAICS and agencies from scout data
+        naics_codes = set()
+        agencies = set()
+        scout_files = sorted(Path('knowledge_graph').glob('scout_data_*.json'), reverse=True)
+        if not scout_files:
+            scout_files = sorted(Path('.').glob('scout_data_*.json'), reverse=True)
+        if scout_files:
+            with open(scout_files[0]) as f:
+                data = json.load(f)
+            for opp in data.get('opportunities', []):
+                nc = opp.get('naicsCode', '')
+                if nc:
+                    naics_codes.add(str(nc))
+                raw = opp.get('fullParentPathName', '')
+                if raw:
+                    agencies.add(normalize_agency_name(raw))
+
+        # Market trends for the first NAICS code (spending over time)
+        timeline = []
+        first_naics = sorted(naics_codes)[0] if naics_codes else ''
+        first_agency = sorted(agencies)[0] if agencies else ''
+        if first_naics:
+            trends = usa.get_market_trends(first_naics, first_agency, years=3)
+            for year, amount in trends.get('yearly_spending', {}).items():
+                timeline.append({
+                    'month': f'{year}-06',
+                    'contract_count': 0,
+                    'total_value': amount
                 })
-            
-            # Top agencies by spend
-            result = session.run("""
-                MATCH (c:Contract)
-                WHERE c.agency IS NOT NULL AND c.agency <> ''
-                WITH c.agency as agency, 
-                     count(c) as contract_count,
-                     sum(toFloat(c.value)) as total_value
-                RETURN agency, contract_count, total_value
-                ORDER BY total_value DESC
-                LIMIT 10
-            """)
-            
-            top_agencies = []
-            for record in result:
+
+        # Market share = top incumbents across all agencies
+        incumbents = usa.get_incumbents_at_agency(first_agency, first_naics, limit=10)
+        market_share = [{'contractor': i['company'], 'total_value': i.get('contract_value_raw', 0)} for i in incumbents]
+
+        # Top agencies = incumbents per agency
+        top_agencies = []
+        for agency in sorted(agencies)[:10]:
+            inc = usa.get_incumbents_at_agency(agency, '', limit=1)
+            if inc:
                 top_agencies.append({
-                    'agency': record['agency'],
-                    'contract_count': record['contract_count'],
-                    'total_value': record['total_value'] or 0
+                    'agency': agency,
+                    'contract_count': sum(i.get('awards', 0) for i in inc),
+                    'total_value': sum(i.get('contract_value_raw', 0) for i in inc)
                 })
-            
-            # NAICS distribution
-            result = session.run("""
-                MATCH (c:Contract)
-                WHERE c.naics IS NOT NULL AND c.naics <> ''
-                WITH c.naics as naics,
-                     count(c) as contract_count,
-                     sum(toFloat(c.value)) as total_value
-                RETURN naics, contract_count, total_value
-                ORDER BY total_value DESC
-                LIMIT 10
-            """)
-            
-            naics_distribution = []
-            for record in result:
+        top_agencies.sort(key=lambda x: x['total_value'], reverse=True)
+
+        # NAICS distribution
+        naics_distribution = []
+        for nc in sorted(naics_codes)[:10]:
+            trends = usa.get_market_trends(nc, '', years=1)
+            total = trends.get('total_spending', 0)
+            if total > 0:
                 naics_distribution.append({
-                    'naics': record['naics'],
-                    'contract_count': record['contract_count'],
-                    'total_value': record['total_value'] or 0
+                    'naics': nc,
+                    'contract_count': 0,
+                    'total_value': total
                 })
-        
-        driver.close()
+        naics_distribution.sort(key=lambda x: x['total_value'], reverse=True)
+
         return jsonify({
             'timeline': timeline,
             'market_share': market_share,
             'top_agencies': top_agencies,
             'naics_distribution': naics_distribution
         })
-        
+
     except Exception as e:
         print(f"Error getting market trends: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'timeline': [], 'market_share': [], 'top_agencies': [], 'naics_distribution': []})
+
+
+@app.route('/api/competitive/contractor-details', methods=['GET'])
+def get_contractor_details():
+    """Get detailed information about a specific contractor via USAspending.gov"""
+    try:
+        contractor_name = request.args.get('name', '')
+
+        if not contractor_name:
+            return jsonify({'error': 'Contractor name required'}), 400
+
+        from usaspending_intel import USAspendingIntelligence
+        usa = USAspendingIntelligence()
+
+        profile = usa.get_contractor_profile(contractor_name)
+
+        if not profile or profile.get('error'):
+            return jsonify({
+                'contractor': contractor_name,
+                'contract_count': 0,
+                'total_value': 0,
+                'agencies': [],
+                'naics_codes': [],
+                'recent_contracts': []
+            })
+
+        # Map USAspending field names to what the frontend modal expects
+        agencies = [a['name'] for a in profile.get('top_agencies', []) if a.get('name') and a['name'] != 'Unknown']
+        naics_codes = list(set(
+            str(r.get('NAICS Code', '')) for r in profile.get('recent_awards', [])
+            if r.get('NAICS Code')
+        ))
+        recent = []
+        for award in profile.get('recent_awards', []):
+            recent.append({
+                'agency': award.get('Awarding Sub Agency') or award.get('Awarding Agency') or 'N/A',
+                'description': award.get('Description') or award.get('Award ID', 'N/A'),
+                'value': award.get('Award Amount', 0) or 0,
+                'date_signed': award.get('Start Date') or None
+            })
+
+        return jsonify({
+            'contractor': contractor_name,
+            'contract_count': profile.get('contract_count_3yr', 0),
+            'total_value': profile.get('total_contract_value_3yr', 0),
+            'agencies': agencies,
+            'naics_codes': naics_codes,
+            'recent_contracts': recent
+        })
+
+    except Exception as e:
+        print(f"Error getting contractor details: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 
-@app.route('/api/competitive/contractor-details', methods=['GET'])
-def get_contractor_details():
-    """Get detailed information about a specific contractor"""
+@app.route('/api/competitive/contractor/<path:contractor_name>', methods=['GET'])
+def get_contractor_full_profile(contractor_name):
+    """Full contractor profile for the detail page — timeline, agencies, NAICS, all contracts"""
     try:
-        contractor_name = request.args.get('name', '')
-        
-        if not contractor_name:
-            return jsonify({'error': 'Contractor name required'}), 400
-        
-        if not NEO4J_AVAILABLE:
-            return jsonify({'error': 'Neo4j not available'}), 503
-        
-        from neo4j import GraphDatabase
-        driver = GraphDatabase.driver(
-            os.getenv('NEO4J_URI', 'bolt://localhost:7687'),
-            auth=('neo4j', os.getenv('NEO4J_PASSWORD'))
+        from usaspending_intel import USAspendingIntelligence
+        usa = USAspendingIntelligence()
+
+        # Fetch all awards (up to 100) with enriched fields
+        import requests as req
+        from datetime import datetime, timedelta
+        payload = {
+            "filters": {
+                "recipient_search_text": [contractor_name],
+                "award_type_codes": ["A", "B", "C", "D"],
+                "time_period": [{
+                    "start_date": (datetime.now() - timedelta(days=1095)).strftime('%Y-%m-%d'),
+                    "end_date": datetime.now().strftime('%Y-%m-%d')
+                }]
+            },
+            "fields": ["Award ID", "Recipient Name", "Award Amount", "Award Type",
+                        "Awarding Agency", "Awarding Sub Agency", "Description",
+                        "Start Date", "NAICS Code"],
+            "limit": 100,
+            "page": 1
+        }
+        resp = req.post("https://api.usaspending.gov/api/v2/search/spending_by_award/",
+                        json=payload, timeout=30)
+        resp.raise_for_status()
+        results = resp.json().get('results', [])
+
+        # Build contracts list matching frontend expected shape
+        contracts = []
+        for r in results:
+            contracts.append({
+                'contract_id': r.get('Award ID', ''),
+                'agency': r.get('Awarding Sub Agency') or r.get('Awarding Agency') or 'N/A',
+                'naics': r.get('NAICS Code') or None,
+                'value': r.get('Award Amount', 0) or 0,
+                'date_signed': r.get('Start Date') or None,
+                'description': r.get('Description') or r.get('Award ID', '')
+            })
+
+        total_value = sum(c['value'] for c in contracts)
+        avg_value = total_value / len(contracts) if contracts else 0
+        max_value = max((c['value'] for c in contracts), default=0)
+
+        # Agency breakdown: {agency: total_value}
+        agency_map = {}
+        for c in contracts:
+            ag = c['agency'] or 'Unknown'
+            agency_map[ag] = agency_map.get(ag, 0) + c['value']
+        agencies = sorted(
+            [{'agency': k, 'value': v} for k, v in agency_map.items()],
+            key=lambda x: x['value'], reverse=True
         )
-        
-        with driver.session(database="contactsgraphdb") as session:
-            # Get contractor summary
-            result = session.run("""
-                MATCH (c:Contract)-[:AWARDED_TO]->(org:Organization)
-                WHERE org.name = $name
-                RETURN 
-                    count(c) as contract_count,
-                    sum(toFloat(c.value)) as total_value,
-                    collect(DISTINCT c.agency) as agencies,
-                    collect(DISTINCT c.naics) as naics_codes
-            """, name=contractor_name)
-            
-            row = result.single()
-            
-            if not row or row['contract_count'] == 0:
-                driver.close()
-                return jsonify({
-                    'contractor': contractor_name,
-                    'contract_count': 0,
-                    'total_value': 0,
-                    'agencies': [],
-                    'naics_codes': [],
-                    'recent_contracts': []
-                })
-            
-            # Get recent contracts
-            result = session.run("""
-                MATCH (c:Contract)-[:AWARDED_TO]->(org:Organization)
-                WHERE org.name = $name
-                RETURN c.agency as agency, 
-                       c.description as description,
-                       toFloat(c.value) as value,
-                       c.date_signed as date_signed,
-                       c.naics as naics
-                ORDER BY c.date_signed DESC
-                LIMIT 10
-            """, name=contractor_name)
-            
-            recent_contracts = []
-            for record in result:
-                recent_contracts.append({
-                    'agency': record['agency'],
-                    'description': record['description'],
-                    'value': record['value'] or 0,
-                    'date_signed': record['date_signed'],
-                    'naics': record['naics']
-                })
-        
-        driver.close()
-        
-        # Filter out None values from lists
-        agencies = [a for a in (row['agencies'] or []) if a]
-        naics_codes = [n for n in (row['naics_codes'] or []) if n]
-        
+
+        # NAICS distribution: {code: count}
+        naics_map = {}
+        for c in contracts:
+            n = c['naics'] or 'Unknown'
+            naics_map[n] = naics_map.get(n, 0) + 1
+        naics_distribution = sorted(
+            [{'code': k, 'count': v} for k, v in naics_map.items()],
+            key=lambda x: x['count'], reverse=True
+        )
+
+        # Timeline: {month: total_value}
+        timeline_map = {}
+        for c in contracts:
+            ds = c['date_signed']
+            if ds:
+                month = str(ds)[:7]
+                timeline_map[month] = timeline_map.get(month, 0) + c['value']
+        timeline = [{'month': k, 'value': v} for k, v in sorted(timeline_map.items())]
+
+        # Recent count (last 12 months)
+        cutoff_12mo = (datetime.now() - timedelta(days=365)).strftime('%Y-%m-%d')
+        recent_count = sum(1 for c in contracts if c['date_signed'] and str(c['date_signed']) >= cutoff_12mo)
+
+        top_agency = agencies[0]['agency'] if agencies else None
+        primary_naics = naics_distribution[0]['code'] if naics_distribution and naics_distribution[0]['code'] != 'Unknown' else None
+
         return jsonify({
-            'contractor': contractor_name,
-            'contract_count': row['contract_count'],
-            'total_value': row['total_value'] or 0,
+            'contractor_name': contractor_name,
+            'contracts': contracts,
+            'total_contracts': len(contracts),
+            'total_value': total_value,
+            'avg_value': avg_value,
+            'max_value': max_value,
+            'agency_count': len(agency_map),
+            'recent_count': recent_count,
+            'top_agency': top_agency,
+            'primary_naics': primary_naics,
             'agencies': agencies,
-            'naics_codes': naics_codes,
-            'recent_contracts': recent_contracts
+            'naics_distribution': naics_distribution,
+            'timeline': timeline
         })
-        
+
     except Exception as e:
-        print(f"Error getting contractor details: {e}")
+        print(f"Error getting full contractor profile: {e}")
         import traceback
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
@@ -1461,7 +1485,8 @@ def analyze_competitive():
     """Agent 2: Competitive Intelligence"""
     if not AGENTS_AVAILABLE:
         return jsonify({'error': 'Agents not available'}), 503
-    
+
+    t0 = time.time()
     try:
         data = request.json
         notice_id = data.get('notice_id', '')
@@ -1507,29 +1532,37 @@ def analyze_competitive():
         executor = AgentExecutor()
         
         results = executor.run_competitive_intel(agency, naics)
-        
+
         # Add opportunity info
         results['opportunity'] = {
             'title': opp.get('title'),
             'agency': agency,
             'naics': naics
         }
-        
+
+        from agent_logger import get_logger
+        get_logger().log_agent_activity(2, 'Competitive Intelligence', f'Analyze: {opp.get("title", notice_id)[:80]}',
+            'success' if results.get('status') == 'success' else 'error', time.time() - t0,
+            input_data={'notice_id': notice_id, 'agency': agency, 'naics': naics},
+            output_data={'incumbents': len(results.get('incumbents', []))})
+
         return jsonify(results)
-        
+
     except Exception as e:
         import traceback
         traceback.print_exc()
+        from agent_logger import get_logger
+        get_logger().log_agent_activity(2, 'Competitive Intelligence', 'Analyze competitive landscape', 'error', time.time() - t0, error_message=str(e))
         return jsonify({'error': str(e), 'status': 'error'}), 500
 
 
 @app.route('/api/agents/contacts/research', methods=['POST'])
 def research_contact():
     """Contact Research Agent — researches a contact's public professional presence"""
+    t0 = time.time()
     try:
         data = request.json or {}
 
-        # Accept either a full contact object or just the fields we need
         contact = {
             'id': data.get('id', ''),
             'name': data.get('name', ''),
@@ -1543,14 +1576,107 @@ def research_contact():
             return jsonify({'error': 'Contact name is required'}), 400
 
         force_refresh = data.get('force_refresh', False)
-
         print(f"📋 Contact Research request: {contact['name']} (force_refresh={force_refresh})")
 
         from agent_executor import AgentExecutor
         executor = AgentExecutor()
         results = executor.run_contact_research(contact, force_refresh=force_refresh)
 
+        from agent_logger import get_logger
+        get_logger().log_agent_activity(7, 'Contact Research', f'Research: {contact["name"][:60]}',
+            'success' if results.get('status') == 'success' else 'error', time.time() - t0,
+            input_data={'name': contact['name'], 'agency': contact.get('agency')},
+            output_data={'confidence': results.get('confidence'), 'method': results.get('method')})
+
         return jsonify(results)
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        from agent_logger import get_logger
+        get_logger().log_agent_activity(7, 'Contact Research', 'Research contact', 'error', time.time() - t0, error_message=str(e))
+        return jsonify({'error': str(e), 'status': 'error'}), 500
+
+
+@app.route('/api/contacts/ensure-and-research', methods=['POST'])
+def ensure_and_research_contact():
+    """Ensure a POC exists in SQLite contacts, then research them.
+    Used from opportunity modal where POCs don't yet have a contact_id."""
+    try:
+        data = request.json or {}
+        name = data.get('name', '').strip()
+        if not name:
+            return jsonify({'error': 'Contact name is required'}), 400
+
+        title = data.get('title', '').strip()
+        organization = data.get('organization', '').strip()
+        email = data.get('email', '').strip()
+
+        db = get_db()
+
+        # Check if contact already exists by name
+        existing = db.execute('SELECT id, research_profile FROM contacts WHERE name = ?', (name,)).fetchone()
+
+        if existing:
+            contact_id = existing['id']
+            # If already has research, return it from cache
+            if existing['research_profile']:
+                try:
+                    profile = json.loads(existing['research_profile'])
+                    db.close()
+                    return jsonify({
+                        'status': 'success',
+                        'contact_id': contact_id,
+                        'name': name,
+                        'cached': True,
+                        **profile
+                    })
+                except (json.JSONDecodeError, TypeError):
+                    pass
+        else:
+            # Create the contact record
+            cursor = db.execute(
+                '''INSERT INTO contacts (name, title, organization, email, source, relationship_strength)
+                   VALUES (?, ?, ?, ?, 'SAM.gov POC', 'New')''',
+                (name, title, organization, email)
+            )
+            db.commit()
+            contact_id = cursor.lastrowid
+            print(f"✓ Created new contact #{contact_id}: {name}")
+
+        db.close()
+
+        # Run research via AgentExecutor
+        contact = {
+            'id': contact_id,
+            'name': name,
+            'title': title,
+            'organization': organization,
+            'agency': organization,
+            'email': email,
+        }
+
+        from agent_executor import AgentExecutor
+        executor = AgentExecutor()
+        results = executor.run_contact_research(contact, force_refresh=False)
+
+        # Save research profile to SQLite for future cache hits
+        if results.get('status') == 'success':
+            profile_data = {k: v for k, v in results.items() if k != 'status'}
+            db2 = get_db()
+            db2.execute(
+                'UPDATE contacts SET research_profile = ? WHERE id = ?',
+                (json.dumps(profile_data), contact_id)
+            )
+            db2.commit()
+            db2.close()
+
+        return jsonify({
+            'contact_id': contact_id,
+            'name': name,
+            'cached': False,
+            **results
+        })
 
     except Exception as e:
         import traceback
@@ -1626,6 +1752,48 @@ def get_agent_stats():
             'stats': stats
         })
         
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/agents/stats/all', methods=['GET'])
+def get_all_agent_stats():
+    """Get summary stats for all agents in one call (for the dashboard)"""
+    try:
+        from agent_logger import get_logger
+        logger = get_logger()
+        days = request.args.get('days', 30, type=int)
+
+        agent_map = {
+            1: 'Opportunity Scout',
+            2: 'Competitive Intelligence',
+            3: 'Capability Matching',
+            4: 'RFI Generator',
+            5: 'Proposal Writer',
+            6: 'Pricing Generator',
+            7: 'Contact Research',
+        }
+
+        agents = {}
+        total_runs = 0
+        total_successes = 0
+
+        for aid, aname in agent_map.items():
+            stats = logger.get_agent_stats(agent_id=aid, days=days)
+            agents[aid] = {**stats, 'name': aname}
+            total_runs += stats['total_runs']
+            total_successes += stats['successes']
+
+        return jsonify({
+            'status': 'success',
+            'agents': agents,
+            'totals': {
+                'total_runs': total_runs,
+                'successes': total_successes,
+                'success_rate': round(total_successes / total_runs * 100, 1) if total_runs > 0 else 0,
+            }
+        })
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -1809,25 +1977,65 @@ def get_scout_summary():
 
 @app.route('/api/scout/run', methods=['POST'])
 def run_scout():
-    """Trigger scout to run"""
+    """Trigger scout to run — fetches SAM.gov opportunities, scores them,
+    collects FPDS contract data, and syncs everything to Neo4j."""
     if not AGENTS_AVAILABLE:
         return jsonify({'error': 'Scout not available'}), 503
-    
+
+    t0 = time.time()
     try:
         data = request.get_json() or {}
         days = data.get('days', 7)
-        
+
         scout = OpportunityScout()
-        scout.run_daily_scout(days_back=days, save_report=True)
+        results = scout.run_daily_scout(days_back=days, save_report=True)
         scout.close()
-        
+
+        # Also sync POC contacts to SQLite
+        poc_stats = {'created': 0, 'updated': 0, 'linked': 0}
+        try:
+            scout_files = sorted(Path('knowledge_graph').glob('scout_data_*.json'), reverse=True)
+            if scout_files:
+                with open(scout_files[0]) as f:
+                    scout_data = json.load(f)
+                poc_stats = extract_and_store_poc_contacts(scout_data.get('opportunities', []))
+        except Exception as e:
+            print(f"POC SQLite sync warning: {e}")
+
+        fpds = results.get('fpds_contracts', {})
+        neo4j_contacts = results.get('neo4j_contacts', {})
+
+        from agent_logger import get_logger
+        get_logger().log_agent_activity(1, 'Opportunity Scout',
+            f'Scout run: {days}d back, {results.get("total", 0)} found, {results.get("scored", 0)} scored',
+            'success', time.time() - t0,
+            input_data={'days_back': days},
+            output_data={
+                'total': results.get('total', 0),
+                'scored': results.get('scored', 0),
+                'high_priority': results.get('high_priority', 0),
+                'medium_priority': results.get('medium_priority', 0),
+                'contacts_created': poc_stats.get('created', 0),
+            })
+
         return jsonify({
             'status': 'success',
             'message': f'Scout completed for last {days} days',
+            'opportunities_found': results.get('total', 0),
+            'opportunities_scored': results.get('scored', 0),
+            'high_priority': results.get('high_priority', 0),
+            'medium_priority': results.get('medium_priority', 0),
+            'fpds_contracts_fetched': fpds.get('contracts_fetched', 0),
+            'fpds_contracts_stored': fpds.get('contracts_stored', 0),
+            'neo4j_opportunities_synced': results.get('neo4j_opportunities', 0),
+            'neo4j_contacts_synced': neo4j_contacts.get('people', 0),
+            'sqlite_contacts_created': poc_stats.get('created', 0),
             'timestamp': datetime.now().isoformat()
         })
-        
+
     except Exception as e:
+        from agent_logger import get_logger
+        get_logger().log_agent_activity(1, 'Opportunity Scout', 'Scout run', 'error', time.time() - t0, error_message=str(e))
         return jsonify({'error': str(e)}), 500
 
 
@@ -1892,6 +2100,43 @@ def get_opportunity_resources(notice_id):
         'resources': [dict(r) for r in resources],
         'total': len(resources)
     })
+
+
+# ============================================================================
+# KANBAN STATE API
+# ============================================================================
+
+@app.route('/api/kanban/state', methods=['GET'])
+def get_kanban_state():
+    """Return all saved kanban stages as {opportunity_id: stage}"""
+    db = get_db()
+    rows = db.execute('SELECT opportunity_id, stage FROM opportunity_stage').fetchall()
+    state = {row['opportunity_id']: row['stage'] for row in rows}
+    return jsonify(state)
+
+
+@app.route('/api/kanban/state', methods=['POST'])
+def save_kanban_state():
+    """Upsert a single opportunity's kanban stage"""
+    data = request.get_json()
+    opp_id = data.get('opportunity_id')
+    stage = data.get('stage')
+
+    if not opp_id or not stage:
+        return jsonify({'error': 'opportunity_id and stage are required'}), 400
+
+    valid_stages = {'new', 'analyzing', 'rfi', 'proposal', 'pricing', 'skipped'}
+    if stage not in valid_stages:
+        return jsonify({'error': f'Invalid stage. Must be one of: {", ".join(sorted(valid_stages))}'}), 400
+
+    db = get_db()
+    db.execute('''
+        INSERT INTO opportunity_stage (opportunity_id, stage, updated_at)
+        VALUES (?, ?, CURRENT_TIMESTAMP)
+        ON CONFLICT(opportunity_id) DO UPDATE SET stage = excluded.stage, updated_at = CURRENT_TIMESTAMP
+    ''', (opp_id, stage))
+    db.commit()
+    return jsonify({'status': 'ok', 'opportunity_id': opp_id, 'stage': stage})
 
 
 # ============================================================================
@@ -2094,7 +2339,7 @@ def dashboard_overview():
                     password=os.getenv('NEO4J_PASSWORD')
                 )
                 
-                with kg.driver.session(database="contactsgraphdb") as session:
+                with kg.driver.session(database="neo4j") as session:
                     result = session.run("MATCH (c:Contract) RETURN count(c) as count")
                     contract_count = result.single()['count'] if result.single() else 0
                 

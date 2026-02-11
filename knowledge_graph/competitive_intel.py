@@ -128,7 +128,7 @@ class CompetitiveIntelAgent:
         org_id = generate_org_id(company_name)
         
         # Query graph for contracts awarded to this company
-        with self.kg.driver.session(database="contactsgraphdb") as session:
+        with self.kg.driver.session(database="neo4j") as session:
             query = """
             MATCH (c:Contract)-[:AWARDED_TO]->(o:Organization {id: $org_id})
             RETURN c.contract_number as contract_number,
@@ -176,7 +176,7 @@ class CompetitiveIntelAgent:
         
         print_info(f"Identifying incumbents at {agency}...")
         
-        with self.kg.driver.session(database="contactsgraphdb") as session:
+        with self.kg.driver.session(database="neo4j") as session:
             query = """
             MATCH (c:Contract)-[:AWARDED_TO]->(o:Organization)
             WHERE c.agency CONTAINS $agency
@@ -221,7 +221,7 @@ class CompetitiveIntelAgent:
         
         print_info("Identifying potential teaming partners...")
         
-        with self.kg.driver.session(database="contactsgraphdb") as session:
+        with self.kg.driver.session(database="neo4j") as session:
             query = """
             MATCH (c:Contract)-[:AWARDED_TO]->(o:Organization)
             WHERE 1=1
@@ -269,7 +269,7 @@ class CompetitiveIntelAgent:
         
         print_info(f"Analyzing spending at {agency}...")
         
-        with self.kg.driver.session(database="contactsgraphdb") as session:
+        with self.kg.driver.session(database="neo4j") as session:
             # Get all contracts at this agency
             query = """
             MATCH (c:Contract)
