@@ -11,7 +11,7 @@ Features:
 - Real-time Scoring
 """
 
-from flask import Flask, render_template, jsonify, request, send_file
+from flask import Flask, render_template, jsonify, request, send_file, g
 from flask_cors import CORS
 import sqlite3
 import os
@@ -49,6 +49,23 @@ print("✓ Competitive Intelligence routes (USAspending-based) active")
 
 # Database path
 DATABASE = 'data/contacts.db'
+
+# ─── Demo Auth (enabled via DEMO_AUTH_ENABLED env var) ───
+try:
+    from demo_auth import init_demo_auth
+    from demo_sessions import SessionManager
+
+    _session_mgr = SessionManager(
+        template_db=DATABASE,
+        sessions_dir='data/sessions'
+    )
+    init_demo_auth(app, session_manager=_session_mgr)
+    print("✓ Demo auth enabled (token-based access)")
+except ImportError:
+    _session_mgr = None
+    if os.getenv("DEMO_AUTH_ENABLED", "").lower() == "true":
+        print("⚠️  DEMO_AUTH_ENABLED is true but demo_auth module not found")
+    # Demo auth not installed — app works normally without it
 
 def init_database():
     """Initialize database if it doesn't exist"""
@@ -114,8 +131,9 @@ def init_database():
     return False
 
 def get_db():
-    """Get database connection"""
-    db = sqlite3.connect(DATABASE)
+    """Get database connection (uses session-specific DB when demo auth is active)"""
+    db_path = getattr(g, 'db_path', None) or DATABASE
+    db = sqlite3.connect(db_path)
     db.row_factory = sqlite3.Row
     return db
 

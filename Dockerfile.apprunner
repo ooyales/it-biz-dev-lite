@@ -1,0 +1,30 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY . .
+
+# Copy shared demo auth modules from architecture-and-deployment
+COPY demo_auth.py demo_sessions.py ./
+
+# Ensure data directory exists with template DB
+RUN mkdir -p data logs data/sessions
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD curl -f http://localhost:8080/api/health || exit 1
+
+# App Runner requires 0.0.0.0 binding (already done in team_dashboard_integrated.py)
+ENV FLASK_ENV=production
+ENV DEMO_AUTH_ENABLED=true
+
+CMD ["python", "team_dashboard_integrated.py"]
