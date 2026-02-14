@@ -2262,6 +2262,79 @@ def serve_output_file(filename):
 
 
 # ============================================================================
+# COMPANY EXPERIENCE DOCUMENTS
+# ============================================================================
+
+COMPANY_DOCS_DIR = Path('company_docs')
+
+@app.route('/api/company-docs')
+def list_company_docs():
+    """List all company experience documents"""
+    docs = []
+    if COMPANY_DOCS_DIR.exists():
+        for filepath in sorted(COMPANY_DOCS_DIR.iterdir()):
+            if filepath.name.startswith('.') or filepath.name == 'README.txt':
+                continue
+            if filepath.suffix.lower() in ('.txt', '.docx'):
+                stat = filepath.stat()
+                docs.append({
+                    'filename': filepath.name,
+                    'size': stat.st_size,
+                    'size_display': f"{stat.st_size / 1024:.1f} KB" if stat.st_size >= 1024 else f"{stat.st_size} B",
+                    'modified': datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                })
+    return jsonify({'documents': docs, 'count': len(docs)})
+
+@app.route('/api/company-docs/upload', methods=['POST'])
+def upload_company_doc():
+    """Upload a company experience document"""
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+
+    file = request.files['file']
+    if not file.filename:
+        return jsonify({'error': 'No file selected'}), 400
+
+    # Validate extension
+    ext = Path(file.filename).suffix.lower()
+    if ext not in ('.txt', '.docx'):
+        return jsonify({'error': 'Only .txt and .docx files are supported'}), 400
+
+    # Sanitize filename — prevent path traversal
+    safe_name = Path(file.filename).name
+    if '..' in safe_name or '/' in safe_name or '\\' in safe_name:
+        return jsonify({'error': 'Invalid filename'}), 400
+
+    COMPANY_DOCS_DIR.mkdir(exist_ok=True)
+    dest = COMPANY_DOCS_DIR / safe_name
+    file.save(str(dest))
+
+    return jsonify({
+        'status': 'success',
+        'filename': safe_name,
+        'message': f'Uploaded {safe_name} successfully'
+    })
+
+@app.route('/api/company-docs/<filename>', methods=['DELETE'])
+def delete_company_doc(filename):
+    """Delete a company experience document"""
+    # Prevent path traversal
+    safe_name = Path(filename).name
+    if safe_name != filename or '..' in filename:
+        return jsonify({'error': 'Invalid filename'}), 400
+
+    filepath = COMPANY_DOCS_DIR / safe_name
+    if not filepath.exists():
+        return jsonify({'error': 'File not found'}), 404
+
+    filepath.unlink()
+    return jsonify({
+        'status': 'success',
+        'message': f'Deleted {safe_name}'
+    })
+
+
+# ============================================================================
 # MAIN
 # ============================================================================
 

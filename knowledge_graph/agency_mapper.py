@@ -184,22 +184,23 @@ def get_contacts_for_agency(kg_client, agency_name: str) -> dict:
             'all_contacts': []
         }
     
-    # Query for contacts at any of these organizations
-    with kg_client.driver.session(database="neo4j") as session:
-        query = """
-        MATCH (p:Person)-[:WORKS_AT]->(o:Organization)
-        WHERE o.name IN $org_names
-        RETURN p.name as name,
-               p.email as email,
-               p.phone as phone,
-               p.title as title,
-               p.role_type as role_type,
-               p.influence_level as influence_level,
-               o.name as organization
-        """
-        
-        result = session.run(query, org_names=possible_orgs)
-        contacts = [dict(record) for record in result]
+    # Query for contacts at any of these organizations (SQLite)
+    placeholders = ','.join('?' for _ in possible_orgs)
+    conn = kg_client._conn()
+    rows = conn.execute(f"""
+        SELECT c.name, c.email, c.phone, c.title,
+               c.role as role_type,
+               c.relationship_strength as influence_level,
+               COALESCE(o.name, c.organization) as organization
+        FROM contacts c
+        LEFT JOIN graph_edges e ON e.from_id = c.graph_id AND e.rel_type = 'WORKS_AT'
+        LEFT JOIN organizations o ON o.id = e.to_id
+        WHERE o.name IN ({placeholders})
+           OR c.organization IN ({placeholders})
+           OR c.agency IN ({placeholders})
+    """, possible_orgs + possible_orgs + possible_orgs).fetchall()
+    conn.close()
+    contacts = [dict(row) for row in rows]
     
     # Categorize contacts
     decision_makers = [c for c in contacts if c.get('role_type') == 'Decision Maker']

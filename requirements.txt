@@ -32,3 +32,9 @@ networkx>=3.0
 
 # For progress bars (FPDS collection)
 tqdm>=4.66.0
+
+# For Word document generation (RFI responses)
+python-docx>=1.0.0
+
+# For Excel export
+openpyxl>=3.1.0

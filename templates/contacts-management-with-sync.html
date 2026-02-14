@@ -37,7 +37,7 @@
                 </div>
                 <div class="col-md-6 text-end">
                     <button class="btn btn-sync me-2" onclick="syncContacts()">
-                        <i class="fas fa-sync me-2"></i>Sync from Neo4j
+                        <i class="fas fa-sync me-2"></i>Sync Contacts
                     </button>
                     <a href="/bd-intelligence" class="btn btn-outline-light me-2">
                         BD Intelligence
@@ -65,7 +65,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Sync contacts from Neo4j
+        // Sync contacts from graph database
         async function syncContacts() {
             const btn = event.target.closest('button');
             const originalHTML = btn.innerHTML;

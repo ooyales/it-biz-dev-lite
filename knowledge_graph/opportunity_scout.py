@@ -127,10 +127,15 @@ class OpportunityScout:
 
         # Search by each NAICS + keyword combination for targeted results
         search_terms = self.keywords if self.keywords else [None]
+        request_count = 0
 
         for naics in self.naics_codes:
             for keyword in search_terms:
                 try:
+                    # Rate limit: wait between requests to avoid 429s
+                    if request_count > 0:
+                        time.sleep(3)
+
                     params = {
                         'api_key': self.sam_api_key,
                         'postedFrom': from_date,
@@ -144,6 +149,16 @@ class OpportunityScout:
                         params['ptype'] = ptype
 
                     response = requests.get(url, params=params, timeout=30)
+                    request_count += 1
+
+                    # Retry once on rate limit
+                    if response.status_code == 429:
+                        retry_after = int(response.headers.get('Retry-After', 60))
+                        print_warning(f"Rate limited — waiting {retry_after}s before retry...")
+                        time.sleep(retry_after)
+                        response = requests.get(url, params=params, timeout=30)
+                        request_count += 1
+
                     response.raise_for_status()
 
                     data = response.json()

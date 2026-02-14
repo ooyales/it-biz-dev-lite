@@ -167,7 +167,7 @@
                             Manage Contacts →
                         </a>
                         <button class="btn btn-outline-primary btn-sm mt-2 w-100" onclick="syncContacts()" id="sync-btn">
-                            <i class="fas fa-sync me-2"></i>Sync from Neo4j
+                            <i class="fas fa-sync me-2"></i>Sync Contacts
                         </button>
                     </div>
                 </div>
@@ -229,12 +229,12 @@
                 
                 // Show sync status
                 const sqliteCount = data.contacts?.total || 0;
-                const neo4jCount = data.contacts?.graph_people || 0;
-                
-                if (neo4jCount > sqliteCount) {
-                    document.getElementById('sync-status').innerHTML = 
-                        `<i class="fas fa-exclamation-triangle text-warning"></i> 
-                         ${neo4jCount - sqliteCount} contacts in Neo4j not synced`;
+                const graphCount = data.contacts?.graph_people || 0;
+
+                if (graphCount > sqliteCount) {
+                    document.getElementById('sync-status').innerHTML =
+                        `<i class="fas fa-exclamation-triangle text-warning"></i>
+                         ${graphCount - sqliteCount} contacts not synced`;
                 } else if (sqliteCount > 0) {
                     document.getElementById('sync-status').innerHTML = 
                         `<i class="fas fa-check text-success"></i> All contacts synced`;
@@ -245,7 +245,7 @@
             }
         }
         
-        // Sync contacts from Neo4j
+        // Sync contacts from graph database
         async function syncContacts() {
             const btn = document.getElementById('sync-btn');
             const originalText = btn.innerHTML;

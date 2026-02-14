@@ -184,11 +184,24 @@ class RFIResponseGenerator:
         return questions
     
     def generate_response_with_claude(self, question: Dict, opportunity: Dict) -> str:
-        """Generate response using Claude AI"""
-        
+        """Generate response using Claude AI, enriched with company experience docs"""
+
         if not self.claude_available:
             return "[Claude AI not available - placeholder response]"
-        
+
+        # Search company experience documents for relevant content
+        experience_context = ""
+        try:
+            from .company_docs_reader import CompanyDocsReader
+            reader = CompanyDocsReader()
+            relevant_chunks = reader.find_relevant_chunks(question['question'], top_k=3)
+            if relevant_chunks:
+                experience_context = "\n\nRELEVANT COMPANY EXPERIENCE (from internal documents):\n"
+                for chunk in relevant_chunks:
+                    experience_context += f"\n[Source: {chunk['source']}]\n\"{chunk['text'][:800]}\"\n"
+        except Exception as e:
+            print(f"Note: Could not load company docs: {e}")
+
         # Build context for Claude
         company_context = f"""
 Company: {self.company.company_name}
@@ -196,12 +209,12 @@ Capabilities: {', '.join(self.company.capabilities)}
 Socioeconomic Status: {self.company.socioeconomic_status}
 Certifications: {', '.join(self.company.company_certifications)}
         """
-        
+
         past_perf_context = "\n".join([
             f"- {pp['project']} for {pp['client']} ({pp['period']}): {pp['description']}"
             for pp in self.company.past_performance
         ])
-        
+
         prompt = f"""You are writing a professional response to a Request for Information (RFI) for a federal government contract opportunity.
 
 Opportunity: {opportunity.get('title', 'Unknown')}
@@ -212,14 +225,15 @@ Our Company Profile:
 
 Our Past Performance:
 {past_perf_context}
+{experience_context}
 
 RFI Question:
 {question['question']}
 
 Please write a professional, concise response (2-3 paragraphs) that:
 1. Directly answers the question
-2. Highlights relevant company capabilities
-3. References specific past performance when applicable
+2. Highlights relevant company capabilities and experience
+3. References specific past performance and experience documents when applicable
 4. Uses professional federal contracting language
 5. Is confident but not boastful
 

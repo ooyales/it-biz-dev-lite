@@ -54,7 +54,7 @@
 </button>
 
 <button class="btn btn-success" onclick="syncFromNeo4j()">
-    <i class="fas fa-sync me-2"></i>Sync from Neo4j
+    <i class="fas fa-sync me-2"></i>Sync Contacts
 </button>
 
 <div class="input-group" style="width: 300px;">
@@ -272,7 +272,7 @@ async function loadContacts() {
                     <div class="alert alert-danger mb-0">
                         <h5>Error Loading Contacts</h5>
                         <p>${error.message}</p>
-                        <p class="small mb-0">Contacts may not be loaded yet. Try syncing from Neo4j.</p>
+                        <p class="small mb-0">Contacts may not be loaded yet. Try syncing contacts.</p>
                     </div>
                 </td>
             </tr>
@@ -521,7 +521,7 @@ async function deleteContact(id) {
 }
 
 async function syncFromNeo4j() {
-    if (!confirm('Sync contacts from Neo4j?\n\nThis will import all contacts from the graph database.')) return;
+    if (!confirm('Sync contacts?\n\nThis will import all contacts from the graph database.')) return;
     
     const btn = event.target;
     btn.disabled = true;
@@ -545,7 +545,7 @@ async function syncFromNeo4j() {
         alert('Error: ' + error.message);
     } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-sync me-2"></i>Sync from Neo4j';
+        btn.innerHTML = '<i class="fas fa-sync me-2"></i>Sync Contacts';
     }
 }
 

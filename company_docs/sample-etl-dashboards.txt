@@ -1,0 +1,65 @@
+ETL PIPELINES & DASHBOARD EXPERIENCE
+======================================
+
+Our data engineering and analytics team specializes in building enterprise data
+pipelines and interactive dashboards for federal agencies.
+
+ETL PIPELINE DEVELOPMENT
+We have designed and implemented ETL (Extract, Transform, Load) pipelines that
+process millions of records daily across multiple federal data sources. Our approach
+emphasizes data quality, lineage tracking, and automated validation.
+
+Recent ETL projects include:
+- Built an automated data pipeline that ingests financial transaction data from
+  5 disparate accounting systems, applies business rule transformations, and loads
+  into a centralized data warehouse. Reduced manual data reconciliation effort from
+  40 hours/week to 2 hours/week.
+- Developed real-time ETL pipelines using Apache Kafka and Spark Streaming to
+  process cybersecurity event logs from 10,000+ endpoints, enabling sub-minute
+  threat detection and automated incident creation.
+- Created a data migration framework that safely transferred 50TB of legacy
+  mainframe data to cloud-hosted PostgreSQL, including automated data validation
+  and rollback capabilities.
+
+ETL TECHNOLOGIES
+- Apache Airflow for workflow orchestration and scheduling
+- Apache Spark and PySpark for large-scale data processing
+- AWS Glue and Step Functions for serverless ETL
+- Python pandas for data transformation and cleaning
+- dbt (data build tool) for SQL-based transformations
+- Great Expectations for automated data quality validation
+
+DASHBOARD & REPORTING SOLUTIONS
+We build executive dashboards and operational reporting solutions that transform
+raw federal data into actionable insights.
+
+Dashboard projects include:
+- Agency-wide performance dashboard tracking 50+ KPIs across 12 program offices,
+  with drill-down capability from executive summary to individual transaction detail.
+  Built with Power BI embedded in a SharePoint Online portal.
+- Real-time IT infrastructure monitoring dashboard showing system health, SLA
+  compliance, and capacity utilization across 500+ servers. Built with Grafana
+  connected to Prometheus and CloudWatch data sources.
+- Financial execution dashboard providing daily budget obligation and expenditure
+  tracking with automated alerts for spending anomalies. Built with React and
+  Recharts connected to a Python Flask API.
+- Acquisition pipeline dashboard showing procurement lifecycle status, milestone
+  tracking, and vendor performance metrics. Built with Tableau connected to a
+  SQL Server data warehouse.
+
+DASHBOARD TECHNOLOGIES
+- Power BI (including Power BI Embedded and Report Server)
+- Tableau Server and Tableau Public
+- Custom React dashboards with D3.js, Recharts, and Chart.js
+- Grafana for infrastructure and operations monitoring
+- Python Plotly/Dash for data science visualizations
+- Jupyter Notebooks for ad-hoc analysis and reporting
+
+DATA GOVERNANCE & QUALITY
+Our data governance practice ensures that agency data assets are properly managed,
+documented, and trusted. We implement:
+- Data catalogs and metadata management (Apache Atlas, Collibra)
+- Data quality monitoring with automated anomaly detection
+- Master data management for key entity types (vendors, employees, assets)
+- Data lineage tracking from source systems through transformations to reports
+- Compliance with federal data standards (NIST, OMB, CDO Council)

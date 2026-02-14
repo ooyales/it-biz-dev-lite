@@ -23,6 +23,9 @@
                     <a class="nav-link" data-tab="company" onclick="switchTab('company')">
                         <i class="fas fa-building me-2"></i>Company Info
                     </a>
+                    <a class="nav-link" data-tab="experience" onclick="switchTab('experience')">
+                        <i class="fas fa-file-alt me-2"></i>Experience Docs
+                    </a>
                     <a class="nav-link" data-tab="data" onclick="switchTab('data')">
                         <i class="fas fa-database me-2"></i>Data Management
                     </a>
@@ -64,36 +67,6 @@
                         </div>
                         <small class="text-muted">Get your API key at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a></small>
                     </div>
-                    
-                    <hr>
-                    
-                    <h6 class="mb-3">Neo4j Connection</h6>
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">URI</label>
-                            <input type="text" class="form-control" id="neo4j-uri" value="bolt://localhost:7687">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Database</label>
-                            <input type="text" class="form-control" id="neo4j-database" value="contactsgraphdb">
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Username</label>
-                            <input type="text" class="form-control" id="neo4j-user" value="neo4j">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Password</label>
-                            <input type="password" class="form-control" id="neo4j-password">
-                        </div>
-                    </div>
-                    
-                    <button class="btn btn-primary" onclick="testNeo4jConnection()">
-                        <i class="fas fa-plug me-2"></i>Test Connection
-                    </button>
                     
                     <hr>
                     
@@ -330,6 +303,32 @@
             </div>
         </div>
         
+        <!-- Experience Documents Tab -->
+        <div class="tab-content" id="tab-experience" style="display: none;">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>Company Experience Documents</h5>
+                    <label class="btn btn-success mb-0">
+                        <i class="fas fa-upload me-2"></i>Upload Document
+                        <input type="file" accept=".txt,.docx" style="display: none;" onchange="uploadCompanyDoc(this)">
+                    </label>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">
+                        Upload <code>.txt</code> or <code>.docx</code> files describing your company's experience.
+                        The RFI Generator will automatically search these documents for relevant content when generating responses.
+                    </p>
+
+                    <div id="docs-list">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary"></div>
+                            <p class="text-muted mt-2">Loading documents...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Data Management Tab -->
         <div class="tab-content" id="tab-data" style="display: none;">
             <div class="card">
@@ -343,8 +342,8 @@
                         <div class="col-md-6 mb-3">
                             <div class="card bg-light">
                                 <div class="card-body">
-                                    <h6><i class="fas fa-sync me-2"></i>Sync Contacts from Neo4j</h6>
-                                    <p class="small text-muted mb-3">Import all contacts from Neo4j graph database</p>
+                                    <h6><i class="fas fa-sync me-2"></i>Sync Contacts</h6>
+                                    <p class="small text-muted mb-3">Import all contacts from graph database</p>
                                     <button class="btn btn-primary w-100" onclick="syncContactsFromNeo4j()">
                                         Sync Contacts
                                     </button>
@@ -429,11 +428,7 @@ function toggleVisibility(inputId) {
 function saveSystemSettings() {
     const settings = {
         samApiKey: document.getElementById('sam-api-key').value,
-        anthropicApiKey: document.getElementById('anthropic-api-key').value,
-        neo4jUri: document.getElementById('neo4j-uri').value,
-        neo4jDatabase: document.getElementById('neo4j-database').value,
-        neo4jUser: document.getElementById('neo4j-user').value,
-        neo4jPassword: document.getElementById('neo4j-password').value
+        anthropicApiKey: document.getElementById('anthropic-api-key').value
     };
     
     localStorage.setItem('system-settings', JSON.stringify(settings));
@@ -491,12 +486,8 @@ function saveCompanyInfo() {
 }
 
 // Data operations
-async function testNeo4jConnection() {
-    alert('Testing Neo4j connection...\n\nThis feature requires backend implementation.');
-}
-
 async function syncContactsFromNeo4j() {
-    if (!confirm('Sync contacts from Neo4j?\n\nThis will import all contacts from the graph database.')) return;
+    if (!confirm('Sync contacts?\n\nThis will import all contacts from the graph database.')) return;
     
     try {
         const res = await fetch('/api/contacts/sync', {
@@ -539,15 +530,116 @@ function resetAllData() {
     setTimeout(() => window.location.reload(), 2000);
 }
 
+// === Company Experience Documents ===
+async function loadCompanyDocs() {
+    try {
+        const res = await fetch('/api/company-docs');
+        const data = await res.json();
+        const container = document.getElementById('docs-list');
+
+        if (!data.documents || data.documents.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-4 text-muted">
+                    <i class="fas fa-folder-open fa-3x mb-3"></i>
+                    <p>No experience documents yet.</p>
+                    <p class="small">Upload .txt or .docx files describing your company's experience.</p>
+                </div>`;
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Filename</th>
+                            <th>Size</th>
+                            <th>Last Modified</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.documents.map(doc => `
+                            <tr>
+                                <td>
+                                    <i class="fas fa-file-${doc.filename.endsWith('.docx') ? 'word text-primary' : 'alt text-info'} me-2"></i>
+                                    ${doc.filename}
+                                </td>
+                                <td>${doc.size_display}</td>
+                                <td>${new Date(doc.modified).toLocaleDateString()}</td>
+                                <td class="text-end">
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteCompanyDoc('${doc.filename}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-2 text-muted small">
+                <i class="fas fa-info-circle me-1"></i>
+                ${data.count} document${data.count !== 1 ? 's' : ''} available for RFI response generation
+            </div>`;
+    } catch (error) {
+        document.getElementById('docs-list').innerHTML =
+            `<div class="alert alert-danger">Error loading documents: ${error.message}</div>`;
+    }
+}
+
+async function uploadCompanyDoc(input) {
+    if (!input.files || !input.files[0]) return;
+
+    const file = input.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const res = await fetch('/api/company-docs/upload', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await res.json();
+
+        if (data.status === 'success') {
+            loadCompanyDocs();
+        } else {
+            alert('Error: ' + (data.error || 'Upload failed'));
+        }
+    } catch (error) {
+        alert('Error uploading: ' + error.message);
+    }
+
+    // Reset file input
+    input.value = '';
+}
+
+async function deleteCompanyDoc(filename) {
+    if (!confirm(`Delete "${filename}"?\n\nThis file will no longer be used for RFI responses.`)) return;
+
+    try {
+        const res = await fetch(`/api/company-docs/${encodeURIComponent(filename)}`, {
+            method: 'DELETE'
+        });
+        const data = await res.json();
+
+        if (data.status === 'success') {
+            loadCompanyDocs();
+        } else {
+            alert('Error: ' + (data.error || 'Delete failed'));
+        }
+    } catch (error) {
+        alert('Error deleting: ' + error.message);
+    }
+}
+
 // Load saved settings on page load
 document.addEventListener('DOMContentLoaded', () => {
+    loadCompanyDocs();
     // Load system settings
     const systemSettings = localStorage.getItem('system-settings');
     if (systemSettings) {
         const settings = JSON.parse(systemSettings);
-        if (settings.neo4jUri) document.getElementById('neo4j-uri').value = settings.neo4jUri;
-        if (settings.neo4jDatabase) document.getElementById('neo4j-database').value = settings.neo4jDatabase;
-        if (settings.neo4jUser) document.getElementById('neo4j-user').value = settings.neo4jUser;
     }
     
     // Load company info
