@@ -203,18 +203,119 @@
             padding: 2rem;
         }
         
-        /* Responsive */
+        /* Mobile hamburger button */
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            color: #a0aec0;
+            font-size: 1.25rem;
+            padding: 0.5rem;
+            margin-right: 1rem;
+            cursor: pointer;
+            display: none;
+        }
+
+        /* Sidebar overlay */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 999;
+        }
+
+        /* Mobile responsive */
         @media (max-width: 768px) {
+            .sidebar-toggle {
+                display: block;
+            }
+
             .sidebar {
                 transform: translateX(-100%);
+                transition: transform 0.2s ease;
             }
-            
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .sidebar-overlay.active {
+                display: block;
+            }
+
             .main-content {
                 margin-left: 0;
             }
-            
+
+            .top-bar {
+                padding: 0.75rem 1rem;
+            }
+
+            .top-bar h5 {
+                font-size: 0.9rem;
+            }
+
+            /* Stack title and actions vertically */
+            .top-bar > .d-flex.justify-content-between {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 0.5rem;
+            }
+
+            /* Actions row: wrap and compact */
+            .top-bar .d-flex.align-items-center.gap-3 {
+                gap: 0.25rem !important;
+                flex-wrap: wrap;
+                width: 100%;
+            }
+
+            /* Compact all top-bar buttons */
+            .top-bar .btn {
+                font-size: 0.75rem;
+                padding: 0.3rem 0.5rem;
+            }
+
+            .content-area {
+                padding: 1rem;
+            }
+
             .stats-bar {
                 flex-direction: column;
+                padding: 1rem;
+                gap: 0.75rem;
+            }
+
+            .stat-item {
+                gap: 0.75rem;
+            }
+
+            .stat-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+            }
+
+            .stat-info h4 {
+                font-size: 1.2rem;
+            }
+
+            .nav-link {
+                padding: 0.75rem 1.25rem;
+                min-height: 44px;
+            }
+
+            .top-bar .btn-group,
+            .top-bar .view-switcher {
+                display: none;
+            }
+
+            .top-bar .input-group {
+                width: 100% !important;
+                max-width: 100%;
+            }
+
+            .top-bar .dropdown {
+                display: none;
             }
         }
     </style>
@@ -293,15 +394,22 @@
             </a>
         </nav>
     </div>
-    
+
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
     <!-- Main Content -->
     <div class="main-content">
         <!-- Top Bar -->
         <div class="top-bar">
             <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h5 class="mb-0" style="color: #fff;">{% block page_title %}Dashboard{% endblock %}</h5>
-                    <p class="text-muted small mb-0">{% block page_subtitle %}{% endblock %}</p>
+                <div class="d-flex align-items-center">
+                    <button class="sidebar-toggle d-md-none" onclick="toggleSidebar()">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div>
+                        <h5 class="mb-0" style="color: #fff;">{% block page_title %}Dashboard{% endblock %}</h5>
+                        <p class="text-muted small mb-0">{% block page_subtitle %}{% endblock %}</p>
+                    </div>
                 </div>
                 
                 <div class="d-flex align-items-center gap-3">
@@ -405,6 +513,26 @@
         
         // Load stats on page load
         document.addEventListener('DOMContentLoaded', updateStats);
+
+        // Mobile sidebar toggle
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const overlay = document.querySelector('.sidebar-overlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+
+        // Close sidebar when clicking a nav link on mobile
+        document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth <= 768) {
+                    const sidebar = document.querySelector('.sidebar');
+                    const overlay = document.querySelector('.sidebar-overlay');
+                    sidebar.classList.remove('open');
+                    overlay.classList.remove('active');
+                }
+            });
+        });
     </script>
     
     {% block extra_js %}{% endblock %}
