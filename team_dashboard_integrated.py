@@ -43,6 +43,7 @@ except ImportError as e:
     AGENTS_AVAILABLE = False
 
 app = Flask(__name__)
+app.url_map.strict_slashes = False
 CORS(app)
 
 from flasgger import Swagger
