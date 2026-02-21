@@ -45,6 +45,118 @@ except ImportError as e:
 app = Flask(__name__)
 CORS(app)
 
+from flasgger import Swagger
+
+SWAGGER_TEMPLATE = {
+    "info": {
+        "title": "IT Biz Dev Lite API",
+        "description": "API for federal contracting intelligence — contacts, agents, competitive intel, SAM.gov scouting.",
+        "version": "1.0.0",
+    },
+    "securityDefinitions": {},
+    "security": [],
+    "basePath": "/",
+    "schemes": ["http", "https"],
+    "definitions": {
+        "Error": {
+            "type": "object",
+            "properties": {
+                "error": {"type": "string"}
+            }
+        },
+        "Contact": {
+            "type": "object",
+            "properties": {
+                "id": {"type": "integer"},
+                "name": {"type": "string"},
+                "email": {"type": "string"},
+                "phone": {"type": "string"},
+                "title": {"type": "string"},
+                "organization": {"type": "string"},
+                "role": {"type": "string"},
+                "notes": {"type": "string"},
+                "linkedin_url": {"type": "string"},
+                "relationship_strength": {"type": "string", "enum": ["New", "Warm", "Hot", "Cold"]},
+                "last_contact": {"type": "string", "format": "date"},
+                "source": {"type": "string"},
+                "has_research": {"type": "boolean"},
+                "created_at": {"type": "string", "format": "date-time"},
+                "updated_at": {"type": "string", "format": "date-time"}
+            }
+        },
+        "Opportunity": {
+            "type": "object",
+            "properties": {
+                "notice_id": {"type": "string"},
+                "title": {"type": "string"},
+                "agency": {"type": "string"},
+                "posted_date": {"type": "string"},
+                "deadline": {"type": "string"},
+                "setaside": {"type": "string"},
+                "naics": {"type": "string"},
+                "description": {"type": "string"},
+                "score": {"type": "number"},
+                "win_probability": {"type": "number"},
+                "priority": {"type": "string", "enum": ["HIGH", "MEDIUM", "LOW", "UNSCORED"]},
+                "recommendation": {"type": "string"},
+                "contacts": {"type": "object"},
+                "reasoning": {"type": "string"},
+                "point_of_contact": {"type": "array", "items": {"type": "object"}},
+                "resource_links": {"type": "array", "items": {"type": "string"}}
+            }
+        },
+        "Incumbent": {
+            "type": "object",
+            "properties": {
+                "contractor": {"type": "string"},
+                "contract_count": {"type": "integer"},
+                "total_value": {"type": "number"},
+                "avg_value": {"type": "number"},
+                "top_agency": {"type": "string"},
+                "naics_codes": {"type": "array", "items": {"type": "string"}}
+            }
+        },
+        "AgentLog": {
+            "type": "object",
+            "properties": {
+                "id": {"type": "integer"},
+                "agent_id": {"type": "integer"},
+                "agent_name": {"type": "string"},
+                "action": {"type": "string"},
+                "status": {"type": "string"},
+                "duration": {"type": "number"},
+                "timestamp": {"type": "string", "format": "date-time"}
+            }
+        },
+        "CompanyDoc": {
+            "type": "object",
+            "properties": {
+                "filename": {"type": "string"},
+                "size": {"type": "integer"},
+                "size_display": {"type": "string"},
+                "modified": {"type": "string", "format": "date-time"}
+            }
+        }
+    }
+}
+
+SWAGGER_CONFIG = {
+    "headers": [],
+    "specs": [
+        {
+            "endpoint": "apispec",
+            "route": "/apispec.json",
+            "rule_filter": lambda rule: rule.rule.startswith('/api/'),
+            "model_filter": lambda tag: True,
+        }
+    ],
+    "static_url_path": "/flasgger_static",
+    "swagger_ui": True,
+    "specs_route": "/apidocs/"
+}
+
+Swagger(app, config=SWAGGER_CONFIG, template=SWAGGER_TEMPLATE)
+
 print("✓ Competitive Intelligence routes (USAspending-based) active")
 
 # Database path
@@ -364,7 +476,49 @@ def bd_intelligence():
 
 @app.route('/api/contacts', methods=['GET'])
 def get_contacts():
-    """Get all contacts"""
+    """Get all contacts with optional filtering and sorting.
+    ---
+    tags:
+      - Contacts
+    security: []
+    parameters:
+      - name: search
+        in: query
+        type: string
+        description: Search by name, email, or organization
+      - name: organization
+        in: query
+        type: string
+        description: Filter by organization name
+      - name: role
+        in: query
+        type: string
+        description: Filter by role
+      - name: sort
+        in: query
+        type: string
+        enum: [name, organization, role, last_contact, relationship_strength]
+        default: name
+        description: Sort field
+      - name: order
+        in: query
+        type: string
+        enum: [asc, desc]
+        default: asc
+        description: Sort order
+    responses:
+      200:
+        description: List of contacts
+        schema:
+          type: object
+          properties:
+            contacts:
+              type: array
+              items:
+                $ref: '#/definitions/Contact'
+            total:
+              type: integer
+    """
     db = get_db()
     
     # Build query with filters
@@ -428,7 +582,38 @@ def get_contacts():
 
 @app.route('/api/contacts/<int:contact_id>', methods=['GET'])
 def get_contact(contact_id):
-    """Get single contact"""
+    """Get a single contact with interactions and relationships.
+    ---
+    tags:
+      - Contacts
+    security: []
+    parameters:
+      - name: contact_id
+        in: path
+        type: integer
+        required: true
+        description: Contact ID
+    responses:
+      200:
+        description: Contact details with interactions and relationships
+        schema:
+          type: object
+          properties:
+            contact:
+              $ref: '#/definitions/Contact'
+            interactions:
+              type: array
+              items:
+                type: object
+            relationships:
+              type: array
+              items:
+                type: object
+      404:
+        description: Contact not found
+        schema:
+          $ref: '#/definitions/Error'
+    """
     db = get_db()
     contact = db.execute('SELECT * FROM contacts WHERE id = ?', (contact_id,)).fetchone()
     
@@ -461,7 +646,39 @@ def get_contact(contact_id):
 
 @app.route('/api/contacts/<int:contact_id>/research', methods=['GET'])
 def get_contact_research(contact_id):
-    """Get research profile for a contact"""
+    """Get research profile for a contact.
+    ---
+    tags:
+      - Contacts
+    security: []
+    parameters:
+      - name: contact_id
+        in: path
+        type: integer
+        required: true
+        description: Contact ID
+    responses:
+      200:
+        description: Contact research profile
+        schema:
+          type: object
+          properties:
+            contact_id:
+              type: integer
+            name:
+              type: string
+            research_profile:
+              type: object
+              description: AI-generated research profile (null if not researched)
+      404:
+        description: Contact not found
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         db = get_db()
         contact = db.execute('SELECT name, research_profile FROM contacts WHERE id = ?', (contact_id,)).fetchone()
@@ -491,7 +708,52 @@ def get_contact_research(contact_id):
 
 @app.route('/api/contacts', methods=['POST'])
 def create_contact():
-    """Create new contact"""
+    """Create a new contact.
+    ---
+    tags:
+      - Contacts
+    security: []
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          required:
+            - name
+          properties:
+            name:
+              type: string
+            email:
+              type: string
+            phone:
+              type: string
+            organization:
+              type: string
+            role:
+              type: string
+            notes:
+              type: string
+            linkedin_url:
+              type: string
+            relationship_strength:
+              type: string
+              enum: [New, Warm, Hot, Cold]
+              default: New
+            last_contact:
+              type: string
+              format: date
+    responses:
+      200:
+        description: Contact created successfully
+        schema:
+          type: object
+          properties:
+            id:
+              type: integer
+            status:
+              type: string
+    """
     data = request.get_json()
     
     db = get_db()
@@ -520,7 +782,51 @@ def create_contact():
 
 @app.route('/api/contacts/<int:contact_id>', methods=['PUT'])
 def update_contact(contact_id):
-    """Update contact"""
+    """Update an existing contact.
+    ---
+    tags:
+      - Contacts
+    security: []
+    parameters:
+      - name: contact_id
+        in: path
+        type: integer
+        required: true
+        description: Contact ID
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          properties:
+            name:
+              type: string
+            email:
+              type: string
+            phone:
+              type: string
+            organization:
+              type: string
+            role:
+              type: string
+            notes:
+              type: string
+            linkedin_url:
+              type: string
+            relationship_strength:
+              type: string
+            last_contact:
+              type: string
+              format: date
+    responses:
+      200:
+        description: Contact updated successfully
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+    """
     data = request.get_json()
     
     db = get_db()
@@ -550,7 +856,26 @@ def update_contact(contact_id):
 
 @app.route('/api/contacts/<int:contact_id>', methods=['DELETE'])
 def delete_contact(contact_id):
-    """Delete contact"""
+    """Delete a contact by ID.
+    ---
+    tags:
+      - Contacts
+    security: []
+    parameters:
+      - name: contact_id
+        in: path
+        type: integer
+        required: true
+        description: Contact ID
+    responses:
+      200:
+        description: Contact deleted successfully
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+    """
     db = get_db()
     db.execute('DELETE FROM contacts WHERE id = ?', (contact_id,))
     db.commit()
@@ -565,7 +890,30 @@ def delete_contact(contact_id):
 
 @app.route('/api/contacts/sync', methods=['POST'])
 def sync_contacts():
-    """Contact sync endpoint (legacy — all data is now in SQLite)"""
+    """Contact sync endpoint (legacy -- all data is now in SQLite).
+    ---
+    tags:
+      - Contacts
+    security: []
+    responses:
+      200:
+        description: Sync status
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+            message:
+              type: string
+            synced:
+              type: integer
+            created:
+              type: integer
+            updated:
+              type: integer
+            skipped:
+              type: integer
+    """
     db = get_db()
     count = db.execute("SELECT COUNT(*) FROM contacts").fetchone()[0]
     db.close()
@@ -603,7 +951,49 @@ def _load_opportunity(notice_id: str) -> dict:
 
 @app.route('/api/agents/capability/analyze', methods=['POST'])
 def analyze_capability():
-    """Agent 3: Capability Matching"""
+    """Agent 3: Capability Matching -- analyze opportunity fit.
+    ---
+    tags:
+      - Agents
+    security: []
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          required:
+            - notice_id
+          properties:
+            notice_id:
+              type: string
+              description: SAM.gov notice ID
+            requirements:
+              type: string
+              description: Fallback requirements text if opportunity not found
+    responses:
+      200:
+        description: Capability match results
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+            capability_score:
+              type: number
+      400:
+        description: Missing required fields
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+      503:
+        description: Agents not available
+        schema:
+          $ref: '#/definitions/Error'
+    """
     if not AGENTS_AVAILABLE:
         return jsonify({'error': 'Agents not available'}), 503
 
@@ -644,7 +1034,47 @@ def analyze_capability():
 
 @app.route('/api/agents/rfi/generate', methods=['POST'])
 def generate_rfi():
-    """Agent 4: RFI Response Generator"""
+    """Agent 4: RFI Response Generator -- generate an RFI response document.
+    ---
+    tags:
+      - Agents
+    security: []
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          required:
+            - notice_id
+          properties:
+            notice_id:
+              type: string
+              description: SAM.gov notice ID
+    responses:
+      200:
+        description: RFI generation results
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+            file_path:
+              type: string
+              description: Path to generated RFI document
+      400:
+        description: Missing notice_id
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+      503:
+        description: Agents not available
+        schema:
+          $ref: '#/definitions/Error'
+    """
     if not AGENTS_AVAILABLE:
         return jsonify({'error': 'Agents not available'}), 503
 
@@ -681,7 +1111,47 @@ def generate_rfi():
 
 @app.route('/api/agents/proposal/generate', methods=['POST'])
 def generate_proposal():
-    """Agent 5: Proposal Writing Assistant"""
+    """Agent 5: Proposal Writing Assistant -- generate a proposal document.
+    ---
+    tags:
+      - Agents
+    security: []
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          required:
+            - notice_id
+          properties:
+            notice_id:
+              type: string
+              description: SAM.gov notice ID
+    responses:
+      200:
+        description: Proposal generation results
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+            file_path:
+              type: string
+              description: Path to generated proposal document
+      400:
+        description: Missing notice_id
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+      503:
+        description: Agents not available
+        schema:
+          $ref: '#/definitions/Error'
+    """
     if not AGENTS_AVAILABLE:
         return jsonify({'error': 'Agents not available'}), 503
 
@@ -718,7 +1188,49 @@ def generate_proposal():
 
 @app.route('/api/agents/pricing/generate', methods=['POST'])
 def generate_pricing():
-    """Agent 6: Pricing & Budget Generator"""
+    """Agent 6: Pricing and Budget Generator -- generate pricing model.
+    ---
+    tags:
+      - Agents
+    security: []
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          required:
+            - notice_id
+          properties:
+            notice_id:
+              type: string
+              description: SAM.gov notice ID
+    responses:
+      200:
+        description: Pricing generation results
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+            pricing:
+              type: object
+              properties:
+                total_value:
+                  type: number
+      400:
+        description: Missing notice_id
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+      503:
+        description: Agents not available
+        schema:
+          $ref: '#/definitions/Error'
+    """
     if not AGENTS_AVAILABLE:
         return jsonify({'error': 'Agents not available'}), 503
 
@@ -759,7 +1271,26 @@ def generate_pricing():
 
 @app.route('/api/competitive/stats', methods=['GET'])
 def get_competitive_stats():
-    """Get overall competitive intelligence statistics via USAspending.gov"""
+    """Get overall competitive intelligence statistics via USAspending.gov.
+    ---
+    tags:
+      - Competitive Intelligence
+    security: []
+    responses:
+      200:
+        description: Competitive landscape statistics
+        schema:
+          type: object
+          properties:
+            contract_count:
+              type: integer
+            contractor_count:
+              type: integer
+            agency_count:
+              type: integer
+            total_value:
+              type: number
+    """
     try:
         from usaspending_intel import USAspendingIntelligence
         usa = USAspendingIntelligence()
@@ -782,7 +1313,35 @@ def get_competitive_stats():
 
 @app.route('/api/competitive/incumbents', methods=['GET'])
 def get_competitive_incumbents():
-    """Get top contractors ranked by contract value via USAspending.gov"""
+    """Get top contractors ranked by contract value via USAspending.gov.
+    ---
+    tags:
+      - Competitive Intelligence
+    security: []
+    parameters:
+      - name: agency
+        in: query
+        type: string
+        description: Filter by agency name
+      - name: naics
+        in: query
+        type: string
+        description: Filter by NAICS code
+    responses:
+      200:
+        description: List of incumbent contractors
+        schema:
+          type: object
+          properties:
+            incumbents:
+              type: array
+              items:
+                $ref: '#/definitions/Incumbent'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         from usaspending_intel import USAspendingIntelligence, normalize_agency_name
         usa = USAspendingIntelligence()
@@ -816,7 +1375,26 @@ def get_competitive_incumbents():
 
 @app.route('/api/competitive/filter-options', methods=['GET'])
 def get_competitive_filter_options():
-    """Get available filter options from scout data"""
+    """Get available filter options (agencies, NAICS) from scout data.
+    ---
+    tags:
+      - Competitive Intelligence
+    security: []
+    responses:
+      200:
+        description: Available filter values
+        schema:
+          type: object
+          properties:
+            agencies:
+              type: array
+              items:
+                type: string
+            naics:
+              type: array
+              items:
+                type: string
+    """
     try:
         from usaspending_intel import normalize_agency_name
         scout_files = sorted(Path('knowledge_graph').glob('scout_data_*.json'), reverse=True)
@@ -849,7 +1427,53 @@ def get_competitive_filter_options():
 
 @app.route('/api/competitive/teaming-partners', methods=['GET'])
 def get_teaming_partners():
-    """Get potential teaming partners via USAspending.gov"""
+    """Get potential teaming partners via USAspending.gov.
+    ---
+    tags:
+      - Competitive Intelligence
+    security: []
+    responses:
+      200:
+        description: Teaming partner recommendations by NAICS, agency, and overall
+        schema:
+          type: object
+          properties:
+            by_naics:
+              type: array
+              items:
+                type: object
+                properties:
+                  naics:
+                    type: string
+                  contractors:
+                    type: array
+                    items:
+                      type: object
+            by_agency:
+              type: array
+              items:
+                type: object
+                properties:
+                  agency:
+                    type: string
+                  contractors:
+                    type: array
+                    items:
+                      type: object
+            recommended:
+              type: array
+              items:
+                type: object
+                properties:
+                  contractor:
+                    type: string
+                  contract_count:
+                    type: integer
+                  total_value:
+                    type: number
+                  partner_score:
+                    type: number
+    """
     try:
         from usaspending_intel import USAspendingIntelligence, normalize_agency_name
         usa = USAspendingIntelligence()
@@ -924,7 +1548,37 @@ def get_teaming_partners():
 
 @app.route('/api/competitive/organization/<path:org_name>/research', methods=['GET'])
 def get_organization_research(org_name):
-    """Get cached research profile for an organization from SQLite + USAspending context"""
+    """Get cached research profile for an organization from SQLite plus USAspending context.
+    ---
+    tags:
+      - Competitive Intelligence
+    security: []
+    parameters:
+      - name: org_name
+        in: path
+        type: string
+        required: true
+        description: Organization name
+    responses:
+      200:
+        description: Organization research profile
+        schema:
+          type: object
+          properties:
+            name:
+              type: string
+            research_profile:
+              type: object
+              description: AI-generated research profile (null if not yet researched)
+            contract_count:
+              type: integer
+            total_value:
+              type: number
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         # Check SQLite cache for existing research
         db = get_db()
@@ -978,7 +1632,48 @@ def get_organization_research(org_name):
 
 @app.route('/api/competitive/organization/research', methods=['POST'])
 def research_organization():
-    """Run AI research on an organization (USAspending context + Claude web search)"""
+    """Run AI research on an organization (USAspending context plus Claude web search).
+    ---
+    tags:
+      - Competitive Intelligence
+    security: []
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          required:
+            - name
+          properties:
+            name:
+              type: string
+              description: Organization name to research
+            force_refresh:
+              type: boolean
+              default: false
+              description: Force refresh even if cached
+    responses:
+      200:
+        description: Organization research results
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+            name:
+              type: string
+            research_profile:
+              type: object
+      400:
+        description: Missing organization name
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         data = request.get_json()
         org_name = data.get('name', '')
@@ -1081,7 +1776,60 @@ def research_organization():
 
 @app.route('/api/competitive/market-trends', methods=['GET'])
 def get_market_trends():
-    """Get market trend data via USAspending.gov"""
+    """Get market trend data via USAspending.gov.
+    ---
+    tags:
+      - Competitive Intelligence
+    security: []
+    responses:
+      200:
+        description: Market trends including timeline, share, agencies, and NAICS distribution
+        schema:
+          type: object
+          properties:
+            timeline:
+              type: array
+              items:
+                type: object
+                properties:
+                  month:
+                    type: string
+                  contract_count:
+                    type: integer
+                  total_value:
+                    type: number
+            market_share:
+              type: array
+              items:
+                type: object
+                properties:
+                  contractor:
+                    type: string
+                  total_value:
+                    type: number
+            top_agencies:
+              type: array
+              items:
+                type: object
+                properties:
+                  agency:
+                    type: string
+                  contract_count:
+                    type: integer
+                  total_value:
+                    type: number
+            naics_distribution:
+              type: array
+              items:
+                type: object
+                properties:
+                  naics:
+                    type: string
+                  contract_count:
+                    type: integer
+                  total_value:
+                    type: number
+    """
     try:
         from usaspending_intel import USAspendingIntelligence, normalize_agency_name
         usa = USAspendingIntelligence()
@@ -1161,7 +1909,59 @@ def get_market_trends():
 
 @app.route('/api/competitive/contractor-details', methods=['GET'])
 def get_contractor_details():
-    """Get detailed information about a specific contractor via USAspending.gov"""
+    """Get detailed information about a specific contractor via USAspending.gov.
+    ---
+    tags:
+      - Competitive Intelligence
+    security: []
+    parameters:
+      - name: name
+        in: query
+        type: string
+        required: true
+        description: Contractor name
+    responses:
+      200:
+        description: Contractor details
+        schema:
+          type: object
+          properties:
+            contractor:
+              type: string
+            contract_count:
+              type: integer
+            total_value:
+              type: number
+            agencies:
+              type: array
+              items:
+                type: string
+            naics_codes:
+              type: array
+              items:
+                type: string
+            recent_contracts:
+              type: array
+              items:
+                type: object
+                properties:
+                  agency:
+                    type: string
+                  description:
+                    type: string
+                  value:
+                    type: number
+                  date_signed:
+                    type: string
+      400:
+        description: Missing contractor name
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         contractor_name = request.args.get('name', '')
 
@@ -1216,7 +2016,90 @@ def get_contractor_details():
 
 @app.route('/api/competitive/contractor/<path:contractor_name>', methods=['GET'])
 def get_contractor_full_profile(contractor_name):
-    """Full contractor profile for the detail page — timeline, agencies, NAICS, all contracts"""
+    """Full contractor profile -- timeline, agencies, NAICS, all contracts from USAspending.
+    ---
+    tags:
+      - Competitive Intelligence
+    security: []
+    parameters:
+      - name: contractor_name
+        in: path
+        type: string
+        required: true
+        description: Contractor name
+    responses:
+      200:
+        description: Full contractor profile with contracts, agencies, NAICS, and timeline
+        schema:
+          type: object
+          properties:
+            contractor_name:
+              type: string
+            contracts:
+              type: array
+              items:
+                type: object
+                properties:
+                  contract_id:
+                    type: string
+                  agency:
+                    type: string
+                  naics:
+                    type: string
+                  value:
+                    type: number
+                  date_signed:
+                    type: string
+                  description:
+                    type: string
+            total_contracts:
+              type: integer
+            total_value:
+              type: number
+            avg_value:
+              type: number
+            max_value:
+              type: number
+            agency_count:
+              type: integer
+            recent_count:
+              type: integer
+            top_agency:
+              type: string
+            primary_naics:
+              type: string
+            agencies:
+              type: array
+              items:
+                type: object
+                properties:
+                  agency:
+                    type: string
+                  value:
+                    type: number
+            naics_distribution:
+              type: array
+              items:
+                type: object
+                properties:
+                  code:
+                    type: string
+                  count:
+                    type: integer
+            timeline:
+              type: array
+              items:
+                type: object
+                properties:
+                  month:
+                    type: string
+                  value:
+                    type: number
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         from usaspending_intel import USAspendingIntelligence
         usa = USAspendingIntelligence()
@@ -1321,7 +2204,61 @@ def get_contractor_full_profile(contractor_name):
 
 @app.route('/api/agents/competitive/analyze', methods=['POST'])
 def analyze_competitive():
-    """Agent 2: Competitive Intelligence"""
+    """Agent 2: Competitive Intelligence -- analyze competitive landscape for an opportunity.
+    ---
+    tags:
+      - Agents
+    security: []
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          required:
+            - notice_id
+          properties:
+            notice_id:
+              type: string
+              description: SAM.gov notice ID
+    responses:
+      200:
+        description: Competitive analysis results
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+            incumbents:
+              type: array
+              items:
+                type: object
+            opportunity:
+              type: object
+              properties:
+                title:
+                  type: string
+                agency:
+                  type: string
+                naics:
+                  type: string
+      400:
+        description: Missing notice_id
+        schema:
+          $ref: '#/definitions/Error'
+      404:
+        description: Opportunity not found
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+      503:
+        description: Agents not available
+        schema:
+          $ref: '#/definitions/Error'
+    """
     if not AGENTS_AVAILABLE:
         return jsonify({'error': 'Agents not available'}), 503
 
@@ -1397,7 +2334,58 @@ def analyze_competitive():
 
 @app.route('/api/agents/contacts/research', methods=['POST'])
 def research_contact():
-    """Contact Research Agent — researches a contact's public professional presence"""
+    """Contact Research Agent -- researches a contact's public professional presence.
+    ---
+    tags:
+      - Agents
+    security: []
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          required:
+            - name
+          properties:
+            id:
+              type: integer
+              description: Contact ID (optional)
+            name:
+              type: string
+              description: Contact full name
+            title:
+              type: string
+            agency:
+              type: string
+            organization:
+              type: string
+            email:
+              type: string
+            force_refresh:
+              type: boolean
+              default: false
+    responses:
+      200:
+        description: Contact research results
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+            confidence:
+              type: string
+            method:
+              type: string
+      400:
+        description: Missing contact name
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     t0 = time.time()
     try:
         data = request.json or {}
@@ -1440,7 +2428,52 @@ def research_contact():
 @app.route('/api/contacts/ensure-and-research', methods=['POST'])
 def ensure_and_research_contact():
     """Ensure a POC exists in SQLite contacts, then research them.
-    Used from opportunity modal where POCs don't yet have a contact_id."""
+    ---
+    tags:
+      - Contacts
+    security: []
+    description: Used from opportunity modal where POCs do not yet have a contact_id. Creates contact if needed, then runs AI research.
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          required:
+            - name
+          properties:
+            name:
+              type: string
+              description: Contact full name
+            title:
+              type: string
+            organization:
+              type: string
+            email:
+              type: string
+    responses:
+      200:
+        description: Research results with contact_id
+        schema:
+          type: object
+          properties:
+            contact_id:
+              type: integer
+            name:
+              type: string
+            cached:
+              type: boolean
+            status:
+              type: string
+      400:
+        description: Missing contact name
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         data = request.json or {}
         name = data.get('name', '').strip()
@@ -1525,7 +2558,32 @@ def ensure_and_research_contact():
 
 @app.route('/api/agents/excel/export', methods=['POST'])
 def export_to_excel():
-    """Export all data to Excel"""
+    """Export all data to an Excel workbook.
+    ---
+    tags:
+      - Agents
+    security: []
+    responses:
+      200:
+        description: Excel export results
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+            filename:
+              type: string
+            message:
+              type: string
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+      503:
+        description: Agents not available
+        schema:
+          $ref: '#/definitions/Error'
+    """
     if not AGENTS_AVAILABLE:
         return jsonify({'error': 'Agents not available'}), 503
     
@@ -1551,7 +2609,40 @@ def export_to_excel():
 
 @app.route('/api/agents/logs', methods=['GET'])
 def get_agent_logs():
-    """Get activity logs for agents"""
+    """Get activity logs for agents.
+    ---
+    tags:
+      - Agent Logs
+    security: []
+    parameters:
+      - name: agent_id
+        in: query
+        type: integer
+        description: Filter by agent ID (1-7)
+      - name: limit
+        in: query
+        type: integer
+        default: 50
+        description: Max number of log entries to return
+    responses:
+      200:
+        description: Agent activity logs
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+            logs:
+              type: array
+              items:
+                $ref: '#/definitions/AgentLog'
+            count:
+              type: integer
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         from agent_logger import get_logger
         logger = get_logger()
@@ -1573,7 +2664,50 @@ def get_agent_logs():
 
 @app.route('/api/agents/stats', methods=['GET'])
 def get_agent_stats():
-    """Get statistics for an agent"""
+    """Get statistics for a specific agent.
+    ---
+    tags:
+      - Agent Logs
+    security: []
+    parameters:
+      - name: agent_id
+        in: query
+        type: integer
+        required: true
+        description: Agent ID (1-7)
+      - name: days
+        in: query
+        type: integer
+        default: 7
+        description: Number of days to look back
+    responses:
+      200:
+        description: Agent statistics
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+            stats:
+              type: object
+              properties:
+                total_runs:
+                  type: integer
+                successes:
+                  type: integer
+                errors:
+                  type: integer
+                avg_duration:
+                  type: number
+      400:
+        description: Missing agent_id
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         from agent_logger import get_logger
         logger = get_logger()
@@ -1597,7 +2731,42 @@ def get_agent_stats():
 
 @app.route('/api/agents/stats/all', methods=['GET'])
 def get_all_agent_stats():
-    """Get summary stats for all agents in one call (for the dashboard)"""
+    """Get summary stats for all agents in one call (for the dashboard).
+    ---
+    tags:
+      - Agent Logs
+    security: []
+    parameters:
+      - name: days
+        in: query
+        type: integer
+        default: 30
+        description: Number of days to look back
+    responses:
+      200:
+        description: Summary stats for all 7 agents
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+            agents:
+              type: object
+              description: Keyed by agent_id (1-7), each with name, total_runs, successes, etc.
+            totals:
+              type: object
+              properties:
+                total_runs:
+                  type: integer
+                successes:
+                  type: integer
+                success_rate:
+                  type: number
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         from agent_logger import get_logger
         logger = get_logger()
@@ -1643,7 +2812,53 @@ def get_all_agent_stats():
 
 @app.route('/api/scout/opportunities', methods=['GET'])
 def get_scout_opportunities():
-    """Get scored opportunities from scout"""
+    """Get scored opportunities from scout data.
+    ---
+    tags:
+      - Opportunity Scout
+    security: []
+    parameters:
+      - name: days
+        in: query
+        type: integer
+        default: 7
+        description: Days back to filter
+      - name: priority
+        in: query
+        type: string
+        enum: [HIGH, MEDIUM, LOW]
+        description: Filter by priority level
+    responses:
+      200:
+        description: Scored opportunity list
+        schema:
+          type: object
+          properties:
+            timestamp:
+              type: string
+            total_opportunities:
+              type: integer
+            high_priority:
+              type: integer
+            medium_priority:
+              type: integer
+            opportunities:
+              type: array
+              items:
+                $ref: '#/definitions/Opportunity'
+      404:
+        description: No scout data available
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+      503:
+        description: Agents not available
+        schema:
+          $ref: '#/definitions/Error'
+    """
     if not AGENTS_AVAILABLE:
         return jsonify({'error': 'Agents not available'}), 503
     
@@ -1777,7 +2992,38 @@ def get_scout_opportunities():
 
 @app.route('/api/scout/summary', methods=['GET'])
 def get_scout_summary():
-    """Get scout summary statistics"""
+    """Get scout summary statistics.
+    ---
+    tags:
+      - Opportunity Scout
+    security: []
+    responses:
+      200:
+        description: Scout summary with priority breakdowns
+        schema:
+          type: object
+          properties:
+            timestamp:
+              type: string
+            total_opportunities:
+              type: integer
+            high_priority:
+              type: integer
+            medium_priority:
+              type: integer
+            low_priority:
+              type: integer
+            average_score:
+              type: number
+            with_contacts:
+              type: integer
+            without_contacts:
+              type: integer
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         # Check multiple locations
         scout_files = list(Path('knowledge_graph').glob('scout_data_*.json'))
@@ -1816,8 +3062,56 @@ def get_scout_summary():
 
 @app.route('/api/scout/run', methods=['POST'])
 def run_scout():
-    """Trigger scout to run — fetches SAM.gov opportunities, scores them,
-    and collects FPDS contract data."""
+    """Trigger scout run -- fetches SAM.gov opportunities, scores them, and collects FPDS data.
+    ---
+    tags:
+      - Opportunity Scout
+    security: []
+    parameters:
+      - name: body
+        in: body
+        schema:
+          type: object
+          properties:
+            days:
+              type: integer
+              default: 7
+              description: Number of days back to scout
+    responses:
+      200:
+        description: Scout run results
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+            message:
+              type: string
+            opportunities_found:
+              type: integer
+            opportunities_scored:
+              type: integer
+            high_priority:
+              type: integer
+            medium_priority:
+              type: integer
+            fpds_contracts_fetched:
+              type: integer
+            fpds_contracts_stored:
+              type: integer
+            sqlite_contacts_created:
+              type: integer
+            timestamp:
+              type: string
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+      503:
+        description: Scout not available
+        schema:
+          $ref: '#/definitions/Error'
+    """
     if not AGENTS_AVAILABLE:
         return jsonify({'error': 'Scout not available'}), 503
 
@@ -1880,7 +3174,40 @@ def run_scout():
 
 @app.route('/api/scout/sync-contacts', methods=['POST'])
 def sync_scout_contacts():
-    """Force sync of POC contacts from scout data into contacts DB"""
+    """Force sync of POC contacts from scout data into contacts DB.
+    ---
+    tags:
+      - Opportunity Scout
+    security: []
+    responses:
+      200:
+        description: Sync results
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+            file:
+              type: string
+            total_opportunities:
+              type: integer
+            contacts_created:
+              type: integer
+            contacts_updated:
+              type: integer
+            links_created:
+              type: integer
+            resources_stored:
+              type: integer
+      404:
+        description: No scout data available
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         scout_files = list(Path('knowledge_graph').glob('scout_data_*.json'))
         if not scout_files:
@@ -1911,7 +3238,30 @@ def sync_scout_contacts():
 
 @app.route('/api/opportunities/<notice_id>/contacts', methods=['GET'])
 def get_opportunity_contacts(notice_id):
-    """Get contacts linked to a specific opportunity"""
+    """Get contacts linked to a specific opportunity.
+    ---
+    tags:
+      - Opportunity Scout
+    security: []
+    parameters:
+      - name: notice_id
+        in: path
+        type: string
+        required: true
+        description: SAM.gov notice ID
+    responses:
+      200:
+        description: Contacts linked to this opportunity
+        schema:
+          type: object
+          properties:
+            contacts:
+              type: array
+              items:
+                $ref: '#/definitions/Contact'
+            total:
+              type: integer
+    """
     db = get_db()
     contacts = db.execute('''
         SELECT c.*, oc.role as opp_role, oc.poc_type
@@ -1928,7 +3278,41 @@ def get_opportunity_contacts(notice_id):
 
 @app.route('/api/opportunities/<notice_id>/resources', methods=['GET'])
 def get_opportunity_resources(notice_id):
-    """Get resource links for a specific opportunity"""
+    """Get resource links for a specific opportunity.
+    ---
+    tags:
+      - Opportunity Scout
+    security: []
+    parameters:
+      - name: notice_id
+        in: path
+        type: string
+        required: true
+        description: SAM.gov notice ID
+    responses:
+      200:
+        description: Resource links for this opportunity
+        schema:
+          type: object
+          properties:
+            resources:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  opportunity_id:
+                    type: string
+                  url:
+                    type: string
+                  resource_type:
+                    type: string
+                  label:
+                    type: string
+            total:
+              type: integer
+    """
     db = get_db()
     resources = db.execute('''
         SELECT * FROM opportunity_resources
@@ -1947,7 +3331,20 @@ def get_opportunity_resources(notice_id):
 
 @app.route('/api/kanban/state', methods=['GET'])
 def get_kanban_state():
-    """Return all saved kanban stages as {opportunity_id: stage}"""
+    """Return all saved kanban stages as opportunity_id to stage mapping.
+    ---
+    tags:
+      - Kanban
+    security: []
+    responses:
+      200:
+        description: Map of opportunity_id to kanban stage
+        schema:
+          type: object
+          additionalProperties:
+            type: string
+            enum: [new, analyzing, rfi, proposal, pricing, skipped]
+    """
     db = get_db()
     rows = db.execute('SELECT opportunity_id, stage FROM opportunity_stage').fetchall()
     state = {row['opportunity_id']: row['stage'] for row in rows}
@@ -1956,7 +3353,44 @@ def get_kanban_state():
 
 @app.route('/api/kanban/state', methods=['POST'])
 def save_kanban_state():
-    """Upsert a single opportunity's kanban stage"""
+    """Upsert a single opportunity's kanban stage.
+    ---
+    tags:
+      - Kanban
+    security: []
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          required:
+            - opportunity_id
+            - stage
+          properties:
+            opportunity_id:
+              type: string
+              description: SAM.gov notice ID
+            stage:
+              type: string
+              enum: [new, analyzing, rfi, proposal, pricing, skipped]
+    responses:
+      200:
+        description: Stage saved
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+            opportunity_id:
+              type: string
+            stage:
+              type: string
+      400:
+        description: Missing or invalid fields
+        schema:
+          $ref: '#/definitions/Error'
+    """
     data = request.get_json()
     opp_id = data.get('opportunity_id')
     stage = data.get('stage')
@@ -1984,7 +3418,50 @@ def save_kanban_state():
 
 @app.route('/api/intel/incumbents', methods=['GET'])
 def get_incumbents():
-    """Get incumbent contractors"""
+    """Get incumbent contractors for an agency.
+    ---
+    tags:
+      - Intelligence
+    security: []
+    parameters:
+      - name: agency
+        in: query
+        type: string
+        required: true
+        description: Agency name
+      - name: naics
+        in: query
+        type: string
+        description: NAICS code filter
+    responses:
+      200:
+        description: List of incumbent contractors
+        schema:
+          type: object
+          properties:
+            agency:
+              type: string
+            naics:
+              type: string
+            incumbents:
+              type: array
+              items:
+                type: object
+            count:
+              type: integer
+      400:
+        description: Missing agency parameter
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+      503:
+        description: Intel agent not available
+        schema:
+          $ref: '#/definitions/Error'
+    """
     if not AGENTS_AVAILABLE:
         return jsonify({'error': 'Intel agent not available'}), 503
     
@@ -2012,7 +3489,50 @@ def get_incumbents():
 
 @app.route('/api/intel/teaming-partners', methods=['GET'])
 def get_intel_teaming_partners():
-    """Get teaming partner recommendations"""
+    """Get teaming partner recommendations.
+    ---
+    tags:
+      - Intelligence
+    security: []
+    parameters:
+      - name: agency
+        in: query
+        type: string
+        description: Agency name filter
+      - name: naics
+        in: query
+        type: string
+        description: NAICS code filter
+      - name: min_contracts
+        in: query
+        type: integer
+        default: 3
+        description: Minimum number of contracts
+    responses:
+      200:
+        description: Teaming partner recommendations
+        schema:
+          type: object
+          properties:
+            agency:
+              type: string
+            naics:
+              type: string
+            partners:
+              type: array
+              items:
+                type: object
+            count:
+              type: integer
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+      503:
+        description: Intel agent not available
+        schema:
+          $ref: '#/definitions/Error'
+    """
     if not AGENTS_AVAILABLE:
         return jsonify({'error': 'Intel agent not available'}), 503
     
@@ -2038,7 +3558,35 @@ def get_intel_teaming_partners():
 
 @app.route('/api/intel/agency-spending', methods=['GET'])
 def get_agency_spending():
-    """Get agency spending analysis"""
+    """Get agency spending analysis.
+    ---
+    tags:
+      - Intelligence
+    security: []
+    parameters:
+      - name: agency
+        in: query
+        type: string
+        required: true
+        description: Agency name
+    responses:
+      200:
+        description: Agency spending data
+        schema:
+          type: object
+      400:
+        description: Missing agency parameter
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+      503:
+        description: Intel agent not available
+        schema:
+          $ref: '#/definitions/Error'
+    """
     if not AGENTS_AVAILABLE:
         return jsonify({'error': 'Intel agent not available'}), 503
     
@@ -2060,7 +3608,43 @@ def get_agency_spending():
 
 @app.route('/api/intel/competitors', methods=['POST'])
 def analyze_competitors():
-    """Analyze competitors"""
+    """Analyze and compare competitors.
+    ---
+    tags:
+      - Intelligence
+    security: []
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          required:
+            - competitors
+          properties:
+            competitors:
+              type: array
+              items:
+                type: string
+              description: List of competitor company names
+    responses:
+      200:
+        description: Competitor comparison results
+        schema:
+          type: object
+      400:
+        description: No competitors specified
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+      503:
+        description: Intel agent not available
+        schema:
+          $ref: '#/definitions/Error'
+    """
     if not AGENTS_AVAILABLE:
         return jsonify({'error': 'Intel agent not available'}), 503
     
@@ -2087,7 +3671,26 @@ def analyze_competitors():
 
 @app.route('/api/dashboard/stats', methods=['GET'])
 def dashboard_stats():
-    """Get dashboard stats for sidebar"""
+    """Get dashboard stats for sidebar.
+    ---
+    tags:
+      - Dashboard
+    security: []
+    responses:
+      200:
+        description: Dashboard sidebar stats
+        schema:
+          type: object
+          properties:
+            contacts:
+              type: integer
+            opportunities:
+              type: integer
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         db = get_db()
         
@@ -2118,7 +3721,53 @@ def dashboard_stats():
 
 @app.route('/api/dashboard/overview', methods=['GET'])
 def dashboard_overview():
-    """Complete dashboard overview"""
+    """Complete dashboard overview with contacts, opportunities, and intel stats.
+    ---
+    tags:
+      - Dashboard
+    security: []
+    responses:
+      200:
+        description: Full dashboard overview
+        schema:
+          type: object
+          properties:
+            timestamp:
+              type: string
+            contacts:
+              type: object
+              properties:
+                total:
+                  type: integer
+                organizations:
+                  type: integer
+                graph_people:
+                  type: integer
+                decision_makers:
+                  type: integer
+            opportunities:
+              type: object
+              properties:
+                total:
+                  type: integer
+                high_priority:
+                  type: integer
+                with_contacts:
+                  type: integer
+                last_run:
+                  type: string
+            intel:
+              type: object
+              properties:
+                contracts_tracked:
+                  type: integer
+            agents_available:
+              type: boolean
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         overview = {
             'timestamp': datetime.now().isoformat(),
@@ -2179,7 +3828,38 @@ def dashboard_overview():
 
 @app.route('/api/dashboard/recent-activity', methods=['GET'])
 def get_recent_activity():
-    """Get recent agent activity"""
+    """Get recent agent activity (scout runs, intel reports).
+    ---
+    tags:
+      - Dashboard
+    security: []
+    responses:
+      200:
+        description: Recent activity feed
+        schema:
+          type: object
+          properties:
+            activities:
+              type: array
+              items:
+                type: object
+                properties:
+                  type:
+                    type: string
+                    enum: [scout, intel]
+                  title:
+                    type: string
+                  timestamp:
+                    type: string
+                  file:
+                    type: string
+            count:
+              type: integer
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         activities = []
         
@@ -2229,7 +3909,26 @@ def get_recent_activity():
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
-    """Health check"""
+    """Health check endpoint.
+    ---
+    tags:
+      - System
+    security: []
+    responses:
+      200:
+        description: Service health status
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+            timestamp:
+              type: string
+            agents_available:
+              type: boolean
+            database:
+              type: boolean
+    """
     return jsonify({
         'status': 'healthy',
         'timestamp': datetime.now().isoformat(),
@@ -2269,7 +3968,24 @@ COMPANY_DOCS_DIR = Path('company_docs')
 
 @app.route('/api/company-docs')
 def list_company_docs():
-    """List all company experience documents"""
+    """List all company experience documents.
+    ---
+    tags:
+      - Company Docs
+    security: []
+    responses:
+      200:
+        description: List of company experience documents
+        schema:
+          type: object
+          properties:
+            documents:
+              type: array
+              items:
+                $ref: '#/definitions/CompanyDoc'
+            count:
+              type: integer
+    """
     docs = []
     if COMPANY_DOCS_DIR.exists():
         for filepath in sorted(COMPANY_DOCS_DIR.iterdir()):
@@ -2287,7 +4003,36 @@ def list_company_docs():
 
 @app.route('/api/company-docs/upload', methods=['POST'])
 def upload_company_doc():
-    """Upload a company experience document"""
+    """Upload a company experience document (.txt or .docx).
+    ---
+    tags:
+      - Company Docs
+    security: []
+    consumes:
+      - multipart/form-data
+    parameters:
+      - name: file
+        in: formData
+        type: file
+        required: true
+        description: A .txt or .docx file to upload
+    responses:
+      200:
+        description: Upload successful
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+            filename:
+              type: string
+            message:
+              type: string
+      400:
+        description: Invalid file or missing file
+        schema:
+          $ref: '#/definitions/Error'
+    """
     if 'file' not in request.files:
         return jsonify({'error': 'No file provided'}), 400
 
@@ -2317,7 +4062,36 @@ def upload_company_doc():
 
 @app.route('/api/company-docs/<filename>', methods=['DELETE'])
 def delete_company_doc(filename):
-    """Delete a company experience document"""
+    """Delete a company experience document.
+    ---
+    tags:
+      - Company Docs
+    security: []
+    parameters:
+      - name: filename
+        in: path
+        type: string
+        required: true
+        description: Filename to delete
+    responses:
+      200:
+        description: File deleted
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+            message:
+              type: string
+      400:
+        description: Invalid filename
+        schema:
+          $ref: '#/definitions/Error'
+      404:
+        description: File not found
+        schema:
+          $ref: '#/definitions/Error'
+    """
     # Prevent path traversal
     safe_name = Path(filename).name
     if safe_name != filename or '..' in filename:
